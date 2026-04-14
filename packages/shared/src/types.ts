@@ -44,10 +44,36 @@ export interface ProgressEvent {
   chunksProcessed?: number;
   totalChunks?: number;
   currentTrack?: string;
+  tracksFound?: number;
   results?: TrackMatch[];
   error?: string;
 }
 
 export interface UploadResponse {
   analysisId: string;
+}
+
+export type SegmentStatus = "identified" | "unknown" | "retrying";
+
+export interface Segment {
+  id: string;
+  analysisId: string;
+  startSec: number;
+  endSec: number;
+  status: SegmentStatus;
+  trackName: string | null;
+  artist: string | null;
+  title: string | null;
+  acrid: string | null;
+  confidence: number | null;
+  attempts: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AnalysisWithSegments extends Omit<AnalysisResult, "results"> {
+  segments: Segment[];
+  chunksAvailable: boolean;
+  chunksExpireAt: string | null;
+  results: TrackMatch[] | null;
 }

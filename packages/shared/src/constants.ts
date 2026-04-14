@@ -17,3 +17,7 @@ export const ALLOWED_MIMETYPES = [
   "audio/mp4",
   "audio/x-m4a",
 ];
+
+export const CHUNKS_TTL_HOURS = 24;
+export const CHUNK_OVERLAP_SEC = 5;
+export const CHUNK_STEP_SEC = CHUNK_DURATION_SEC - CHUNK_OVERLAP_SEC; // 10
