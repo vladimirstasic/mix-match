@@ -2,7 +2,7 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import path from "path";
 import fs from "fs/promises";
-import { CHUNK_DURATION_SEC } from "@mix-detective/shared";
+import { CHUNK_DURATION_SEC, CHUNK_STEP_SEC } from "@mix-match/shared";
 
 const exec = promisify(execFile);
 
@@ -20,48 +20,64 @@ export async function getDuration(filePath: string): Promise<number> {
   return parseFloat(stdout.trim());
 }
 
-export async function splitIntoChunks(wavPath: string, outputDir: string): Promise<string[]> {
-  await fs.mkdir(outputDir, { recursive: true });
-  const pattern = path.join(outputDir, "chunk_%04d.wav");
-  await exec("ffmpeg", [
-    "-i", wavPath,
-    "-f", "segment",
-    "-segment_time", String(CHUNK_DURATION_SEC),
-    "-c", "copy",
-    "-y",
-    pattern,
-  ]);
-
-  const files = await fs.readdir(outputDir);
-  return files
-    .filter((f) => f.startsWith("chunk_") && f.endsWith(".wav"))
-    .sort()
-    .map((f) => path.join(outputDir, f));
+export function computeChunkPositions(durationSec: number, chunkDuration: number, stepSec: number): number[] {
+  const positions: number[] = [];
+  for (let pos = 0; pos <= durationSec - stepSec; pos += stepSec) {
+    positions.push(pos);
+  }
+  if (positions.length === 0) {
+    positions.push(0);
+  }
+  return positions;
 }
 
-export async function extractRmsLevels(wavPath: string, chunkCount: number): Promise<number[]> {
-  const samplesPerChunk = 44100 * CHUNK_DURATION_SEC;
-  const { stderr } = await exec("ffmpeg", [
-    "-i", wavPath,
-    "-af", `astats=metadata=1:reset=${samplesPerChunk}`,
-    "-f", "null",
-    "-",
-  ]);
+export async function splitIntoChunks(wavPath: string, outputDir: string): Promise<{ paths: string[]; positions: number[] }> {
+  await fs.mkdir(outputDir, { recursive: true });
 
+  const duration = await getDuration(wavPath);
+  const positions = computeChunkPositions(duration, CHUNK_DURATION_SEC, CHUNK_STEP_SEC);
+  const paths: string[] = [];
+
+  for (let i = 0; i < positions.length; i++) {
+    const outFile = path.join(outputDir, `chunk_${String(i).padStart(4, "0")}.wav`);
+    await exec("ffmpeg", [
+      "-ss", String(positions[i]),
+      "-i", wavPath,
+      "-t", String(CHUNK_DURATION_SEC),
+      "-c", "copy",
+      "-y",
+      outFile,
+    ]);
+    paths.push(outFile);
+  }
+
+  return { paths, positions };
+}
+
+export async function extractRmsLevels(_wavPath: string, chunkCount: number, chunkPaths: string[]): Promise<number[]> {
   const rmsValues: number[] = [];
-  const lines = stderr.split("\n");
-  for (const line of lines) {
-    const match = line.match(/RMS level dB:\s*([-\d.]+)/);
-    if (match) {
-      rmsValues.push(parseFloat(match[1]));
+
+  for (const chunkPath of chunkPaths) {
+    try {
+      const { stderr } = await exec("ffmpeg", [
+        "-i", chunkPath,
+        "-af", "volumedetect",
+        "-f", "null",
+        "-",
+      ], { maxBuffer: 10 * 1024 * 1024 });
+
+      const match = stderr.match(/mean_volume:\s*([-\d.]+)\s*dB/);
+      if (match) {
+        rmsValues.push(parseFloat(match[1]));
+      } else {
+        rmsValues.push(-Infinity);
+      }
+    } catch {
+      rmsValues.push(-Infinity);
     }
   }
 
-  while (rmsValues.length < chunkCount) {
-    rmsValues.push(-Infinity);
-  }
-
-  return rmsValues.slice(0, chunkCount);
+  return rmsValues;
 }
 
 export function formatTimestamp(totalSeconds: number): string {
