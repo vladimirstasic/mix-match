@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useRef, useState} from "react";
 import type {TrackMatch, Segment, AnalysisMode} from "@mix-match/shared";
-import {getAnalysis, subscribeProgress, uploadFile, retrySegment as retrySegmentApi, retryAllUnknown as retryAllApi} from "../api/client";
+import {getAnalysis, subscribeProgress, uploadFile, retrySegment as retrySegmentApi, retryAllUnknown as retryAllApi, editSegment as editSegmentApi} from "../api/client";
 
 type Phase = "idle" | "uploading" | "processing" | "completed" | "failed";
 
@@ -169,5 +169,12 @@ export function useAnalysis() {
     setTimeout(poll, 3000);
   }, [state.analysisId]);
 
-  return { ...state, startAnalysis, reset, retrySegment, retryAll };
+  const editSegment = useCallback(async (segmentId: string, trackName: string) => {
+    if (!state.analysisId) return;
+    await editSegmentApi(state.analysisId, segmentId, trackName);
+    const full = await getAnalysis(state.analysisId);
+    setState((s) => ({ ...s, segments: full.segments }));
+  }, [state.analysisId]);
+
+  return { ...state, startAnalysis, reset, retrySegment, retryAll, editSegment };
 }

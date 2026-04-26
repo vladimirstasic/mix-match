@@ -1,7 +1,8 @@
+import { useState } from "react";
 import type { Segment } from "@mix-match/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RotateCw, Check, HelpCircle, Loader2 } from "lucide-react";
+import { RotateCw, Check, HelpCircle, Loader2, Pencil } from "lucide-react";
 
 interface Props {
   segments: Segment[];
@@ -9,6 +10,7 @@ interface Props {
   onRetrySegment: (segmentId: string) => void;
   onRetryAll: () => void;
   onReset: () => void;
+  onEditSegment: (segmentId: string, trackName: string) => void;
 }
 
 function formatTime(sec: number): string {
@@ -17,7 +19,10 @@ function formatTime(sec: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-export function Timeline({ segments, chunksAvailable, onRetrySegment, onRetryAll, onReset }: Props) {
+export function Timeline({ segments, chunksAvailable, onRetrySegment, onRetryAll, onReset, onEditSegment }: Props) {
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editValue, setEditValue] = useState("");
+
   const identified = segments.filter((s) => s.status === "identified");
   const unknown = segments.filter((s) => s.status === "unknown");
   const retrying = segments.filter((s) => s.status === "retrying");
@@ -66,7 +71,56 @@ export function Timeline({ segments, chunksAvailable, onRetrySegment, onRetryAll
               {seg.status === "identified" && (
                 <>
                   <Check className="w-4 h-4 text-green-500 shrink-0" />
-                  <span className="font-medium">{seg.trackName}</span>
+                  {editingId === seg.id ? (
+                    <div className="flex items-center gap-2 flex-1">
+                      <input
+                        className="flex-1 bg-transparent border-b border-foreground/30 outline-none text-sm font-medium px-1 py-0.5"
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onKeyDown={(e) => {
+                          if (e.key === "Enter") {
+                            onEditSegment(seg.id, editValue);
+                            setEditingId(null);
+                          } else if (e.key === "Escape") {
+                            setEditingId(null);
+                          }
+                        }}
+                        autoFocus
+                      />
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          onEditSegment(seg.id, editValue);
+                          setEditingId(null);
+                        }}
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setEditingId(null)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <>
+                      <span className="font-medium">{seg.trackName}</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="ml-auto"
+                        onClick={() => {
+                          setEditingId(seg.id);
+                          setEditValue(seg.trackName ?? "");
+                        }}
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </Button>
+                    </>
+                  )}
                 </>
               )}
 

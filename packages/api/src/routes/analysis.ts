@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getAuth } from "@clerk/express";
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { analyses, segments } from "../db/schema.js";
 import fs from "fs/promises";
@@ -121,4 +121,69 @@ analysisRouter.get("/analysis/:id/progress", async (req, res) => {
   queueEvents.on("failed", onFailed);
 
   req.on("close", cleanup);
+});
+
+// PATCH /api/analysis/:id/segments/:segId — manual track edit
+analysisRouter.patch("/analysis/:id/segments/:segId", async (req, res) => {
+  const { userId } = getAuth(req);
+  const analysisId = req.params.id as string;
+  const segId = req.params.segId as string;
+  const { trackName, artist, title } = req.body;
+
+  if (!trackName && !artist && !title) {
+    res.status(400).json({ error: "Provide trackName, artist, or title" });
+    return;
+  }
+
+  // Verify ownership
+  const [analysis] = await db
+    .select()
+    .from(analyses)
+    .where(eq(analyses.id, analysisId))
+    .limit(1);
+  if (!analysis) {
+    res.status(404).json({ error: "Analysis not found" });
+    return;
+  }
+  if (analysis.userId && analysis.userId !== userId) {
+    res.status(403).json({ error: "Not authorized" });
+    return;
+  }
+
+  // Verify segment belongs to this analysis
+  const [segment] = await db
+    .select()
+    .from(segments)
+    .where(and(eq(segments.id, segId), eq(segments.analysisId, analysisId)))
+    .limit(1);
+  if (!segment) {
+    res.status(404).json({ error: "Segment not found" });
+    return;
+  }
+
+  // Build update - if only trackName provided, parse artist/title from it
+  const finalArtist =
+    artist || (trackName ? trackName.split(" - ")[0] : segment.artist);
+  const finalTitle =
+    title ||
+    (trackName ? trackName.split(" - ").slice(1).join(" - ") : segment.title);
+  const finalTrackName = trackName || `${finalArtist} - ${finalTitle}`;
+
+  await db
+    .update(segments)
+    .set({
+      trackName: finalTrackName,
+      artist: finalArtist,
+      title: finalTitle,
+      status: "identified",
+      updatedAt: new Date(),
+    })
+    .where(eq(segments.id, segId));
+
+  const [updated] = await db
+    .select()
+    .from(segments)
+    .where(eq(segments.id, segId))
+    .limit(1);
+  res.json(updated);
 });
