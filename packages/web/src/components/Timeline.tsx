@@ -7,6 +7,7 @@ import { RotateCw, Check, HelpCircle, Loader2, Pencil } from "lucide-react";
 interface Props {
   segments: Segment[];
   chunksAvailable: boolean;
+  analysisId: string;
   onRetrySegment: (segmentId: string) => void;
   onRetryAll: () => void;
   onReset: () => void;
@@ -19,7 +20,7 @@ function formatTime(sec: number): string {
   return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
 }
 
-export function Timeline({ segments, chunksAvailable, onRetrySegment, onRetryAll, onReset, onEditSegment }: Props) {
+export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment, onRetryAll, onReset, onEditSegment }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
 
@@ -156,6 +157,19 @@ export function Timeline({ segments, chunksAvailable, onRetrySegment, onRetryAll
             </CardContent>
           </Card>
         ))}
+      </div>
+
+      <div className="flex items-center gap-2 pt-4 border-t">
+        <span className="text-sm text-muted-foreground">Export:</span>
+        <Button variant="outline" size="sm" asChild>
+          <a href={`/api/analysis/${analysisId}/export/text`} download>Text</a>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <a href={`/api/analysis/${analysisId}/export/mixcloud`} download>Mixcloud</a>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <a href={`/api/analysis/${analysisId}/export/soundcloud`} download>SoundCloud</a>
+        </Button>
       </div>
     </div>
   );

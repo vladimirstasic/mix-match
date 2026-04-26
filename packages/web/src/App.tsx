@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 
 function App() {
-  const { phase, uploadProgress, chunksProcessed, totalChunks, currentTrack, tracksFound,
+  const { phase, analysisId, uploadProgress, chunksProcessed, totalChunks, currentTrack, tracksFound,
         segments, chunksAvailable, error, startAnalysis, reset, retrySegment, retryAll, editSegment } =
     useAnalysis();
 
@@ -51,6 +51,7 @@ function App() {
               <Timeline
                 segments={segments}
                 chunksAvailable={chunksAvailable}
+                analysisId={analysisId!}
                 onRetrySegment={retrySegment}
                 onRetryAll={retryAll}
                 onReset={reset}

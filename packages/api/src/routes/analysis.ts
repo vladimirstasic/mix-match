@@ -187,3 +187,64 @@ analysisRouter.patch("/analysis/:id/segments/:segId", async (req, res) => {
     .limit(1);
   res.json(updated);
 });
+
+// GET /api/analysis/:id/export/text
+analysisRouter.get("/analysis/:id/export/text", async (req, res) => {
+  const analysisId = req.params.id as string;
+  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
+
+  const segs = await db.select().from(segments)
+    .where(eq(segments.analysisId, analysisId)).orderBy(segments.startSec);
+
+  const identified = segs.filter(s => s.status === "identified");
+  const lines = identified.map((s, i) => {
+    const start = formatTime(s.startSec);
+    const end = formatTime(s.endSec);
+    return `${i + 1}. ${start} - ${end}  ${s.trackName}`;
+  });
+
+  res.setHeader("Content-Type", "text/plain");
+  res.setHeader("Content-Disposition", `attachment; filename="${analysis.filename || "tracklist"}.txt"`);
+  res.send(lines.join("\n"));
+});
+
+// GET /api/analysis/:id/export/mixcloud
+analysisRouter.get("/analysis/:id/export/mixcloud", async (req, res) => {
+  const analysisId = req.params.id as string;
+  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
+
+  const segs = await db.select().from(segments)
+    .where(eq(segments.analysisId, analysisId)).orderBy(segments.startSec);
+
+  const identified = segs.filter(s => s.status === "identified");
+  const lines = identified.map(s => `${s.artist} - ${s.title} @ ${formatTime(s.startSec)}`);
+
+  res.setHeader("Content-Type", "text/plain");
+  res.setHeader("Content-Disposition", `attachment; filename="${analysis.filename || "tracklist"}_mixcloud.txt"`);
+  res.send(lines.join("\n"));
+});
+
+// GET /api/analysis/:id/export/soundcloud
+analysisRouter.get("/analysis/:id/export/soundcloud", async (req, res) => {
+  const analysisId = req.params.id as string;
+  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
+
+  const segs = await db.select().from(segments)
+    .where(eq(segments.analysisId, analysisId)).orderBy(segments.startSec);
+
+  const identified = segs.filter(s => s.status === "identified");
+  const lines = ["Tracklist:", ...identified.map(s => `${formatTime(s.startSec)} ${s.trackName}`)];
+
+  res.setHeader("Content-Type", "text/plain");
+  res.setHeader("Content-Disposition", `attachment; filename="${analysis.filename || "tracklist"}_soundcloud.txt"`);
+  res.send(lines.join("\n"));
+});
+
+function formatTime(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
