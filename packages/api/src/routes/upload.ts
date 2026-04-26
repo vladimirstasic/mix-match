@@ -3,6 +3,7 @@ import multer from "multer";
 import crypto from "crypto";
 import fs from "fs/promises";
 import path from "path";
+import { requireAuth, getAuth } from "@clerk/express";
 import { eq, lt } from "drizzle-orm";
 import { MAX_FILE_SIZE, ALLOWED_MIMETYPES } from "@mix-match/shared";
 import { db } from "../db/client.js";
@@ -43,7 +44,8 @@ async function cleanupExpiredChunks() {
 
 export const uploadRouter = Router();
 
-uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
+uploadRouter.post("/upload", requireAuth(), upload.single("file"), async (req, res) => {
+  const { userId } = getAuth(req);
   const file = req.file;
   if (!file) {
     res.status(400).json({ error: "No file uploaded" });
@@ -76,6 +78,7 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
         fileSize: file.size,
         fileHash,
         status: "pending",
+        userId: userId,
       })
       .returning({ id: analyses.id });
 

@@ -11,6 +11,7 @@
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
+    "@clerk/express": "^2.1.9",
     "@mix-match/shared": "*",
     "bullmq": "^5.0.0",
     "cors": "^2.8.5",

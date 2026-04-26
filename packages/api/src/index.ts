@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import { clerkMiddleware } from "@clerk/express";
 import { config } from "./config.js";
 import { uploadRouter } from "./routes/upload.js";
 import { analysisRouter } from "./routes/analysis.js";
@@ -9,6 +10,7 @@ const app = express();
 
 app.use(cors());
 app.use(express.json());
+app.use(clerkMiddleware());
 app.use("/api", uploadRouter);
 app.use("/api", analysisRouter);
 app.use("/api", retryRouter);

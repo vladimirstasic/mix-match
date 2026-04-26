@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { getAuth } from "@clerk/express";
 import { eq } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { analyses, segments } from "../db/schema.js";
@@ -17,6 +18,12 @@ analysisRouter.get("/analysis/:id", async (req, res) => {
 
   if (!analysis) {
     res.status(404).json({ error: "Analysis not found" });
+    return;
+  }
+
+  const { userId } = getAuth(req);
+  if (analysis.userId && analysis.userId !== userId) {
+    res.status(403).json({ error: "Not authorized" });
     return;
   }
 

@@ -1,4 +1,13 @@
-import { pgTable, uuid, varchar, integer, jsonb, text, timestamp, real } from "drizzle-orm/pg-core";
+import { pgTable, uuid, varchar, integer, jsonb, text, timestamp, real, boolean } from "drizzle-orm/pg-core";
+
+export const users = pgTable("users", {
+  clerkId: varchar("clerk_id", { length: 255 }).primaryKey(),
+  plan: varchar("plan", { length: 20 }).notNull().default("free"),
+  creditsRemaining: integer("credits_remaining").notNull().default(3),
+  creditsResetAt: timestamp("credits_reset_at").notNull().defaultNow(),
+  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+  createdAt: timestamp("created_at").defaultNow(),
+});
 
 export const analyses = pgTable("analyses", {
   id: uuid("id").primaryKey().defaultRandom(),
@@ -13,6 +22,10 @@ export const analyses = pgTable("analyses", {
   error: text("error"),
   chunksDir: varchar("chunks_dir", { length: 500 }),
   chunksExpireAt: timestamp("chunks_expire_at"),
+  userId: varchar("user_id", { length: 255 }).references(() => users.clerkId),
+  mode: varchar("mode", { length: 10 }).default("fast"),
+  isPublic: boolean("is_public").default(false),
+  slug: varchar("slug", { length: 50 }).unique(),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });

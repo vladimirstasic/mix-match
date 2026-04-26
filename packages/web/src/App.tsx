@@ -3,6 +3,7 @@ import { FileUpload } from "./components/FileUpload";
 import { ProgressBar } from "./components/ProgressBar";
 import { Timeline } from "./components/Timeline";
 import { Button } from "@/components/ui/button";
+import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 
 function App() {
   const { phase, uploadProgress, chunksProcessed, totalChunks, currentTrack, tracksFound,
@@ -13,40 +14,56 @@ function App() {
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-2xl mx-auto px-4 py-12">
         <header className="text-center mb-12">
+          <div className="flex justify-end mb-4">
+            <SignedIn>
+              <UserButton />
+            </SignedIn>
+          </div>
           <h1 className="text-3xl font-bold tracking-tight">Mix Match</h1>
           <p className="text-muted-foreground mt-2">Upload a DJ mix and identify every track</p>
         </header>
 
         <main>
-          {phase === "idle" && <FileUpload onFileSelected={startAnalysis} />}
-
-          {(phase === "uploading" || phase === "processing") && (
-            <ProgressBar
-              phase={phase}
-              uploadProgress={uploadProgress}
-              chunksProcessed={chunksProcessed}
-              totalChunks={totalChunks}
-              currentTrack={currentTrack}
-              tracksFound={tracksFound}
-            />
-          )}
-
-          {phase === "completed" && segments.length > 0 && (
-            <Timeline
-              segments={segments}
-              chunksAvailable={chunksAvailable}
-              onRetrySegment={retrySegment}
-              onRetryAll={retryAll}
-              onReset={reset}
-            />
-          )}
-
-          {phase === "failed" && (
+          <SignedOut>
             <div className="text-center space-y-4">
-              <p className="text-destructive">Analysis failed: {error}</p>
-              <Button variant="outline" onClick={reset}>Try again</Button>
+              <p className="text-muted-foreground">Sign in to start identifying tracks in your mixes</p>
+              <SignInButton mode="modal">
+                <Button>Sign in</Button>
+              </SignInButton>
             </div>
-          )}
+          </SignedOut>
+
+          <SignedIn>
+            {phase === "idle" && <FileUpload onFileSelected={startAnalysis} />}
+
+            {(phase === "uploading" || phase === "processing") && (
+              <ProgressBar
+                phase={phase}
+                uploadProgress={uploadProgress}
+                chunksProcessed={chunksProcessed}
+                totalChunks={totalChunks}
+                currentTrack={currentTrack}
+                tracksFound={tracksFound}
+              />
+            )}
+
+            {phase === "completed" && segments.length > 0 && (
+              <Timeline
+                segments={segments}
+                chunksAvailable={chunksAvailable}
+                onRetrySegment={retrySegment}
+                onRetryAll={retryAll}
+                onReset={reset}
+              />
+            )}
+
+            {phase === "failed" && (
+              <div className="text-center space-y-4">
+                <p className="text-destructive">Analysis failed: {error}</p>
+                <Button variant="outline" onClick={reset}>Try again</Button>
+              </div>
+            )}
+          </SignedIn>
         </main>
       </div>
     </div>
