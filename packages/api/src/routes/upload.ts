@@ -2,7 +2,9 @@ import { Router } from "express";
 import multer from "multer";
 import crypto from "crypto";
 import fs from "fs/promises";
-import { MAX_FILE_SIZE, ALLOWED_MIMETYPES } from "@mix-detective/shared";
+import path from "path";
+import { eq, lt } from "drizzle-orm";
+import { MAX_FILE_SIZE, ALLOWED_MIMETYPES } from "@mix-match/shared";
 import { db } from "../db/client.js";
 import { analyses } from "../db/schema.js";
 import { analysisQueue } from "../queue/index.js";
@@ -21,6 +23,24 @@ const upload = multer({
   },
 });
 
+async function cleanupExpiredChunks() {
+  const expired = await db
+    .select({ id: analyses.id, chunksDir: analyses.chunksDir })
+    .from(analyses)
+    .where(lt(analyses.chunksExpireAt, new Date()));
+
+  for (const row of expired) {
+    if (row.chunksDir) {
+      await fs.rm(row.chunksDir, { recursive: true, force: true }).catch(() => {});
+      const parentDir = path.dirname(row.chunksDir);
+      await fs.rmdir(parentDir).catch(() => {});
+    }
+    await db.update(analyses)
+      .set({ chunksDir: null, chunksExpireAt: null })
+      .where(eq(analyses.id, row.id));
+  }
+}
+
 export const uploadRouter = Router();
 
 uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
@@ -30,10 +50,15 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
     return;
   }
 
+  cleanupExpiredChunks().catch((err) => console.error("[cleanup]", err));
+
   try {
     // SHA256 file hash for full-file cache
     const fileBuffer = await fs.readFile(file.path);
     const fileHash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
+
+    // Mode from form data (default: fast)
+    const mode = req.body?.mode === "detailed" ? "detailed" : "fast";
 
     // Check file cache
     const cachedAnalysisId = await redis.get(`acr:file:${fileHash}`);
@@ -59,6 +84,7 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
       analysisId: analysis.id,
       filePath: file.path,
       fileHash,
+      mode,
     });
 
     res.json({ analysisId: analysis.id });

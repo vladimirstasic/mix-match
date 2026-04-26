@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { eq } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { analyses } from "../db/schema.js";
+import { analyses, segments } from "../db/schema.js";
+import fs from "fs/promises";
 import { queueEvents, analysisQueue } from "../queue/index.js";
 
 export const analysisRouter = Router();
@@ -19,7 +20,27 @@ analysisRouter.get("/analysis/:id", async (req, res) => {
     return;
   }
 
-  res.json(analysis);
+  const segs = await db
+    .select()
+    .from(segments)
+    .where(eq(segments.analysisId, req.params.id))
+    .orderBy(segments.startSec);
+
+  let chunksAvailable = false;
+  if (analysis.chunksDir) {
+    try {
+      await fs.access(analysis.chunksDir);
+      chunksAvailable = true;
+    } catch {
+      chunksAvailable = false;
+    }
+  }
+
+  res.json({
+    ...analysis,
+    segments: segs,
+    chunksAvailable,
+  });
 });
 
 // GET /api/analysis/:id/progress — SSE stream

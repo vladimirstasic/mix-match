@@ -1,4 +1,4 @@
-# Mix Detective Implementation Plan
+# Mix Match Implementation Plan
 
 > **For Claude:** REQUIRED SUB-SKILL: Use superpowers:executing-plans to implement this plan task-by-task.
 
@@ -29,7 +29,7 @@
 
 ```json
 {
-  "name": "mix-detective",
+  "name": "mix-match",
   "private": true,
   "workspaces": ["packages/*"],
   "scripts": {
@@ -72,7 +72,7 @@ services:
   postgres:
     image: postgres:16-alpine
     environment:
-      POSTGRES_DB: mix_detective
+      POSTGRES_DB: mix_match
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
     ports:
@@ -92,12 +92,12 @@ volumes:
 **Step 4: Create .env.example**
 
 ```
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/mix_detective
+DATABASE_URL=postgresql://postgres:postgres@localhost:5432/mix_match
 REDIS_URL=redis://localhost:6379
 ACRCLOUD_HOST=identify-eu-west-1.acrcloud.com
 ACRCLOUD_ACCESS_KEY=your_access_key
 ACRCLOUD_ACCESS_SECRET=your_access_secret
-UPLOAD_DIR=/tmp/mix-detective
+UPLOAD_DIR=/tmp/mix-match
 PORT=3001
 ```
 
@@ -117,7 +117,7 @@ dist/
 ```json
 // packages/shared/package.json
 {
-  "name": "@mix-detective/shared",
+  "name": "@mix-match/shared",
   "version": "1.0.0",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -145,7 +145,7 @@ dist/
 ```json
 // packages/api/package.json
 {
-  "name": "@mix-detective/api",
+  "name": "@mix-match/api",
   "version": "1.0.0",
   "scripts": {
     "dev": "tsx watch src/index.ts",
@@ -156,7 +156,7 @@ dist/
     "db:migrate": "drizzle-kit migrate"
   },
   "dependencies": {
-    "@mix-detective/shared": "*",
+    "@mix-match/shared": "*",
     "bullmq": "^5.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.0",
@@ -203,7 +203,7 @@ Then add to `packages/web/package.json` dependencies:
 ```json
 {
   "dependencies": {
-    "@mix-detective/shared": "*"
+    "@mix-match/shared": "*"
   }
 }
 ```
@@ -354,7 +354,7 @@ export const config = {
     accessKey: process.env.ACRCLOUD_ACCESS_KEY!,
     accessSecret: process.env.ACRCLOUD_ACCESS_SECRET!,
   },
-  uploadDir: process.env.UPLOAD_DIR || "/tmp/mix-detective",
+  uploadDir: process.env.UPLOAD_DIR || "/tmp/mix-match",
 };
 ```
 
@@ -471,7 +471,7 @@ import path from "path";
 import crypto from "crypto";
 import fs from "fs/promises";
 import { eq } from "drizzle-orm";
-import { MAX_FILE_SIZE, ALLOWED_MIMETYPES } from "@mix-detective/shared";
+import { MAX_FILE_SIZE, ALLOWED_MIMETYPES } from "@mix-match/shared";
 import { db } from "../db/client.js";
 import { analyses } from "../db/schema.js";
 import { analysisQueue } from "../queue/index.js";
@@ -717,7 +717,7 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import path from "path";
 import fs from "fs/promises";
-import { CHUNK_DURATION_SEC } from "@mix-detective/shared";
+import { CHUNK_DURATION_SEC } from "@mix-match/shared";
 
 const exec = promisify(execFile);
 
@@ -838,8 +838,8 @@ npx vitest run src/services/__tests__/acrcloud.test.ts
 ```typescript
 import crypto from "crypto";
 import fs from "fs/promises";
-import { ACRCLOUD_RETRY_COUNT, ACRCLOUD_RETRY_BASE_DELAY_MS } from "@mix-detective/shared";
-import type { RawMatch } from "@mix-detective/shared";
+import { ACRCLOUD_RETRY_COUNT, ACRCLOUD_RETRY_BASE_DELAY_MS } from "@mix-match/shared";
+import type { RawMatch } from "@mix-match/shared";
 import { config } from "../config.js";
 
 export function buildSignature(stringToSign: string, accessSecret: string): string {
@@ -965,7 +965,7 @@ npx vitest run src/services/__tests__/fingerprint.test.ts
 import { execFile } from "child_process";
 import { promisify } from "util";
 import crypto from "crypto";
-import { FINGERPRINT_SIMILARITY_THRESHOLD } from "@mix-detective/shared";
+import { FINGERPRINT_SIMILARITY_THRESHOLD } from "@mix-match/shared";
 
 const exec = promisify(execFile);
 
@@ -1067,8 +1067,8 @@ import {
   COAST_MODE_CONFIRM_COUNT,
   COAST_MODE_CHECK_INTERVAL,
   REDIS_FINGERPRINT_TTL,
-} from "@mix-detective/shared";
-import type { RawMatch, AnalysisMetrics } from "@mix-detective/shared";
+} from "@mix-match/shared";
+import type { RawMatch, AnalysisMetrics } from "@mix-match/shared";
 import { generateFingerprint, isSimilar } from "./fingerprint.js";
 import { identifyChunk } from "./acrcloud.js";
 import { redis } from "../queue/index.js";
@@ -1272,8 +1272,8 @@ npx vitest run src/services/__tests__/aggregator.test.ts
 **Step 3: Create aggregator.ts**
 
 ```typescript
-import type { RawMatch, TrackMatch } from "@mix-detective/shared";
-import { CHUNK_DURATION_SEC } from "@mix-detective/shared";
+import type { RawMatch, TrackMatch } from "@mix-match/shared";
+import { CHUNK_DURATION_SEC } from "@mix-match/shared";
 import { formatTimestamp } from "./ffmpeg.js";
 
 export function aggregateMatches(raw: RawMatch[]): TrackMatch[] {
@@ -1343,7 +1343,7 @@ import { eq } from "drizzle-orm";
 import fs from "fs/promises";
 import path from "path";
 import crypto from "crypto";
-import { REDIS_FILE_CACHE_TTL } from "@mix-detective/shared";
+import { REDIS_FILE_CACHE_TTL } from "@mix-match/shared";
 import { config } from "../config.js";
 import { redis } from "../queue/index.js";
 import { db } from "../db/client.js";
@@ -1351,7 +1351,7 @@ import { analyses } from "../db/schema.js";
 import { normalizeAudio, getDuration, splitIntoChunks, extractRmsLevels } from "../services/ffmpeg.js";
 import { processChunksOptimized } from "../services/optimizer.js";
 import { aggregateMatches } from "../services/aggregator.js";
-import { CHUNK_DURATION_SEC } from "@mix-detective/shared";
+import { CHUNK_DURATION_SEC } from "@mix-match/shared";
 
 interface AnalysisJobData {
   analysisId: string;
@@ -1493,7 +1493,7 @@ git add -A && git commit -m "feat: add analysis worker with full processing pipe
 **Step 1: Create api/client.ts**
 
 ```typescript
-import type { UploadResponse, AnalysisResult } from "@mix-detective/shared";
+import type { UploadResponse, AnalysisResult } from "@mix-match/shared";
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001/api";
 
@@ -1558,7 +1558,7 @@ export function subscribeProgress(
 
 ```typescript
 import { useState, useCallback, useEffect, useRef } from "react";
-import type { TrackMatch, ProgressEvent } from "@mix-detective/shared";
+import type { TrackMatch, ProgressEvent } from "@mix-match/shared";
 import { uploadFile, subscribeProgress, getAnalysis } from "../api/client";
 
 type Phase = "idle" | "uploading" | "processing" | "completed" | "failed";
@@ -1695,7 +1695,7 @@ git add -A && git commit -m "feat: add frontend API client and useAnalysis hook 
 
 ```tsx
 import { useCallback, useRef, useState, type DragEvent } from "react";
-import { MAX_FILE_SIZE, ALLOWED_MIMETYPES } from "@mix-detective/shared";
+import { MAX_FILE_SIZE, ALLOWED_MIMETYPES } from "@mix-match/shared";
 
 interface Props {
   onFileSelected: (file: File) => void;
@@ -1790,7 +1790,7 @@ export function ProgressBar({ phase, uploadProgress, chunksProcessed, totalChunk
 **Step 3: Create Timeline.tsx**
 
 ```tsx
-import type { TrackMatch } from "@mix-detective/shared";
+import type { TrackMatch } from "@mix-match/shared";
 
 interface Props {
   results: TrackMatch[];
@@ -1837,7 +1837,7 @@ function App() {
   return (
     <div className="app">
       <header>
-        <h1>Mix Detective</h1>
+        <h1>Mix Match</h1>
         <p>Upload a DJ mix and identify every track</p>
       </header>
 

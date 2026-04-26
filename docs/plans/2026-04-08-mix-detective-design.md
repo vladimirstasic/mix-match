@@ -1,4 +1,4 @@
-# Mix Detective — Design Document
+# Mix Match — Design Document
 
 A web app that identifies songs in uploaded DJ mixes using ACRCloud, with aggressive API cost optimization.
 
@@ -13,7 +13,7 @@ A web app that identifies songs in uploaded DJ mixes using ACRCloud, with aggres
     │
 [Express API Server]
     │
-    ├── Multer → /tmp/mix-detective/
+    ├── Multer → /tmp/mix-match/
     ├── PostgreSQL (Drizzle ORM)
     └── BullMQ queue → Redis
             │
@@ -44,7 +44,7 @@ A web app that identifies songs in uploaded DJ mixes using ACRCloud, with aggres
 ## Monorepo Structure
 
 ```
-mix-detective/
+mix-match/
 ├── packages/
 │   ├── shared/              # Types & constants
 │   │   └── src/

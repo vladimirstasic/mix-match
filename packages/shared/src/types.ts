@@ -4,6 +4,7 @@ export interface TrackMatch {
   track: string;
   start: string; // "mm:ss"
   end: string;
+  acrid?: string;
 }
 
 export interface RawMatch {
@@ -11,6 +12,7 @@ export interface RawMatch {
   title: string;
   acrid: string;
   album?: string;
+  score?: number;
   startSec: number;
 }
 
@@ -48,6 +50,8 @@ export interface ProgressEvent {
   results?: TrackMatch[];
   error?: string;
 }
+
+export type AnalysisMode = "fast" | "detailed";
 
 export interface UploadResponse {
   analysisId: string;

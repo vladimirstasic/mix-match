@@ -1,7 +1,7 @@
 import { execFile } from "child_process";
 import { promisify } from "util";
 import crypto from "crypto";
-import { FINGERPRINT_SIMILARITY_THRESHOLD } from "@mix-detective/shared";
+import { FINGERPRINT_SIMILARITY_THRESHOLD } from "@mix-match/shared";
 
 const exec = promisify(execFile);
 

@@ -13,4 +13,13 @@ export const analysisQueue = new Queue("analysis", {
   },
 });
 
+export const retryQueue = new Queue("retry", {
+  connection: redis,
+  defaultJobOptions: {
+    attempts: 1,
+    removeOnComplete: { count: 100 },
+    removeOnFail: { count: 50 },
+  },
+});
+
 export const queueEvents = new QueueEvents("analysis", { connection: redis.duplicate() });

@@ -1,5 +1,5 @@
 {
-  "name": "mix-detective",
+  "name": "mix-match",
   "private": true,
   "workspaces": ["packages/*"],
   "scripts": {

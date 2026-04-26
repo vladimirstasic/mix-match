@@ -9,5 +9,5 @@ export const config = {
     accessKey: process.env.ACRCLOUD_ACCESS_KEY!,
     accessSecret: process.env.ACRCLOUD_ACCESS_SECRET!,
   },
-  uploadDir: process.env.UPLOAD_DIR || "/tmp/mix-detective",
+  uploadDir: process.env.UPLOAD_DIR || "/tmp/mix-match",
 };

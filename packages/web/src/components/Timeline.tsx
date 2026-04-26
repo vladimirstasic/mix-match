@@ -1,27 +1,106 @@
-import type { TrackMatch } from "@mix-detective/shared";
+import type { Segment } from "@mix-match/shared";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { RotateCw, Check, HelpCircle, Loader2 } from "lucide-react";
 
 interface Props {
-  results: TrackMatch[];
+  segments: Segment[];
+  chunksAvailable: boolean;
+  onRetrySegment: (segmentId: string) => void;
+  onRetryAll: () => void;
   onReset: () => void;
 }
 
-export function Timeline({ results, onReset }: Props) {
+function formatTime(sec: number): string {
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+}
+
+export function Timeline({ segments, chunksAvailable, onRetrySegment, onRetryAll, onReset }: Props) {
+  const identified = segments.filter((s) => s.status === "identified");
+  const unknown = segments.filter((s) => s.status === "unknown");
+  const retrying = segments.filter((s) => s.status === "retrying");
+
   return (
-    <div className="timeline">
-      <div className="timeline-header">
-        <h2>Detected {results.length} track{results.length !== 1 ? "s" : ""}</h2>
-        <button onClick={onReset} className="btn-reset">Analyze another mix</button>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h2 className="text-xl font-semibold">
+          Found {identified.length} track{identified.length !== 1 ? "s" : ""}
+          {unknown.length > 0 && (
+            <span className="text-muted-foreground font-normal text-base ml-2">
+              ({unknown.length} unidentified)
+            </span>
+          )}
+        </h2>
+        <div className="flex gap-2">
+          {unknown.length > 0 && chunksAvailable && (
+            <Button variant="outline" size="sm" onClick={onRetryAll} disabled={retrying.length > 0}>
+              <RotateCw className="w-4 h-4 mr-1" />
+              Retry all unknown
+            </Button>
+          )}
+          <Button variant="outline" size="sm" onClick={onReset}>
+            New analysis
+          </Button>
+        </div>
       </div>
-      <div className="timeline-list">
-        {results.map((t, i) => (
-          <div key={i} className="timeline-item">
-            <div className="timeline-time">
-              <span>{t.start}</span>
-              <span className="timeline-dash">—</span>
-              <span>{t.end}</span>
-            </div>
-            <div className="timeline-track">{t.track}</div>
-          </div>
+
+      <div className="space-y-2">
+        {segments.map((seg) => (
+          <Card
+            key={seg.id}
+            className={`border-l-4 ${
+              seg.status === "identified"
+                ? "border-l-green-500"
+                : seg.status === "retrying"
+                ? "border-l-yellow-500"
+                : "border-l-muted-foreground/30"
+            }`}
+          >
+            <CardContent className="flex items-center gap-4 py-3">
+              <span className="font-mono text-sm text-muted-foreground whitespace-nowrap min-w-[120px]">
+                {formatTime(seg.startSec)} — {formatTime(seg.endSec)}
+              </span>
+
+              {seg.status === "identified" && (
+                <>
+                  <Check className="w-4 h-4 text-green-500 shrink-0" />
+                  <span className="font-medium">{seg.trackName}</span>
+                </>
+              )}
+
+              {seg.status === "unknown" && (
+                <>
+                  <HelpCircle className="w-4 h-4 text-muted-foreground shrink-0" />
+                  <span className="text-muted-foreground italic">Unknown track</span>
+                  <div className="ml-auto">
+                    {chunksAvailable ? (
+                      <Button variant="ghost" size="sm" onClick={() => onRetrySegment(seg.id)}>
+                        <RotateCw className="w-3 h-3 mr-1" />
+                        Retry
+                      </Button>
+                    ) : (
+                      <span className="text-xs text-muted-foreground">Chunks expired</span>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {seg.status === "retrying" && (
+                <>
+                  <Loader2 className="w-4 h-4 text-yellow-500 animate-spin shrink-0" />
+                  <span className="text-muted-foreground italic">Retrying...</span>
+                </>
+              )}
+
+              {seg.attempts > 1 && (
+                <span className="text-xs text-muted-foreground ml-auto">
+                  attempt {seg.attempts}
+                </span>
+              )}
+            </CardContent>
+          </Card>
         ))}
       </div>
     </div>

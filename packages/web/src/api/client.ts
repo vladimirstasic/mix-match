@@ -1,8 +1,13 @@
-import type { UploadResponse, AnalysisResult } from "@mix-detective/shared";
+import type { UploadResponse, AnalysisResult, Segment, AnalysisMode } from "@mix-match/shared";
+
+export interface AnalysisResponse extends AnalysisResult {
+  segments: Segment[];
+  chunksAvailable: boolean;
+}
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
 
-export async function uploadFile(file: File, onProgress?: (pct: number) => void): Promise<UploadResponse> {
+export async function uploadFile(file: File, onProgress?: (pct: number) => void, mode: AnalysisMode = "fast"): Promise<UploadResponse> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
     xhr.open("POST", `${API_BASE}/upload`);
@@ -25,11 +30,12 @@ export async function uploadFile(file: File, onProgress?: (pct: number) => void)
 
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("mode", mode);
     xhr.send(formData);
   });
 }
 
-export async function getAnalysis(id: string): Promise<AnalysisResult> {
+export async function getAnalysis(id: string): Promise<AnalysisResponse> {
   const res = await fetch(`${API_BASE}/analysis/${id}`);
   if (!res.ok) throw new Error("Failed to fetch analysis");
   return res.json();
@@ -56,4 +62,16 @@ export function subscribeProgress(
   };
 
   return () => es.close();
+}
+
+export async function retrySegment(analysisId: string, segmentId: string): Promise<{ jobId: string }> {
+  const res = await fetch(`${API_BASE}/analysis/${analysisId}/segments/${segmentId}/retry`, { method: "POST" });
+  if (!res.ok) throw new Error("Retry failed");
+  return res.json();
+}
+
+export async function retryAllUnknown(analysisId: string): Promise<{ jobId: string; segmentCount: number }> {
+  const res = await fetch(`${API_BASE}/analysis/${analysisId}/retry-unknown`, { method: "POST" });
+  if (!res.ok) throw new Error("Retry failed");
+  return res.json();
 }

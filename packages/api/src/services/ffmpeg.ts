@@ -31,20 +31,19 @@ export function computeChunkPositions(durationSec: number, chunkDuration: number
   return positions;
 }
 
-export async function splitIntoChunks(wavPath: string, outputDir: string): Promise<{ paths: string[]; positions: number[] }> {
+export async function splitIntoChunks(wavPath: string, outputDir: string, stepSec?: number): Promise<{ paths: string[]; positions: number[] }> {
   await fs.mkdir(outputDir, { recursive: true });
 
   const duration = await getDuration(wavPath);
-  const positions = computeChunkPositions(duration, CHUNK_DURATION_SEC, CHUNK_STEP_SEC);
+  const positions = computeChunkPositions(duration, CHUNK_DURATION_SEC, stepSec ?? CHUNK_STEP_SEC);
   const paths: string[] = [];
 
   for (let i = 0; i < positions.length; i++) {
     const outFile = path.join(outputDir, `chunk_${String(i).padStart(4, "0")}.wav`);
     await exec("ffmpeg", [
-      "-ss", String(positions[i]),
       "-i", wavPath,
+      "-ss", String(positions[i]),
       "-t", String(CHUNK_DURATION_SEC),
-      "-c", "copy",
       "-y",
       outFile,
     ]);
