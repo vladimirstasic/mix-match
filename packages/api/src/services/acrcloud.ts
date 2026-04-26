@@ -1,7 +1,7 @@
 import crypto from "crypto";
 import fs from "fs/promises";
 import { ACRCLOUD_RETRY_COUNT, ACRCLOUD_RETRY_BASE_DELAY_MS, ACRCLOUD_MIN_SCORE } from "@mix-match/shared";
-import type { RawMatch } from "@mix-match/shared";
+import type { RawMatch, ExternalLinks } from "@mix-match/shared";
 import { config } from "../config.js";
 
 export function buildSignature(stringToSign: string, accessSecret: string): string {
@@ -53,6 +53,19 @@ export async function identifyChunk(chunkPath: string, startSec: number): Promis
         }
 
         console.log(`[acr] @${startSec}s: "${artist} - ${title}" score=${score} ✓`);
+
+        const externalLinks: ExternalLinks = {};
+        const ext = track.external_metadata;
+        if (ext?.spotify?.track?.id) {
+          externalLinks.spotify = `https://open.spotify.com/track/${ext.spotify.track.id}`;
+        }
+        if (ext?.youtube?.vid) {
+          externalLinks.youtube = `https://youtube.com/watch?v=${ext.youtube.vid}`;
+        }
+        if (ext?.deezer?.track?.id) {
+          externalLinks.deezer = `https://www.deezer.com/track/${ext.deezer.track.id}`;
+        }
+
         return {
           artist,
           title,
@@ -60,6 +73,7 @@ export async function identifyChunk(chunkPath: string, startSec: number): Promis
           album: track.album?.name,
           score,
           startSec,
+          externalLinks: Object.keys(externalLinks).length > 0 ? externalLinks : undefined,
         };
       }
 

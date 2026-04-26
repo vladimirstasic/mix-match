@@ -76,6 +76,18 @@ export async function retryAllUnknown(analysisId: string): Promise<{ jobId: stri
   return res.json();
 }
 
+export async function updateAnalysis(
+  analysisId: string, data: { isPublic?: boolean; slug?: string }
+): Promise<unknown> {
+  const res = await fetch(`${API_BASE}/analysis/${analysisId}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error("Update failed");
+  return res.json();
+}
+
 export async function editSegment(
   analysisId: string, segmentId: string, trackName: string
 ): Promise<Segment> {

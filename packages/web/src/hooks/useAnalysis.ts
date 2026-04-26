@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useRef, useState} from "react";
 import type {TrackMatch, Segment, AnalysisMode} from "@mix-match/shared";
-import {getAnalysis, subscribeProgress, uploadFile, retrySegment as retrySegmentApi, retryAllUnknown as retryAllApi, editSegment as editSegmentApi} from "../api/client";
+import {getAnalysis, subscribeProgress, uploadFile, retrySegment as retrySegmentApi, retryAllUnknown as retryAllApi, editSegment as editSegmentApi, updateAnalysis} from "../api/client";
 
 type Phase = "idle" | "uploading" | "processing" | "completed" | "failed";
 
@@ -176,5 +176,12 @@ export function useAnalysis() {
     setState((s) => ({ ...s, segments: full.segments }));
   }, [state.analysisId]);
 
-  return { ...state, startAnalysis, reset, retrySegment, retryAll, editSegment };
+  const shareAnalysis = useCallback(async (): Promise<string | null> => {
+    if (!state.analysisId) return null;
+    const slug = Math.random().toString(36).slice(2, 10);
+    await updateAnalysis(state.analysisId, { isPublic: true, slug });
+    return slug;
+  }, [state.analysisId]);
+
+  return { ...state, startAnalysis, reset, retrySegment, retryAll, editSegment, shareAnalysis };
 }

@@ -22,6 +22,13 @@
       "when": 1777225002707,
       "tag": "0002_rich_psylocke",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1777226504929,
+      "tag": "0003_supreme_radioactive_man",
+      "breakpoints": true
     }
   ]
 }

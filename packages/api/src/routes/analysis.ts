@@ -243,6 +243,43 @@ analysisRouter.get("/analysis/:id/export/soundcloud", async (req, res) => {
   res.send(lines.join("\n"));
 });
 
+// PATCH /api/analysis/:id — update metadata (is_public, slug)
+analysisRouter.patch("/analysis/:id", async (req, res) => {
+  const { userId } = getAuth(req);
+  const analysisId = req.params.id as string;
+  const { isPublic, slug } = req.body;
+
+  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
+  if (analysis.userId && analysis.userId !== userId) { res.status(403).json({ error: "Not authorized" }); return; }
+
+  const updates: Record<string, unknown> = { updatedAt: new Date() };
+  if (isPublic !== undefined) updates.isPublic = isPublic;
+  if (slug !== undefined) updates.slug = slug;
+
+  await db.update(analyses).set(updates).where(eq(analyses.id, analysisId));
+
+  const [updated] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  res.json(updated);
+});
+
+// GET /api/t/:slug — public tracklist (no auth required)
+analysisRouter.get("/t/:slug", async (req, res) => {
+  const slug = req.params.slug as string;
+
+  const [analysis] = await db.select().from(analyses).where(eq(analyses.slug, slug)).limit(1);
+  if (!analysis || !analysis.isPublic) { res.status(404).json({ error: "Not found" }); return; }
+
+  const segs = await db.select().from(segments)
+    .where(eq(segments.analysisId, analysis.id)).orderBy(segments.startSec);
+
+  res.json({
+    filename: analysis.filename,
+    segments: segs.filter(s => s.status === "identified"),
+    createdAt: analysis.createdAt,
+  });
+});
+
 function formatTime(sec: number): string {
   const m = Math.floor(sec / 60);
   const s = Math.floor(sec % 60);

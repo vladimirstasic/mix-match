@@ -41,6 +41,7 @@ export const segments = pgTable("segments", {
   title: varchar("title", { length: 255 }),
   acrid: varchar("acrid", { length: 100 }),
   confidence: real("confidence"),
+  externalLinks: jsonb("external_links"),
   attempts: integer("attempts").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),

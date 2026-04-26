@@ -7,7 +7,7 @@ import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-reac
 
 function App() {
   const { phase, analysisId, uploadProgress, chunksProcessed, totalChunks, currentTrack, tracksFound,
-        segments, chunksAvailable, error, startAnalysis, reset, retrySegment, retryAll, editSegment } =
+        segments, chunksAvailable, error, startAnalysis, reset, retrySegment, retryAll, editSegment, shareAnalysis } =
     useAnalysis();
 
   return (
@@ -56,6 +56,7 @@ function App() {
                 onRetryAll={retryAll}
                 onReset={reset}
                 onEditSegment={editSegment}
+                onShare={shareAnalysis}
               />
             )}
 
