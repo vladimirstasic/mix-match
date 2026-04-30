@@ -3,18 +3,20 @@ import { FileUpload } from "./components/FileUpload";
 import { ProgressBar } from "./components/ProgressBar";
 import { Timeline } from "./components/Timeline";
 import { Button } from "@/components/ui/button";
+import { ThemeToggle } from "./components/ThemeToggle";
 import { SignedIn, SignedOut, SignInButton, UserButton } from "@clerk/clerk-react";
 
 function App() {
   const { phase, analysisId, uploadProgress, chunksProcessed, totalChunks, currentTrack, tracksFound,
-        segments, chunksAvailable, error, startAnalysis, reset, retrySegment, retryAll, editSegment, shareAnalysis } =
+        segments, chunksAvailable, error, startAnalysis, startAnalysisFromUrl, reset, retrySegment, retryAll, editSegment, shareAnalysis } =
     useAnalysis();
 
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="max-w-2xl mx-auto px-4 py-12">
         <header className="text-center mb-12">
-          <div className="flex justify-end mb-4">
+          <div className="flex justify-end items-center gap-2 mb-4">
+            <ThemeToggle />
             <SignedIn>
               <UserButton />
             </SignedIn>
@@ -34,7 +36,7 @@ function App() {
           </SignedOut>
 
           <SignedIn>
-            {phase === "idle" && <FileUpload onFileSelected={startAnalysis} />}
+            {phase === "idle" && <FileUpload onFileSelected={startAnalysis} onUrlSubmitted={startAnalysisFromUrl} />}
 
             {(phase === "uploading" || phase === "processing") && (
               <ProgressBar

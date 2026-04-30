@@ -35,6 +35,19 @@ export async function uploadFile(file: File, onProgress?: (pct: number) => void,
   });
 }
 
+export async function uploadUrl(url: string, mode: AnalysisMode = "fast"): Promise<UploadResponse> {
+  const res = await fetch(`${API_BASE}/upload-url`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ url, mode }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: "Download failed" }));
+    throw new Error(err.error || "Download failed");
+  }
+  return res.json();
+}
+
 export async function getAnalysis(id: string): Promise<AnalysisResponse> {
   const res = await fetch(`${API_BASE}/analysis/${id}`);
   if (!res.ok) throw new Error("Failed to fetch analysis");

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { requireAuth } from "@clerk/express";
+import { getAuth } from "@clerk/express";
 import { eq, and } from "drizzle-orm";
 import fs from "fs/promises";
 import { db } from "../db/client.js";
@@ -8,7 +8,9 @@ import { retryQueue } from "../queue/index.js";
 
 export const retryRouter = Router();
 
-retryRouter.post("/analysis/:id/segments/:segmentId/retry", requireAuth(), async (req, res) => {
+retryRouter.post("/analysis/:id/segments/:segmentId/retry", async (req, res) => {
+  const { userId } = getAuth(req);
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const id = req.params.id as string;
   const segmentId = req.params.segmentId as string;
 
@@ -32,7 +34,9 @@ retryRouter.post("/analysis/:id/segments/:segmentId/retry", requireAuth(), async
   res.json({ jobId: job.id });
 });
 
-retryRouter.post("/analysis/:id/retry-unknown", requireAuth(), async (req, res) => {
+retryRouter.post("/analysis/:id/retry-unknown", async (req, res) => {
+  const { userId } = getAuth(req);
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
   const id = req.params.id as string;
 
   const [analysis] = await db.select().from(analyses).where(eq(analyses.id, id)).limit(1);

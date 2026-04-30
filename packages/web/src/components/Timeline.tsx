@@ -1,8 +1,8 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import type { Segment, ExternalLinks } from "@mix-match/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RotateCw, Check, HelpCircle, Loader2, Pencil, Share2 } from "lucide-react";
+import { RotateCw, Check, HelpCircle, Loader2, Pencil, Share2, EyeOff, Eye } from "lucide-react";
 
 interface Props {
   segments: Segment[];
@@ -29,26 +29,60 @@ const LINK_LABELS: { key: keyof ExternalLinks; label: string; color: string }[] 
   { key: "deezer", label: "Deezer", color: "text-purple-500 hover:text-purple-400" },
 ];
 
-function StreamingLinks({ links }: { links: ExternalLinks }) {
+function StreamingLinks({ links, segmentId, expandedService, onToggleEmbed }: {
+  links: ExternalLinks;
+  segmentId: string;
+  expandedService: string | null;
+  onToggleEmbed: (id: string, service: string) => void;
+}) {
   const available = LINK_LABELS.filter(({ key }) => links[key]);
   if (available.length === 0) return null;
 
+  const embeddable = new Set(["spotify", "deezer"]);
+
   return (
     <span className="inline-flex items-center gap-1 ml-2">
-      {available.map(({ key, label, color }) => (
-        <a
-          key={key}
-          href={links[key]}
-          target="_blank"
-          rel="noopener noreferrer"
-          title={`Open on ${label}`}
-          className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${color} bg-muted/50 hover:bg-muted transition-colors`}
-        >
-          {label}
-        </a>
-      ))}
+      {available.map(({ key, label, color }) => {
+        if (embeddable.has(key) && links[key]) {
+          const isExpanded = expandedService === key;
+          return (
+            <button
+              key={key}
+              onClick={(e) => { e.stopPropagation(); onToggleEmbed(segmentId, key); }}
+              title={isExpanded ? `Hide ${label} player` : `Show ${label} player`}
+              className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${color} ${isExpanded ? "ring-1 ring-current/40 bg-current/10" : "bg-muted/50 hover:bg-muted"} transition-colors cursor-pointer`}
+            >
+              {label}
+            </button>
+          );
+        }
+        return (
+          <a
+            key={key}
+            href={links[key]}
+            target="_blank"
+            rel="noopener noreferrer"
+            title={`Open on ${label}`}
+            className={`inline-flex items-center rounded px-1.5 py-0.5 text-xs font-medium ${color} bg-muted/50 hover:bg-muted transition-colors`}
+          >
+            {label}
+          </a>
+        );
+      })}
     </span>
   );
+}
+
+function getSpotifyEmbedUrl(spotifyUrl: string): string | null {
+  const match = spotifyUrl.match(/track\/([a-zA-Z0-9]+)/);
+  if (!match) return null;
+  return `https://open.spotify.com/embed/track/${match[1]}?utm_source=generator&theme=0`;
+}
+
+function getDeezerEmbedUrl(deezerUrl: string): string | null {
+  const match = deezerUrl.match(/track\/(\d+)/);
+  if (!match) return null;
+  return `https://widget.deezer.com/widget/dark/track/${match[1]}`;
 }
 
 export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment, onRetryAll, onReset, onEditSegment, onShare }: Props) {
@@ -56,10 +90,13 @@ export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment
   const [editValue, setEditValue] = useState("");
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
+  const [hideUnknown, setHideUnknown] = useState(false);
+  const [expandedEmbed, setExpandedEmbed] = useState<{ segId: string; service: string } | null>(null);
 
   const identified = segments.filter((s) => s.status === "identified");
   const unknown = segments.filter((s) => s.status === "unknown");
   const retrying = segments.filter((s) => s.status === "retrying");
+  const visibleSegments = hideUnknown ? segments.filter((s) => s.status !== "unknown") : segments;
 
   return (
     <div className="space-y-6">
@@ -73,6 +110,16 @@ export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment
           )}
         </h2>
         <div className="flex gap-2">
+          {unknown.length > 0 && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setHideUnknown(!hideUnknown)}
+            >
+              {hideUnknown ? <Eye className="w-4 h-4 mr-1" /> : <EyeOff className="w-4 h-4 mr-1" />}
+              {hideUnknown ? "Show unknown" : "Hide unknown"}
+            </Button>
+          )}
           {unknown.length > 0 && chunksAvailable && (
             <Button variant="outline" size="sm" onClick={onRetryAll} disabled={retrying.length > 0}>
               <RotateCw className="w-4 h-4 mr-1" />
@@ -86,9 +133,9 @@ export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment
       </div>
 
       <div className="space-y-2">
-        {segments.map((seg) => (
+        {visibleSegments.map((seg) => (
+          <React.Fragment key={seg.id}>
           <Card
-            key={seg.id}
             className={`border-l-4 ${
               seg.status === "identified"
                 ? "border-l-green-500"
@@ -142,7 +189,16 @@ export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment
                   ) : (
                     <>
                       <span className="font-medium">{seg.trackName}</span>
-                      {seg.externalLinks && <StreamingLinks links={seg.externalLinks} />}
+                      {seg.externalLinks && (
+                        <StreamingLinks
+                          links={seg.externalLinks}
+                          segmentId={seg.id}
+                          expandedService={expandedEmbed?.segId === seg.id ? expandedEmbed.service : null}
+                          onToggleEmbed={(id, svc) => setExpandedEmbed(
+                            expandedEmbed?.segId === id && expandedEmbed.service === svc ? null : { segId: id, service: svc }
+                          )}
+                        />
+                      )}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -189,7 +245,34 @@ export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment
                 </span>
               )}
             </CardContent>
+            {expandedEmbed?.segId === seg.id && seg.externalLinks && (
+              <div className="px-4 pb-4">
+                {expandedEmbed.service === "spotify" && seg.externalLinks.spotify && (
+                  <iframe
+                    src={getSpotifyEmbedUrl(seg.externalLinks.spotify) || ""}
+                    width="100%"
+                    height="152"
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy"
+                    className="rounded-lg"
+                    style={{ border: "none" }}
+                  />
+                )}
+                {expandedEmbed.service === "deezer" && seg.externalLinks.deezer && (
+                  <iframe
+                    src={getDeezerEmbedUrl(seg.externalLinks.deezer) || ""}
+                    width="100%"
+                    height="130"
+                    allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                    loading="lazy"
+                    className="rounded-lg"
+                    style={{ border: "none" }}
+                  />
+                )}
+              </div>
+            )}
           </Card>
+        </React.Fragment>
         ))}
       </div>
 
