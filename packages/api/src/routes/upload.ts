@@ -136,7 +136,7 @@ uploadRouter.post("/upload-url", async (req, res) => {
     await execFileAsync("yt-dlp", [
       "-x",
       "--audio-format", "mp3",
-      "--max-filesize", "200m",
+      "--max-filesize", "300m",
       "-o", outputPath,
       url,
     ]);

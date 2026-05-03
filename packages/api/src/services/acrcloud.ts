@@ -3,6 +3,7 @@ import fs from "fs/promises";
 import { ACRCLOUD_RETRY_COUNT, ACRCLOUD_RETRY_BASE_DELAY_MS, ACRCLOUD_MIN_SCORE } from "@mix-match/shared";
 import type { RawMatch, ExternalLinks } from "@mix-match/shared";
 import { config } from "../config.js";
+import { searchSpotifyTrack } from "./spotify.js";
 
 export function buildSignature(stringToSign: string, accessSecret: string): string {
   return crypto.createHmac("sha1", accessSecret).update(stringToSign).digest("base64");
@@ -64,6 +65,14 @@ export async function identifyChunk(chunkPath: string, startSec: number): Promis
         }
         if (ext?.deezer?.track?.id) {
           externalLinks.deezer = `https://www.deezer.com/track/${ext.deezer.track.id}`;
+        }
+
+        // Spotify fallback: if ACRCloud didn't return a Spotify link, search for it
+        if (!externalLinks.spotify) {
+          const spotifyUrl = await searchSpotifyTrack(artist, title);
+          if (spotifyUrl) {
+            externalLinks.spotify = spotifyUrl;
+          }
         }
 
         return {

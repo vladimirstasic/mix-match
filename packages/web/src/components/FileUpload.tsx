@@ -99,7 +99,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
               <p className="text-lg font-medium">Drop your DJ mix here</p>
               <p className="text-sm text-muted-foreground mt-1">or click to browse</p>
             </div>
-            <p className="text-xs text-muted-foreground">MP3, WAV, FLAC, M4A — up to 200MB</p>
+            <p className="text-xs text-muted-foreground">MP3, WAV, FLAC, M4A — up to 300MB</p>
             {error && <p className="text-sm text-destructive">{error}</p>}
           </CardContent>
         </Card>
