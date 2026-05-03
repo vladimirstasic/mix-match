@@ -101,6 +101,22 @@ export async function updateAnalysis(
   return res.json();
 }
 
+export interface AnalysisSummary {
+  id: string;
+  filename: string;
+  status: string;
+  mode: string | null;
+  createdAt: string;
+  isPublic: boolean | null;
+  slug: string | null;
+}
+
+export async function getUserAnalyses(): Promise<AnalysisSummary[]> {
+  const res = await fetch(`${API_BASE}/user/analyses`);
+  if (!res.ok) return [];
+  return res.json();
+}
+
 export async function editSegment(
   analysisId: string, segmentId: string, trackName: string
 ): Promise<Segment> {

@@ -64,6 +64,7 @@ export function useAnalysis() {
         setState((s) => ({ ...s, uploadProgress: pct }));
       }, mode);
 
+      localStorage.setItem("mixmatch_active_analysis", analysisId);
       setState((s) => ({ ...s, phase: "processing", analysisId, uploadProgress: 100 }));
 
       cleanupRef.current = subscribeProgress(
@@ -117,6 +118,7 @@ export function useAnalysis() {
 
       const { analysisId } = await uploadUrl(url, mode);
 
+      localStorage.setItem("mixmatch_active_analysis", analysisId);
       setState((s) => ({ ...s, phase: "processing", analysisId, uploadProgress: 100 }));
 
       // Same SSE subscription as startAnalysis
@@ -162,8 +164,31 @@ export function useAnalysis() {
     }
   }, [pollResult]);
 
+  const loadAnalysis = useCallback(async (id: string) => {
+    try {
+      const full = await getAnalysis(id);
+      localStorage.setItem("mixmatch_active_analysis", id);
+      if (full.status === "completed") {
+        setState((s) => ({
+          ...s,
+          phase: "completed",
+          analysisId: id,
+          segments: full.segments || [],
+          chunksAvailable: full.chunksAvailable || false,
+        }));
+      } else if (full.status === "failed") {
+        setState((s) => ({ ...s, phase: "failed", analysisId: id, error: full.error || "Failed" }));
+      } else {
+        setState((s) => ({ ...s, phase: "processing", analysisId: id }));
+      }
+    } catch {
+      // Analysis not found
+    }
+  }, []);
+
   const reset = useCallback(() => {
     cleanupRef.current?.();
+    localStorage.removeItem("mixmatch_active_analysis");
     setState({
       phase: "idle",
       analysisId: null,
@@ -176,6 +201,77 @@ export function useAnalysis() {
       segments: [],
       chunksAvailable: false,
       error: null,
+    });
+  }, []);
+
+  useEffect(() => {
+    const savedId = localStorage.getItem("mixmatch_active_analysis");
+    if (!savedId || state.phase !== "idle") return;
+
+    getAnalysis(savedId).then((data) => {
+      if (data.status === "completed") {
+        setState((s) => ({
+          ...s,
+          phase: "completed",
+          analysisId: savedId,
+          segments: data.segments,
+          chunksAvailable: data.chunksAvailable,
+        }));
+      } else if (data.status === "processing" || data.status === "pending") {
+        setState((s) => ({ ...s, phase: "processing", analysisId: savedId }));
+        // Re-subscribe to SSE progress
+        cleanupRef.current = subscribeProgress(
+          savedId,
+          async (progressData) => {
+            if (progressData.type === "progress") {
+              setState((s) => ({
+                ...s,
+                chunksProcessed: (progressData.chunksProcessed as number) || s.chunksProcessed,
+                totalChunks: (progressData.totalChunks as number) || s.totalChunks,
+                currentTrack: (progressData.currentTrack as string) || s.currentTrack,
+                tracksFound: (progressData.tracksFound as number) || s.tracksFound,
+              }));
+            } else if (progressData.type === "completed") {
+              const full = await getAnalysis(savedId);
+              setState((s) => ({
+                ...s,
+                phase: "completed",
+                segments: full.segments,
+                chunksAvailable: full.chunksAvailable,
+              }));
+            } else if (progressData.type === "failed") {
+              setState((s) => ({
+                ...s,
+                phase: "failed",
+                error: (progressData.error as string) || "Analysis failed",
+              }));
+            }
+          },
+          () => {
+            // SSE failed, poll instead
+            const poll = async () => {
+              try {
+                const result = await getAnalysis(savedId);
+                if (result.status === "completed") {
+                  setState((s) => ({ ...s, phase: "completed", analysisId: savedId, segments: result.segments, chunksAvailable: result.chunksAvailable }));
+                } else if (result.status === "failed") {
+                  setState((s) => ({ ...s, phase: "failed", error: result.error || "Failed" }));
+                } else {
+                  setTimeout(poll, 3000);
+                }
+              } catch {
+                setTimeout(poll, 5000);
+              }
+            };
+            poll();
+          }
+        );
+      } else if (data.status === "failed") {
+        setState((s) => ({ ...s, phase: "failed", analysisId: savedId, error: data.error || "Analysis failed" }));
+      }
+    }).catch(() => {
+      // Analysis no longer exists, clear saved ID
+      localStorage.removeItem("mixmatch_active_analysis");
     });
   }, []);
 
@@ -237,5 +333,5 @@ export function useAnalysis() {
     return slug;
   }, [state.analysisId]);
 
-  return { ...state, startAnalysis, startAnalysisFromUrl, reset, retrySegment, retryAll, editSegment, shareAnalysis };
+  return { ...state, startAnalysis, startAnalysisFromUrl, reset, loadAnalysis, retrySegment, retryAll, editSegment, shareAnalysis };
 }

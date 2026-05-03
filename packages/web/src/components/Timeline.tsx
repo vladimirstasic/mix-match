@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import type { Segment, ExternalLinks } from "@mix-match/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RotateCw, Check, HelpCircle, Loader2, Pencil, Share2, EyeOff, Eye } from "lucide-react";
+import { RotateCw, Check, HelpCircle, Loader2, Pencil, Share2, EyeOff, Eye, Copy } from "lucide-react";
 
 interface Props {
   segments: Segment[];
@@ -92,6 +92,20 @@ export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment
   const [sharing, setSharing] = useState(false);
   const [hideUnknown, setHideUnknown] = useState(false);
   const [expandedEmbed, setExpandedEmbed] = useState<{ segId: string; service: string } | null>(null);
+  const [copied, setCopied] = useState<string | null>(null);
+
+  const copyTracklist = (format: "text" | "youtube") => {
+    const identified = segments.filter(s => s.status === "identified");
+    let text: string;
+    if (format === "text") {
+      text = identified.map((s, i) => `${i + 1}. ${formatTime(s.startSec)} - ${formatTime(s.endSec)}  ${s.trackName}`).join("\n");
+    } else {
+      text = identified.map(s => `${formatTime(s.startSec)} ${s.trackName}`).join("\n");
+    }
+    navigator.clipboard.writeText(text);
+    setCopied(format);
+    setTimeout(() => setCopied(null), 2000);
+  };
 
   const identified = segments.filter((s) => s.status === "identified");
   const unknown = segments.filter((s) => s.status === "unknown");
@@ -286,6 +300,14 @@ export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment
         </Button>
         <Button variant="outline" size="sm" asChild>
           <a href={`/api/analysis/${analysisId}/export/soundcloud`} download>SoundCloud</a>
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => copyTracklist("text")}>
+          <Copy className="w-4 h-4 mr-1" />
+          {copied === "text" ? "Copied!" : "Copy Text"}
+        </Button>
+        <Button variant="outline" size="sm" onClick={() => copyTracklist("youtube")}>
+          <Copy className="w-4 h-4 mr-1" />
+          {copied === "youtube" ? "Copied!" : "YT Chapters"}
         </Button>
         <Button
           variant="outline"
