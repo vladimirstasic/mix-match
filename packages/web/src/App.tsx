@@ -7,17 +7,19 @@ import { Dashboard } from "./components/Dashboard";
 import { LandingPage } from "./components/LandingPage";
 import { PublicTracklist } from "./components/PublicTracklist";
 import { DjProfile } from "./components/DjProfile";
+import { MixCompare } from "./components/MixCompare";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { useToast, ToastContainer } from "./components/Toast";
 import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
-import { useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 
 function App() {
   const { phase, analysisId, uploadProgress, chunksProcessed, totalChunks, currentTrack, tracksFound,
         segments, chunksAvailable, error, startAnalysis, startAnalysisFromUrl, reset, loadAnalysis, retrySegment, retryAll, editSegment, shareAnalysis } =
     useAnalysis();
   const { toasts, addToast, removeToast } = useToast();
+  const [showCompare, setShowCompare] = useState(false);
   const prevPhase = useRef(phase);
 
   // Handle Spotify OAuth callback
@@ -76,11 +78,20 @@ function App() {
                 </header>
 
                 <main>
-                  {phase === "idle" && (
+                  {phase === "idle" && !showCompare && (
                     <>
                       <Dashboard onSelectAnalysis={loadAnalysis} />
+                      <div className="flex justify-center mb-4">
+                        <Button variant="outline" size="sm" onClick={() => setShowCompare(true)}>
+                          Compare Mixes
+                        </Button>
+                      </div>
                       <FileUpload onFileSelected={startAnalysis} onUrlSubmitted={startAnalysisFromUrl} />
                     </>
+                  )}
+
+                  {phase === "idle" && showCompare && (
+                    <MixCompare onBack={() => setShowCompare(false)} />
                   )}
 
                   {(phase === "uploading" || phase === "processing") && (

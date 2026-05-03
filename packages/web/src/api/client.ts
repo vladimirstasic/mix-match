@@ -117,6 +117,20 @@ export async function getUserAnalyses(): Promise<AnalysisSummary[]> {
   return res.json();
 }
 
+export interface CompareResult {
+  mixA: { id: string; filename: string; totalTracks: number };
+  mixB: { id: string; filename: string; totalTracks: number };
+  sharedTracks: { trackName: string; inA: string; inB: string }[];
+  uniqueToA: number;
+  uniqueToB: number;
+}
+
+export async function compareMixes(idA: string, idB: string): Promise<CompareResult> {
+  const res = await fetch(`${API_BASE}/analysis/compare?a=${idA}&b=${idB}`);
+  if (!res.ok) throw new Error("Compare failed");
+  return res.json();
+}
+
 export async function editSegment(
   analysisId: string, segmentId: string, trackName: string
 ): Promise<Segment> {
