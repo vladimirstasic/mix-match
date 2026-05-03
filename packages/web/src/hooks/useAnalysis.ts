@@ -1,6 +1,6 @@
 import {useCallback, useEffect, useRef, useState} from "react";
 import type {TrackMatch, Segment, AnalysisMode} from "@mix-match/shared";
-import {getAnalysis, subscribeProgress, uploadFile, retrySegment as retrySegmentApi, retryAllUnknown as retryAllApi} from "../api/client";
+import {getAnalysis, subscribeProgress, uploadFile, uploadUrl, retrySegment as retrySegmentApi, retryAllUnknown as retryAllApi, editSegment as editSegmentApi, updateAnalysis} from "../api/client";
 
 type Phase = "idle" | "uploading" | "processing" | "completed" | "failed";
 
@@ -108,6 +108,60 @@ export function useAnalysis() {
     }
   }, [pollResult]);
 
+  const startAnalysisFromUrl = useCallback(async (url: string, mode: AnalysisMode = "fast") => {
+    setState((s) => ({ ...s, phase: "uploading", uploadProgress: 0, error: null, results: null }));
+
+    try {
+      // No progress tracking for URL download — just show indeterminate
+      setState((s) => ({ ...s, uploadProgress: -1 })); // -1 = indeterminate
+
+      const { analysisId } = await uploadUrl(url, mode);
+
+      setState((s) => ({ ...s, phase: "processing", analysisId, uploadProgress: 100 }));
+
+      // Same SSE subscription as startAnalysis
+      cleanupRef.current = subscribeProgress(
+        analysisId,
+        async (data) => {
+          if (data.type === "progress") {
+            setState((s) => ({
+              ...s,
+              chunksProcessed: (data.chunksProcessed as number) || s.chunksProcessed,
+              totalChunks: (data.totalChunks as number) || s.totalChunks,
+              currentTrack: (data.currentTrack as string) || s.currentTrack,
+              tracksFound: (data.tracksFound as number) || s.tracksFound,
+            }));
+          } else if (data.type === "completed") {
+            const full = await getAnalysis(analysisId);
+            setState((s) => ({
+              ...s,
+              phase: "completed",
+              results: full.results as TrackMatch[],
+              segments: full.segments,
+              chunksAvailable: full.chunksAvailable,
+            }));
+          } else if (data.type === "failed") {
+            setState((s) => ({
+              ...s,
+              phase: "failed",
+              error: (data.error as string) || "Analysis failed",
+            }));
+          }
+        },
+        (err) => {
+          console.log(err);
+          pollResult(analysisId);
+        }
+      );
+    } catch (err) {
+      setState((s) => ({
+        ...s,
+        phase: "failed",
+        error: err instanceof Error ? err.message : "Failed to process URL",
+      }));
+    }
+  }, [pollResult]);
+
   const reset = useCallback(() => {
     cleanupRef.current?.();
     setState({
@@ -169,5 +223,19 @@ export function useAnalysis() {
     setTimeout(poll, 3000);
   }, [state.analysisId]);
 
-  return { ...state, startAnalysis, reset, retrySegment, retryAll };
+  const editSegment = useCallback(async (segmentId: string, trackName: string) => {
+    if (!state.analysisId) return;
+    await editSegmentApi(state.analysisId, segmentId, trackName);
+    const full = await getAnalysis(state.analysisId);
+    setState((s) => ({ ...s, segments: full.segments }));
+  }, [state.analysisId]);
+
+  const shareAnalysis = useCallback(async (): Promise<string | null> => {
+    if (!state.analysisId) return null;
+    const slug = Math.random().toString(36).slice(2, 10);
+    await updateAnalysis(state.analysisId, { isPublic: true, slug });
+    return slug;
+  }, [state.analysisId]);
+
+  return { ...state, startAnalysis, startAnalysisFromUrl, reset, retrySegment, retryAll, editSegment, shareAnalysis };
 }

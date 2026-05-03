@@ -5,6 +5,15 @@ export interface TrackMatch {
   start: string; // "mm:ss"
   end: string;
   acrid?: string;
+  externalLinks?: ExternalLinks;
+}
+
+export interface ExternalLinks {
+  spotify?: string;
+  beatport?: string;
+  appleMusic?: string;
+  youtube?: string;
+  deezer?: string;
 }
 
 export interface RawMatch {
@@ -14,6 +23,7 @@ export interface RawMatch {
   album?: string;
   score?: number;
   startSec: number;
+  externalLinks?: ExternalLinks;
 }
 
 export interface AnalysisResult {
@@ -70,6 +80,7 @@ export interface Segment {
   title: string | null;
   acrid: string | null;
   confidence: number | null;
+  externalLinks: ExternalLinks | null;
   attempts: number;
   createdAt: string;
   updatedAt: string;

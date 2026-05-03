@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { getAuth } from "@clerk/express";
 import { eq, and } from "drizzle-orm";
 import fs from "fs/promises";
 import { db } from "../db/client.js";
@@ -8,7 +9,10 @@ import { retryQueue } from "../queue/index.js";
 export const retryRouter = Router();
 
 retryRouter.post("/analysis/:id/segments/:segmentId/retry", async (req, res) => {
-  const { id, segmentId } = req.params;
+  const { userId } = getAuth(req);
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  const id = req.params.id as string;
+  const segmentId = req.params.segmentId as string;
 
   const [analysis] = await db.select().from(analyses).where(eq(analyses.id, id)).limit(1);
   if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
@@ -31,7 +35,9 @@ retryRouter.post("/analysis/:id/segments/:segmentId/retry", async (req, res) => 
 });
 
 retryRouter.post("/analysis/:id/retry-unknown", async (req, res) => {
-  const { id } = req.params;
+  const { userId } = getAuth(req);
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+  const id = req.params.id as string;
 
   const [analysis] = await db.select().from(analyses).where(eq(analyses.id, id)).limit(1);
   if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }

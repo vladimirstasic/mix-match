@@ -1,4 +1,4 @@
-import type { TrackMatch } from "@mix-match/shared";
+import type { ExternalLinks, TrackMatch } from "@mix-match/shared";
 
 export interface SegmentData {
   startSec: number;
@@ -8,6 +8,7 @@ export interface SegmentData {
   artist: string | null;
   title: string | null;
   acrid: string | null;
+  externalLinks: ExternalLinks | null;
 }
 
 export function buildSegments(
@@ -23,6 +24,7 @@ export function buildSegments(
       artist: null,
       title: null,
       acrid: null,
+      externalLinks: null,
     }];
   }
 
@@ -41,7 +43,7 @@ export function buildSegments(
     if (matchStart > cursor) {
       segments.push({
         startSec: cursor, endSec: matchStart, status: "unknown",
-        trackName: null, artist: null, title: null, acrid: null,
+        trackName: null, artist: null, title: null, acrid: null, externalLinks: null,
       });
     }
 
@@ -51,6 +53,7 @@ export function buildSegments(
     segments.push({
       startSec: matchStart, endSec: matchEnd, status: "identified",
       trackName: match.track, artist, title, acrid: match.acrid || null,
+      externalLinks: match.externalLinks || null,
     });
 
     cursor = matchEnd;
@@ -59,7 +62,7 @@ export function buildSegments(
   if (cursor < totalDurationSec) {
     segments.push({
       startSec: cursor, endSec: totalDurationSec, status: "unknown",
-      trackName: null, artist: null, title: null, acrid: null,
+      trackName: null, artist: null, title: null, acrid: null, externalLinks: null,
     });
   }
 

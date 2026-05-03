@@ -59,6 +59,7 @@ export function aggregateMatches(raw: RawMatch[]): TrackMatch[] {
         start: formatTimestamp(groupStart),
         end: formatTimestamp(groupEnd),
         acrid: rep.acrid,
+        externalLinks: rep.externalLinks,
       });
       groupMatches = [next];
       groupStart = next.startSec;
@@ -72,6 +73,7 @@ export function aggregateMatches(raw: RawMatch[]): TrackMatch[] {
     start: formatTimestamp(groupStart),
     end: formatTimestamp(groupEnd),
     acrid: rep.acrid,
+    externalLinks: rep.externalLinks,
   });
 
   return timeline;

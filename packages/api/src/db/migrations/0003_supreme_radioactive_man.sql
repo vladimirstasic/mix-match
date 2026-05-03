@@ -1,0 +1,1 @@
+ALTER TABLE "segments" ADD COLUMN "external_links" jsonb;

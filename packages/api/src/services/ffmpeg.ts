@@ -7,7 +7,7 @@ import { CHUNK_DURATION_SEC, CHUNK_STEP_SEC } from "@mix-match/shared";
 const exec = promisify(execFile);
 
 export async function normalizeAudio(inputPath: string, outputPath: string): Promise<void> {
-  await exec("ffmpeg", ["-i", inputPath, "-ac", "1", "-ar", "44100", "-f", "wav", "-y", outputPath]);
+  await exec("ffmpeg", ["-i", inputPath, "-ar", "44100", "-f", "wav", "-y", outputPath]);
 }
 
 export async function getDuration(filePath: string): Promise<number> {

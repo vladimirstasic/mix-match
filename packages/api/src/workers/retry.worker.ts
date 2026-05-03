@@ -39,6 +39,7 @@ async function retrySegment(segmentId: string, startSec: number, endSec: number,
       await db.update(segments).set({
         status: "identified", trackName: `${match.artist} - ${match.title}`,
         artist: match.artist, title: match.title, acrid: match.acrid,
+        externalLinks: match.externalLinks || null,
         attempts: attempt, updatedAt: new Date(),
       }).where(eq(segments.id, segmentId));
       return;
@@ -52,6 +53,7 @@ async function retrySegment(segmentId: string, startSec: number, endSec: number,
         await db.update(segments).set({
           status: "identified", trackName: `${altMatch.artist} - ${altMatch.title}`,
           artist: altMatch.artist, title: altMatch.title, acrid: altMatch.acrid,
+          externalLinks: altMatch.externalLinks || null,
           attempts: attempt, updatedAt: new Date(),
         }).where(eq(segments.id, segmentId));
         return;
