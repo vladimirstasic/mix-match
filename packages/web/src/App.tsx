@@ -6,6 +6,7 @@ import { Timeline } from "./components/Timeline";
 import { Dashboard } from "./components/Dashboard";
 import { LandingPage } from "./components/LandingPage";
 import { PublicTracklist } from "./components/PublicTracklist";
+import { DjProfile } from "./components/DjProfile";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { useToast, ToastContainer } from "./components/Toast";
@@ -52,6 +53,7 @@ function App() {
     <ToastContainer toasts={toasts} onRemove={removeToast} />
     <Routes>
       <Route path="/t/:slug" element={<PublicTracklist />} />
+      <Route path="/dj/:username" element={<DjProfile />} />
       <Route path="*" element={
         <>
           <SignedOut>

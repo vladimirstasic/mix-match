@@ -3,6 +3,7 @@ import type { Segment, ExternalLinks } from "@mix-match/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RotateCw, Check, HelpCircle, Loader2, Pencil, Share2, EyeOff, Eye, Copy, Search } from "lucide-react";
+import { Waveform } from "./Waveform";
 
 interface Props {
   segments: Segment[];
@@ -108,6 +109,8 @@ export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment
     setTimeout(() => setCopied(null), 2000);
   };
 
+  const totalDuration = segments.length > 0 ? Math.max(...segments.map(s => s.endSec)) : 0;
+
   const identified = segments.filter((s) => s.status === "identified");
   const unknown = segments.filter((s) => s.status === "unknown");
   const retrying = segments.filter((s) => s.status === "retrying");
@@ -156,6 +159,10 @@ export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment
           </Button>
         </div>
       </div>
+
+      {totalDuration > 0 && (
+        <Waveform segments={segments} totalDuration={totalDuration} />
+      )}
 
       {segments.some(s => s.status === "identified") && (
         <div className="relative">
@@ -227,6 +234,11 @@ export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment
                   ) : (
                     <>
                       <span className="font-medium">{seg.trackName}</span>
+                      {seg.bpm && (
+                        <span className="text-xs text-muted-foreground bg-muted rounded px-1.5 py-0.5">
+                          {seg.bpm} BPM
+                        </span>
+                      )}
                       {seg.externalLinks && (
                         <StreamingLinks
                           links={seg.externalLinks}
@@ -341,9 +353,17 @@ export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment
             variant="outline"
             size="sm"
             className="text-green-500 border-green-500/30 hover:bg-green-500/10"
-            onClick={() => window.open(`/api/spotify/auth?analysisId=${analysisId}`, "_blank")}
+            onClick={() => {
+              const links = segments
+                .filter(s => s.status === "identified" && s.externalLinks && (s.externalLinks as Record<string, string>).spotify)
+                .map(s => (s.externalLinks as Record<string, string>).spotify);
+              const unique = [...new Set(links)];
+              navigator.clipboard.writeText(unique.join("\n"));
+              setCopied("spotify");
+              setTimeout(() => setCopied(null), 2000);
+            }}
           >
-            Spotify Playlist
+            {copied === "spotify" ? "Copied!" : "Copy Spotify Links"}
           </Button>
         )}
         <Button

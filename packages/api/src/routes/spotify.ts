@@ -6,7 +6,7 @@ import { analyses, segments } from "../db/schema.js";
 
 export const spotifyRouter = Router();
 
-const SPOTIFY_REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || "http://localhost:3001/api/spotify/callback";
+const SPOTIFY_REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || "http://127.0.0.1:3001/api/spotify/callback";
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 
 // GET /api/spotify/auth?analysisId=xxx — redirect to Spotify login

@@ -82,6 +82,7 @@ const worker = new Worker<AnalysisJobData>(
           artist: s.artist,
           title: s.title,
           acrid: s.acrid,
+          bpm: s.bpm,
           externalLinks: s.externalLinks,
           attempts: 1,
         }))

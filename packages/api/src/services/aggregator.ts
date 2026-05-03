@@ -59,6 +59,7 @@ export function aggregateMatches(raw: RawMatch[]): TrackMatch[] {
         start: formatTimestamp(groupStart),
         end: formatTimestamp(groupEnd),
         acrid: rep.acrid,
+        bpm: rep.bpm ?? null,
         externalLinks: rep.externalLinks,
       });
       groupMatches = [next];
@@ -73,6 +74,7 @@ export function aggregateMatches(raw: RawMatch[]): TrackMatch[] {
     start: formatTimestamp(groupStart),
     end: formatTimestamp(groupEnd),
     acrid: rep.acrid,
+    bpm: rep.bpm ?? null,
     externalLinks: rep.externalLinks,
   });
 

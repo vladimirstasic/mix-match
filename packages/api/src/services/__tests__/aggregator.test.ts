@@ -48,8 +48,8 @@ describe("aggregateMatches", () => {
     ]);
 
     expect(result).toEqual([
-      { track: "Daft Punk - Around the World", start: "00:00", end: "00:30", acrid: "a" },
-      { track: "Chemical Brothers - Block Rockin Beats", start: "00:30", end: "00:40", acrid: "b" },
+      { track: "Daft Punk - Around the World", start: "00:00", end: "00:30", acrid: "a", bpm: null },
+      { track: "Chemical Brothers - Block Rockin Beats", start: "00:30", end: "00:40", acrid: "b", bpm: null },
     ]);
   });
 
@@ -83,7 +83,7 @@ describe("aggregateMatches", () => {
       { artist: "Artist", title: "Song", acrid: "x", startSec: 0 },
     ]);
     expect(result).toEqual([
-      { track: "Artist - Song", start: "00:00", end: "00:10", acrid: "x" },
+      { track: "Artist - Song", start: "00:00", end: "00:10", acrid: "x", bpm: null },
     ]);
   });
 
