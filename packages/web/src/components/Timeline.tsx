@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import type { Segment, ExternalLinks } from "@mix-match/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RotateCw, Check, HelpCircle, Loader2, Pencil, Share2, EyeOff, Eye, Copy } from "lucide-react";
+import { RotateCw, Check, HelpCircle, Loader2, Pencil, Share2, EyeOff, Eye, Copy, Search } from "lucide-react";
 
 interface Props {
   segments: Segment[];
@@ -93,6 +93,7 @@ export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment
   const [hideUnknown, setHideUnknown] = useState(false);
   const [expandedEmbed, setExpandedEmbed] = useState<{ segId: string; service: string } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const copyTracklist = (format: "text" | "youtube") => {
     const identified = segments.filter(s => s.status === "identified");
@@ -110,7 +111,17 @@ export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment
   const identified = segments.filter((s) => s.status === "identified");
   const unknown = segments.filter((s) => s.status === "unknown");
   const retrying = segments.filter((s) => s.status === "retrying");
-  const visibleSegments = hideUnknown ? segments.filter((s) => s.status !== "unknown") : segments;
+  const visibleSegments = segments.filter((s) => {
+    if (hideUnknown && s.status === "unknown") return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      const name = (s.trackName || "").toLowerCase();
+      const artist = (s.artist || "").toLowerCase();
+      const title = (s.title || "").toLowerCase();
+      return name.includes(q) || artist.includes(q) || title.includes(q);
+    }
+    return true;
+  });
 
   return (
     <div className="space-y-6">
@@ -145,6 +156,19 @@ export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment
           </Button>
         </div>
       </div>
+
+      {segments.some(s => s.status === "identified") && (
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            placeholder="Search tracks..."
+            className="w-full pl-9 pr-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+          />
+        </div>
+      )}
 
       <div className="space-y-2">
         {visibleSegments.map((seg) => (
@@ -300,6 +324,9 @@ export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment
         </Button>
         <Button variant="outline" size="sm" asChild>
           <a href={`/api/analysis/${analysisId}/export/soundcloud`} download>SoundCloud</a>
+        </Button>
+        <Button variant="outline" size="sm" asChild>
+          <a href={`/api/analysis/${analysisId}/export/youtube`} download>YouTube</a>
         </Button>
         <Button variant="outline" size="sm" onClick={() => copyTracklist("text")}>
           <Copy className="w-4 h-4 mr-1" />

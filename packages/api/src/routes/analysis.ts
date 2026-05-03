@@ -243,6 +243,62 @@ analysisRouter.get("/analysis/:id/export/soundcloud", async (req, res) => {
   res.send(lines.join("\n"));
 });
 
+// POST /api/analysis/:id/export/spotify-playlist
+analysisRouter.post("/analysis/:id/export/spotify-playlist", async (req, res) => {
+  const { userId } = getAuth(req);
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const analysisId = req.params.id as string;
+  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
+
+  const segs = await db.select().from(segments)
+    .where(eq(segments.analysisId, analysisId)).orderBy(segments.startSec);
+
+  const identified = segs.filter(s => s.status === "identified" && s.externalLinks);
+
+  // Extract Spotify track URIs
+  const trackUris: string[] = [];
+  for (const seg of identified) {
+    const links = seg.externalLinks as Record<string, string> | null;
+    if (links?.spotify) {
+      const match = links.spotify.match(/track\/([a-zA-Z0-9]+)/);
+      if (match) trackUris.push(`spotify:track:${match[1]}`);
+    }
+  }
+
+  if (trackUris.length === 0) {
+    res.status(400).json({ error: "No tracks with Spotify links found" });
+    return;
+  }
+
+  // Remove duplicates
+  const uniqueUris = [...new Set(trackUris)];
+
+  res.json({
+    playlistName: analysis.filename || "MixMatch Tracklist",
+    trackCount: uniqueUris.length,
+    spotifyUris: uniqueUris,
+  });
+});
+
+// GET /api/analysis/:id/export/youtube
+analysisRouter.get("/analysis/:id/export/youtube", async (req, res) => {
+  const analysisId = req.params.id as string;
+  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
+
+  const segs = await db.select().from(segments)
+    .where(eq(segments.analysisId, analysisId)).orderBy(segments.startSec);
+
+  const identified = segs.filter(s => s.status === "identified");
+  const lines = identified.map(s => `${formatTime(s.startSec)} ${s.trackName}`);
+
+  res.setHeader("Content-Type", "text/plain");
+  res.setHeader("Content-Disposition", `attachment; filename="${analysis.filename || "tracklist"}_youtube.txt"`);
+  res.send(lines.join("\n"));
+});
+
 // PATCH /api/analysis/:id — update metadata (is_public, slug)
 analysisRouter.patch("/analysis/:id", async (req, res) => {
   const { userId } = getAuth(req);

@@ -8,14 +8,31 @@ import { LandingPage } from "./components/LandingPage";
 import { PublicTracklist } from "./components/PublicTracklist";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./components/ThemeToggle";
+import { useToast, ToastContainer } from "./components/Toast";
 import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
+import { useEffect, useRef } from "react";
 
 function App() {
   const { phase, analysisId, uploadProgress, chunksProcessed, totalChunks, currentTrack, tracksFound,
         segments, chunksAvailable, error, startAnalysis, startAnalysisFromUrl, reset, loadAnalysis, retrySegment, retryAll, editSegment, shareAnalysis } =
     useAnalysis();
+  const { toasts, addToast, removeToast } = useToast();
+  const prevPhase = useRef(phase);
+
+  useEffect(() => {
+    if (prevPhase.current === "processing" && phase === "completed") {
+      const count = segments.filter(s => s.status === "identified").length;
+      addToast(`Analysis complete — ${count} track${count !== 1 ? "s" : ""} identified`);
+    }
+    if (prevPhase.current === "processing" && phase === "failed") {
+      addToast(error || "Analysis failed", "error");
+    }
+    prevPhase.current = phase;
+  }, [phase, segments, error, addToast]);
 
   return (
+    <>
+    <ToastContainer toasts={toasts} onRemove={removeToast} />
     <Routes>
       <Route path="/t/:slug" element={<PublicTracklist />} />
       <Route path="*" element={
@@ -84,6 +101,7 @@ function App() {
         </>
       } />
     </Routes>
+    </>
   );
 }
 
