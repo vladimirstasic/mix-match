@@ -19,6 +19,23 @@ function App() {
   const { toasts, addToast, removeToast } = useToast();
   const prevPhase = useRef(phase);
 
+  // Handle Spotify OAuth callback
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const spotifyStatus = params.get("spotify");
+    if (spotifyStatus === "success") {
+      const playlistUrl = params.get("playlist");
+      if (playlistUrl) {
+        addToast(`Spotify playlist created!`);
+        window.open(decodeURIComponent(playlistUrl), "_blank");
+      }
+      window.history.replaceState({}, "", window.location.pathname);
+    } else if (spotifyStatus === "error") {
+      addToast("Failed to create Spotify playlist", "error");
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, [addToast]);
+
   useEffect(() => {
     if (prevPhase.current === "processing" && phase === "completed") {
       const count = segments.filter(s => s.status === "identified").length;

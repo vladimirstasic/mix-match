@@ -336,6 +336,16 @@ export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment
           <Copy className="w-4 h-4 mr-1" />
           {copied === "youtube" ? "Copied!" : "YT Chapters"}
         </Button>
+        {segments.some(s => s.status === "identified" && s.externalLinks && (s.externalLinks as Record<string, string>).spotify) && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-green-500 border-green-500/30 hover:bg-green-500/10"
+            onClick={() => window.open(`/api/spotify/auth?analysisId=${analysisId}`, "_blank")}
+          >
+            Spotify Playlist
+          </Button>
+        )}
         <Button
           variant="outline"
           size="sm"
