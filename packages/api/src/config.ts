@@ -1,5 +1,19 @@
 import 'dotenv/config';
 
+const required = [
+  'DATABASE_URL',
+  'ACRCLOUD_HOST',
+  'ACRCLOUD_ACCESS_KEY',
+  'ACRCLOUD_ACCESS_SECRET',
+  'CLERK_SECRET_KEY',
+  'CLERK_PUBLISHABLE_KEY',
+];
+for (const key of required) {
+  if (!process.env[key]) {
+    throw new Error(`Missing required environment variable: ${key}`);
+  }
+}
+
 export const config = {
   port: parseInt(process.env.PORT || '3001'),
   databaseUrl: process.env.DATABASE_URL!,

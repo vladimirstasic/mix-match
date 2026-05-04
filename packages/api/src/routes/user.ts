@@ -170,6 +170,12 @@ userRouter.patch('/segments/:id/bookmark', requireUser, async (req, res) => {
     return;
   }
 
+  const analysis = await findAnalysis(segment.analysisId);
+  if (!analysis || analysis.userId !== userId) {
+    res.status(403).json({ error: 'Not authorized' });
+    return;
+  }
+
   const newVal = !(segment as any).isBookmarked;
   await db.update(segments).set({ isBookmarked: newVal }).where(eq(segments.id, segmentId));
   res.json({ isBookmarked: newVal });
