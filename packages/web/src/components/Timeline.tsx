@@ -1,9 +1,10 @@
-import React, { useCallback, useRef, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { Segment, ExternalLinks } from "@mix-match/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RotateCw, Check, HelpCircle, Loader2, Pencil, Share2, EyeOff, Eye, Copy, Search, Bookmark, ThumbsUp, ThumbsDown, Link2 } from "lucide-react";
 import { Waveform } from "./Waveform";
+import { Recommendations } from "./Recommendations";
 import { toggleBookmark, voteSegment } from "../api/client";
 
 interface Props {
@@ -100,6 +101,14 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(() => {
     return new Set(segments.filter(s => s.isBookmarked).map(s => s.id));
   });
+  const [summary, setSummary] = useState<{ summary: string; stats: any; artists: string[] } | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/analysis/${analysisId}/summary`)
+      .then(r => r.ok ? r.json() : null)
+      .then(setSummary)
+      .catch(() => {});
+  }, [analysisId]);
 
   const segmentRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
@@ -207,6 +216,32 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
           </Button>
         </div>
       </div>
+
+      {summary && (
+        <Card className="bg-muted/30">
+          <CardContent className="py-4">
+            <p className="text-sm text-muted-foreground">{summary.summary}</p>
+            <div className="flex flex-wrap gap-4 mt-3 text-center">
+              <div>
+                <p className="text-2xl font-bold">{summary.stats.totalTracks}</p>
+                <p className="text-xs text-muted-foreground">Tracks</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{summary.stats.totalArtists}</p>
+                <p className="text-xs text-muted-foreground">Artists</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{summary.stats.coveragePercent}%</p>
+                <p className="text-xs text-muted-foreground">Identified</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{summary.stats.durationMin}m</p>
+                <p className="text-xs text-muted-foreground">Duration</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {totalDuration > 0 && (
         <Waveform segments={segments} totalDuration={totalDuration} waveformData={waveformData} onSegmentClick={scrollToSegment} />
@@ -488,6 +523,8 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
           </a>
         </p>
       )}
+
+      <Recommendations analysisId={analysisId} />
     </div>
   );
 }
