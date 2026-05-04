@@ -6,6 +6,7 @@ export interface TrackMatch {
   end: string;
   acrid?: string;
   bpm?: number | null;
+  genre?: string | null;
   externalLinks?: ExternalLinks;
 }
 
@@ -24,6 +25,7 @@ export interface RawMatch {
   album?: string;
   score?: number;
   bpm?: number;
+  genre?: string;
   durationMs?: number;
   startSec: number;
   externalLinks?: ExternalLinks;
@@ -83,6 +85,7 @@ export interface Segment {
   title: string | null;
   acrid: string | null;
   bpm: number | null;
+  genre: string | null;
   confidence: number | null;
   externalLinks: ExternalLinks | null;
   isBookmarked: boolean;

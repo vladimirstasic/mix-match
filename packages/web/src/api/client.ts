@@ -155,6 +155,28 @@ export async function compareMixes(idA: string, idB: string): Promise<CompareRes
   return res.json();
 }
 
+export interface Comment {
+  id: string;
+  segmentId: string;
+  userId: string;
+  text: string;
+  createdAt: string;
+}
+
+export async function getComments(segmentId: string): Promise<Comment[]> {
+  const res = await fetch(`${API_BASE}/segments/${segmentId}/comments`);
+  return res.ok ? res.json() : [];
+}
+
+export async function addComment(segmentId: string, text: string): Promise<Comment> {
+  const res = await fetch(`${API_BASE}/segments/${segmentId}/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text }),
+  });
+  return res.json();
+}
+
 export async function voteSegment(segmentId: string, value: 1 | -1): Promise<{ score: number }> {
   const res = await fetch(`${API_BASE}/segments/${segmentId}/vote`, {
     method: "POST",
