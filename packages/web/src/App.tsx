@@ -99,7 +99,7 @@ function App() {
 
           <SignedIn>
             <div className="min-h-screen bg-background text-foreground">
-              <div className="max-w-2xl mx-auto px-4 py-12">
+              <div className="max-w-4xl mx-auto px-4 py-12">
                 <header className="text-center mb-12">
                   <div className="flex justify-end items-center gap-2 mb-4">
                     <ThemeToggle />

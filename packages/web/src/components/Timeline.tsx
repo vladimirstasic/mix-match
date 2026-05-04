@@ -280,138 +280,74 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
                 : "border-l-muted-foreground/30"
             }`}
           >
-            <CardContent className="flex items-center gap-3 py-3 flex-wrap sm:flex-nowrap">
-              <span className="font-mono text-xs sm:text-sm text-muted-foreground whitespace-nowrap min-w-[100px] sm:min-w-[120px]">
-                {formatTime(seg.startSec)} — {formatTime(seg.endSec)}
-              </span>
+            <CardContent className="py-3 space-y-2">
+              <div className="flex items-center gap-3">
+                <span className="font-mono text-xs sm:text-sm text-muted-foreground whitespace-nowrap min-w-[100px] sm:min-w-[120px]">
+                  {formatTime(seg.startSec)} — {formatTime(seg.endSec)}
+                </span>
 
-              {seg.status === "identified" && (
+              {seg.status === "identified" && editingId === seg.id && (
+                <div className="flex items-center gap-2 flex-1">
+                  <input
+                    className="flex-1 bg-transparent border-b border-foreground/30 outline-none text-sm font-medium px-1 py-0.5"
+                    value={editValue}
+                    onChange={(e) => setEditValue(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") { onEditSegment(seg.id, editValue); setEditingId(null); }
+                      else if (e.key === "Escape") { setEditingId(null); }
+                    }}
+                    autoFocus
+                  />
+                  <Button variant="ghost" size="sm" onClick={() => { onEditSegment(seg.id, editValue); setEditingId(null); }}>Save</Button>
+                  <Button variant="ghost" size="sm" onClick={() => setEditingId(null)}>Cancel</Button>
+                </div>
+              )}
+
+              {seg.status === "identified" && editingId !== seg.id && (
                 <>
                   <Check className="w-4 h-4 text-green-500 shrink-0" />
-                  {editingId === seg.id ? (
-                    <div className="flex items-center gap-2 flex-1">
-                      <input
-                        className="flex-1 bg-transparent border-b border-foreground/30 outline-none text-sm font-medium px-1 py-0.5"
-                        value={editValue}
-                        onChange={(e) => setEditValue(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            onEditSegment(seg.id, editValue);
-                            setEditingId(null);
-                          } else if (e.key === "Escape") {
-                            setEditingId(null);
-                          }
-                        }}
-                        autoFocus
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          onEditSegment(seg.id, editValue);
-                          setEditingId(null);
-                        }}
-                      >
-                        Save
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setEditingId(null)}
-                      >
-                        Cancel
-                      </Button>
-                    </div>
-                  ) : (
-                    <>
-                      <span className="font-medium">{seg.trackName}</span>
-                      {isDuplicate(seg.acrid) && (
-                        <span className="text-xs bg-yellow-500/10 text-yellow-500 rounded px-1.5 py-0.5 shrink-0">
-                          x{trackCounts.get(seg.acrid!)}
-                        </span>
-                      )}
-                      {seg.bpm && (
-                        <span className="text-xs text-muted-foreground bg-muted rounded px-1.5 py-0.5">
-                          {seg.bpm} BPM
-                        </span>
-                      )}
-                      {seg.genre && (
-                        <span className="text-xs text-muted-foreground bg-muted rounded px-1.5 py-0.5">
-                          {seg.genre}
-                        </span>
-                      )}
-                      {seg.externalLinks && (
-                        <StreamingLinks
-                          links={seg.externalLinks}
-                          segmentId={seg.id}
-                          expandedService={expandedEmbed?.segId === seg.id ? expandedEmbed.service : null}
-                          onToggleEmbed={(id, svc) => setExpandedEmbed(
-                            expandedEmbed?.segId === id && expandedEmbed.service === svc ? null : { segId: id, service: svc }
-                          )}
-                        />
-                      )}
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="ml-auto"
-                        onClick={() => {
-                          setEditingId(seg.id);
-                          setEditValue(seg.trackName ?? "");
-                        }}
-                      >
-                        <Pencil className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        title="Copy link to this timestamp"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          const base = shareUrl || `${window.location.origin}/t/share`;
-                          const url = `${base}#t=${seg.startSec}`;
-                          navigator.clipboard.writeText(`${seg.trackName} @ ${formatTime(seg.startSec)} — ${url}`);
-                          setCopied(`share-${seg.id}`);
-                          setTimeout(() => setCopied(null), 2000);
-                        }}
-                      >
-                        {copied === `share-${seg.id}` ? <Check className="w-3 h-3" /> : <Link2 className="w-3 h-3" />}
-                      </Button>
-                      <button
-                        className={`p-1 rounded transition-colors shrink-0 ${
-                          bookmarkedIds.has(seg.id)
-                            ? "text-blue-500 hover:text-blue-400"
-                            : "text-muted-foreground/40 hover:text-blue-500"
-                        }`}
-                        onClick={(e) => handleToggleBookmark(e, seg.id)}
-                        title={bookmarkedIds.has(seg.id) ? "Remove bookmark" : "Bookmark segment"}
-                      >
-                        <Bookmark className={`w-4 h-4 ${bookmarkedIds.has(seg.id) ? "fill-blue-500" : ""}`} />
-                      </button>
-                      <Button variant="ghost" size="sm" className="text-green-500" onClick={(e) => { e.stopPropagation(); voteSegment(seg.id, 1); }}>
-                        <ThumbsUp className="w-3 h-3" />
-                      </Button>
-                      <Button variant="ghost" size="sm" className="text-red-500" onClick={(e) => { e.stopPropagation(); voteSegment(seg.id, -1); }}>
-                        <ThumbsDown className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          if (commentSegId === seg.id) {
-                            setCommentSegId(null);
-                          } else {
-                            setCommentSegId(seg.id);
-                            const comments = await getComments(seg.id);
-                            setCommentsList(comments);
-                          }
-                        }}
-                      >
-                        <MessageCircle className="w-3 h-3" />
-                      </Button>
-                    </>
+                  <span className="font-medium flex-1 min-w-0">{seg.trackName}</span>
+                  {isDuplicate(seg.acrid) && (
+                    <span className="text-xs bg-yellow-500/10 text-yellow-500 rounded px-1.5 py-0.5 shrink-0">x{trackCounts.get(seg.acrid!)}</span>
                   )}
+                  {seg.bpm && <span className="text-xs text-muted-foreground bg-muted rounded px-1.5 py-0.5 shrink-0">{seg.bpm} BPM</span>}
+                  {seg.genre && <span className="text-xs text-muted-foreground bg-muted rounded px-1.5 py-0.5 shrink-0">{seg.genre}</span>}
                 </>
+              )}
+              </div>
+
+              {seg.status === "identified" && editingId !== seg.id && (
+                <div className="flex items-center gap-1 ml-[100px] sm:ml-[120px] flex-wrap">
+                  {seg.externalLinks && (
+                    <StreamingLinks
+                      links={seg.externalLinks}
+                      segmentId={seg.id}
+                      expandedService={expandedEmbed?.segId === seg.id ? expandedEmbed.service : null}
+                      onToggleEmbed={(id, svc) => setExpandedEmbed(
+                        expandedEmbed?.segId === id && expandedEmbed.service === svc ? null : { segId: id, service: svc }
+                      )}
+                    />
+                  )}
+                  <div className="flex items-center gap-0.5 ml-auto">
+                    <Button variant="ghost" size="sm" onClick={() => { setEditingId(seg.id); setEditValue(seg.trackName ?? ""); }}><Pencil className="w-3 h-3" /></Button>
+                    <Button variant="ghost" size="sm" title="Copy link" onClick={(e) => {
+                      e.stopPropagation();
+                      const base = shareUrl || `${window.location.origin}/t/share`;
+                      navigator.clipboard.writeText(`${seg.trackName} @ ${formatTime(seg.startSec)} — ${base}#t=${seg.startSec}`);
+                      setCopied(`share-${seg.id}`); setTimeout(() => setCopied(null), 2000);
+                    }}>{copied === `share-${seg.id}` ? <Check className="w-3 h-3" /> : <Link2 className="w-3 h-3" />}</Button>
+                    <button className={`p-1 rounded transition-colors ${bookmarkedIds.has(seg.id) ? "text-blue-500" : "text-muted-foreground/40 hover:text-blue-500"}`} onClick={(e) => handleToggleBookmark(e, seg.id)}>
+                      <Bookmark className={`w-3 h-3 ${bookmarkedIds.has(seg.id) ? "fill-blue-500" : ""}`} />
+                    </button>
+                    <Button variant="ghost" size="sm" className="text-green-500" onClick={(e) => { e.stopPropagation(); voteSegment(seg.id, 1); }}><ThumbsUp className="w-3 h-3" /></Button>
+                    <Button variant="ghost" size="sm" className="text-red-500" onClick={(e) => { e.stopPropagation(); voteSegment(seg.id, -1); }}><ThumbsDown className="w-3 h-3" /></Button>
+                    <Button variant="ghost" size="sm" onClick={async (e) => {
+                      e.stopPropagation();
+                      if (commentSegId === seg.id) { setCommentSegId(null); }
+                      else { setCommentSegId(seg.id); setCommentsList(await getComments(seg.id)); }
+                    }}><MessageCircle className="w-3 h-3" /></Button>
+                  </div>
+                </div>
               )}
 
               {seg.status === "unknown" && (
