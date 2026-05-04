@@ -21,6 +21,7 @@ export const analyses = pgTable("analyses", {
   results: jsonb("results"),
   metrics: jsonb("metrics"),
   error: text("error"),
+  waveformData: jsonb("waveform_data"),
   chunksDir: varchar("chunks_dir", { length: 500 }),
   chunksExpireAt: timestamp("chunks_expire_at"),
   userId: varchar("user_id", { length: 255 }).references(() => users.clerkId),

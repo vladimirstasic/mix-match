@@ -16,7 +16,7 @@ import { useState, useEffect, useRef } from "react";
 
 function App() {
   const { phase, analysisId, uploadProgress, chunksProcessed, totalChunks, currentTrack, tracksFound,
-        segments, chunksAvailable, error, startAnalysis, startAnalysisFromUrl, reset, loadAnalysis, retrySegment, retryAll, editSegment, shareAnalysis } =
+        segments, chunksAvailable, waveformData, error, startAnalysis, startAnalysisFromUrl, reset, loadAnalysis, retrySegment, retryAll, editSegment, shareAnalysis } =
     useAnalysis();
   const { toasts, addToast, removeToast } = useToast();
   const [showCompare, setShowCompare] = useState(false);
@@ -110,6 +110,7 @@ function App() {
                       segments={segments}
                       chunksAvailable={chunksAvailable}
                       analysisId={analysisId!}
+                    waveformData={waveformData}
                       onRetrySegment={retrySegment}
                       onRetryAll={retryAll}
                       onReset={reset}

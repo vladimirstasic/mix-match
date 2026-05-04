@@ -9,6 +9,7 @@ interface Props {
   segments: Segment[];
   chunksAvailable: boolean;
   analysisId: string;
+  waveformData?: number[] | null;
   onRetrySegment: (segmentId: string) => void;
   onRetryAll: () => void;
   onReset: () => void;
@@ -86,7 +87,7 @@ function getDeezerEmbedUrl(deezerUrl: string): string | null {
   return `https://widget.deezer.com/widget/dark/track/${match[1]}`;
 }
 
-export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment, onRetryAll, onReset, onEditSegment, onShare }: Props) {
+export function Timeline({ segments, chunksAvailable, analysisId, waveformData, onRetrySegment, onRetryAll, onReset, onEditSegment, onShare }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editValue, setEditValue] = useState("");
   const [shareUrl, setShareUrl] = useState<string | null>(null);
@@ -161,7 +162,7 @@ export function Timeline({ segments, chunksAvailable, analysisId, onRetrySegment
       </div>
 
       {totalDuration > 0 && (
-        <Waveform segments={segments} totalDuration={totalDuration} />
+        <Waveform segments={segments} totalDuration={totalDuration} waveformData={waveformData} />
       )}
 
       {segments.some(s => s.status === "identified") && (
