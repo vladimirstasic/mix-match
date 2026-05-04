@@ -3,7 +3,7 @@ import fs from "fs/promises";
 import { ACRCLOUD_RETRY_COUNT, ACRCLOUD_RETRY_BASE_DELAY_MS, ACRCLOUD_MIN_SCORE } from "@mix-match/shared";
 import type { RawMatch, ExternalLinks } from "@mix-match/shared";
 import { config } from "../config.js";
-import { searchSpotifyTrack } from "./spotify.js";
+import { searchSpotifyTrack, getTrackKey } from "./spotify.js";
 
 export function buildSignature(stringToSign: string, accessSecret: string): string {
   return crypto.createHmac("sha1", accessSecret).update(stringToSign).digest("base64");
@@ -75,6 +75,12 @@ export async function identifyChunk(chunkPath: string, startSec: number): Promis
           }
         }
 
+        // Key detection from Spotify audio features
+        let musicalKey: string | undefined;
+        if (externalLinks.spotify) {
+          musicalKey = (await getTrackKey(externalLinks.spotify)) ?? undefined;
+        }
+
         return {
           artist,
           title,
@@ -83,6 +89,7 @@ export async function identifyChunk(chunkPath: string, startSec: number): Promis
           score,
           bpm: track.bpm ?? null,
           genre: track.genres?.[0]?.name ?? null,
+          musicalKey,
           durationMs: track.duration_ms ?? null,
           startSec,
           externalLinks: Object.keys(externalLinks).length > 0 ? externalLinks : undefined,

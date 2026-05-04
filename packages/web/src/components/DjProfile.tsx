@@ -9,6 +9,7 @@ const API_BASE = import.meta.env.VITE_API_URL || "/api";
 interface DjProfileData {
   username: string;
   mixes: { id: string; filename: string; status: string; createdAt: string; slug: string | null }[];
+  badges?: string[];
 }
 
 export function DjProfile() {
@@ -54,6 +55,15 @@ export function DjProfile() {
             </div>
           </div>
           <h1 className="text-3xl font-bold">@{data.username}</h1>
+          {data.badges && data.badges.length > 0 && (
+            <div className="flex justify-center gap-2 mt-2">
+              {data.badges.map(badge => (
+                <span key={badge} className="text-xs bg-primary/10 text-primary rounded-full px-2.5 py-0.5">
+                  {badge}
+                </span>
+              ))}
+            </div>
+          )}
           <Button variant={following ? "outline" : "default"} size="sm" onClick={toggleFollow} className="mt-2">
             {following ? "Unfollow" : "Follow"}
           </Button>

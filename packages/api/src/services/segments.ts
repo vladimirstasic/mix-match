@@ -10,6 +10,7 @@ export interface SegmentData {
   acrid: string | null;
   bpm: number | null;
   genre: string | null;
+  musicalKey: string | null;
   confidence: number | null;
   externalLinks: ExternalLinks | null;
 }
@@ -29,6 +30,7 @@ export function buildSegments(
       acrid: null,
       bpm: null,
       genre: null,
+      musicalKey: null,
       confidence: null,
       externalLinks: null,
     }];
@@ -49,7 +51,7 @@ export function buildSegments(
     if (matchStart > cursor) {
       segments.push({
         startSec: cursor, endSec: matchStart, status: "unknown",
-        trackName: null, artist: null, title: null, acrid: null, bpm: null, genre: null, confidence: null, externalLinks: null,
+        trackName: null, artist: null, title: null, acrid: null, bpm: null, genre: null, musicalKey: null, confidence: null, externalLinks: null,
       });
     }
 
@@ -61,6 +63,7 @@ export function buildSegments(
       trackName: match.track, artist, title, acrid: match.acrid || null,
       bpm: match.bpm ?? null,
       genre: match.genre ?? null,
+      musicalKey: match.musicalKey ?? null,
       confidence: match.score ?? null,
       externalLinks: match.externalLinks || null,
     });
@@ -71,7 +74,7 @@ export function buildSegments(
   if (cursor < totalDurationSec) {
     segments.push({
       startSec: cursor, endSec: totalDurationSec, status: "unknown",
-      trackName: null, artist: null, title: null, acrid: null, bpm: null, genre: null, confidence: null, externalLinks: null,
+      trackName: null, artist: null, title: null, acrid: null, bpm: null, genre: null, musicalKey: null, confidence: null, externalLinks: null,
     });
   }
 
