@@ -34,7 +34,26 @@
       }
     }
   },
+  "css": {
+    "parser": {
+      "cssModules": false
+    },
+    "formatter": {
+      "enabled": true
+    },
+    "linter": {
+      "enabled": false
+    }
+  },
   "files": {
-    "includes": ["**", "!**/node_modules", "!**/.next", "!**/drizzle", "!**/dist", "!**/packages/api/src/db/migrations"]
+    "includes": [
+      "**",
+      "!**/node_modules",
+      "!**/.next",
+      "!**/drizzle",
+      "!**/dist",
+      "!**/packages/api/src/db/migrations",
+      "!**/*.css"
+    ]
   }
 }
