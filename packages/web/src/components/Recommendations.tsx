@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
 
-const API_BASE = import.meta.env.VITE_API_URL || "/api";
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 interface Props {
   analysisId: string;
@@ -18,7 +18,7 @@ export function Recommendations({ analysisId }: Props) {
 
   useEffect(() => {
     fetch(`${API_BASE}/analysis/${analysisId}/recommendations`)
-      .then(r => r.ok ? r.json() : null)
+      .then(r => (r.ok ? r.json() : null))
       .then(setData)
       .catch(() => {});
   }, [analysisId]);
@@ -34,7 +34,7 @@ export function Recommendations({ analysisId }: Props) {
             <CardContent className="py-3 text-center">
               <p className="font-medium text-sm truncate">{artist.name}</p>
               <p className="text-xs text-muted-foreground">
-                {artist.tracks.length} track{artist.tracks.length !== 1 ? "s" : ""}
+                {artist.tracks.length} track{artist.tracks.length !== 1 ? 's' : ''}
               </p>
             </CardContent>
           </Card>

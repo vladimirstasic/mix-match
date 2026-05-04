@@ -1,8 +1,8 @@
-import { useState, useEffect } from "react";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Loader2, ArrowLeft, Music, Check } from "lucide-react";
-import { compareMixes, getUserAnalyses, type CompareResult, type AnalysisSummary } from "../api/client";
+import { useState, useEffect } from 'react';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Loader2, ArrowLeft, Music, Check } from 'lucide-react';
+import { compareMixes, getUserAnalyses, type CompareResult, type AnalysisSummary } from '../api/client';
 
 interface Props {
   onBack: () => void;
@@ -16,7 +16,7 @@ export function MixCompare({ onBack }: Props) {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    getUserAnalyses().then(a => setAnalyses(a.filter(x => x.status === "completed")));
+    getUserAnalyses().then(a => setAnalyses(a.filter(x => x.status === 'completed')));
   }, []);
 
   const runCompare = async () => {
@@ -62,7 +62,7 @@ export function MixCompare({ onBack }: Props) {
         <Card className="border-primary/30">
           <CardContent className="pt-4">
             <h3 className="font-semibold mb-3">
-              {result.sharedTracks.length} shared track{result.sharedTracks.length !== 1 ? "s" : ""}
+              {result.sharedTracks.length} shared track{result.sharedTracks.length !== 1 ? 's' : ''}
             </h3>
             {result.sharedTracks.length === 0 ? (
               <p className="text-sm text-muted-foreground">No tracks in common</p>
@@ -105,7 +105,7 @@ export function MixCompare({ onBack }: Props) {
             {analyses.map(a => (
               <Card
                 key={a.id}
-                className={`cursor-pointer transition-colors ${selectedA === a.id ? "border-primary bg-primary/5" : "hover:border-primary/30"}`}
+                className={`cursor-pointer transition-colors ${selectedA === a.id ? 'border-primary bg-primary/5' : 'hover:border-primary/30'}`}
                 onClick={() => setSelectedA(a.id)}
               >
                 <CardContent className="py-2">
@@ -121,7 +121,7 @@ export function MixCompare({ onBack }: Props) {
             {analyses.map(a => (
               <Card
                 key={a.id}
-                className={`cursor-pointer transition-colors ${selectedB === a.id ? "border-primary bg-primary/5" : "hover:border-primary/30"}`}
+                className={`cursor-pointer transition-colors ${selectedB === a.id ? 'border-primary bg-primary/5' : 'hover:border-primary/30'}`}
                 onClick={() => setSelectedB(a.id)}
               >
                 <CardContent className="py-2">
@@ -133,7 +133,11 @@ export function MixCompare({ onBack }: Props) {
         </div>
       </div>
 
-      <Button onClick={runCompare} disabled={!selectedA || !selectedB || selectedA === selectedB || loading} className="w-full">
+      <Button
+        onClick={runCompare}
+        disabled={!selectedA || !selectedB || selectedA === selectedB || loading}
+        className="w-full"
+      >
         {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : <Music className="w-4 h-4 mr-2" />}
         Compare
       </Button>

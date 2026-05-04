@@ -1,4 +1,4 @@
-export type AnalysisStatus = "pending" | "processing" | "completed" | "failed";
+export type AnalysisStatus = 'pending' | 'processing' | 'completed' | 'failed';
 
 export interface TrackMatch {
   track: string;
@@ -60,7 +60,7 @@ export interface AnalysisMetrics {
 }
 
 export interface ProgressEvent {
-  type: "progress" | "completed" | "failed";
+  type: 'progress' | 'completed' | 'failed';
   chunksProcessed?: number;
   totalChunks?: number;
   currentTrack?: string;
@@ -69,13 +69,13 @@ export interface ProgressEvent {
   error?: string;
 }
 
-export type AnalysisMode = "fast" | "detailed";
+export type AnalysisMode = 'fast' | 'detailed';
 
 export interface UploadResponse {
   analysisId: string;
 }
 
-export type SegmentStatus = "identified" | "unknown" | "retrying";
+export type SegmentStatus = 'identified' | 'unknown' | 'retrying';
 
 export interface Segment {
   id: string;
@@ -98,7 +98,7 @@ export interface Segment {
   updatedAt: string;
 }
 
-export interface AnalysisWithSegments extends Omit<AnalysisResult, "results"> {
+export interface AnalysisWithSegments extends Omit<AnalysisResult, 'results'> {
   segments: Segment[];
   chunksAvailable: boolean;
   chunksExpireAt: string | null;

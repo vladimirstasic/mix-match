@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect } from 'react';
 
 interface Shortcuts {
   onNewAnalysis?: () => void;
@@ -11,17 +11,17 @@ export function useKeyboardShortcuts(shortcuts: Shortcuts) {
       // Don't trigger if user is typing in an input
       if (e.target instanceof HTMLInputElement || e.target instanceof HTMLTextAreaElement) return;
 
-      if (e.key === "n" && !e.metaKey && !e.ctrlKey) {
+      if (e.key === 'n' && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         shortcuts.onNewAnalysis?.();
       }
-      if (e.key === "u" && !e.metaKey && !e.ctrlKey) {
+      if (e.key === 'u' && !e.metaKey && !e.ctrlKey) {
         e.preventDefault();
         shortcuts.onToggleUnknown?.();
       }
     };
 
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
   }, [shortcuts]);
 }

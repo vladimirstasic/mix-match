@@ -1,21 +1,21 @@
-import { Router } from "express";
-import multer from "multer";
-import crypto from "crypto";
-import fs from "fs/promises";
-import path from "path";
-import { createReadStream } from "fs";
-import { execFile } from "child_process";
-import { promisify } from "util";
-import { v4 as uuid } from "uuid";
-import { eq, lt, and, sql } from "drizzle-orm";
-import { requireUser, getUserId } from "../middleware/auth.js";
-import { MAX_FILE_SIZE, ALLOWED_MIMETYPES } from "@mix-match/shared";
-import { db } from "../db/client.js";
-import { analyses, users } from "../db/schema.js";
-import { findUser } from "../db/helpers.js";
-import { analysisQueue } from "../queue/index.js";
-import { redis } from "../queue/index.js";
-import { config } from "../config.js";
+import { Router } from 'express';
+import multer from 'multer';
+import crypto from 'crypto';
+import fs from 'fs/promises';
+import path from 'path';
+import { createReadStream } from 'fs';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import { v4 as uuid } from 'uuid';
+import { eq, lt, and, sql } from 'drizzle-orm';
+import { requireUser, getUserId } from '../middleware/auth.js';
+import { MAX_FILE_SIZE, ALLOWED_MIMETYPES } from '@mix-match/shared';
+import { db } from '../db/client.js';
+import { analyses, users } from '../db/schema.js';
+import { findUser } from '../db/helpers.js';
+import { analysisQueue } from '../queue/index.js';
+import { redis } from '../queue/index.js';
+import { config } from '../config.js';
 
 const upload = multer({
   dest: config.uploadDir,
@@ -41,32 +41,34 @@ async function cleanupExpiredChunks() {
       const parentDir = path.dirname(row.chunksDir);
       await fs.rmdir(parentDir).catch(() => {});
     }
-    await db.update(analyses)
-      .set({ chunksDir: null, chunksExpireAt: null })
-      .where(eq(analyses.id, row.id));
+    await db.update(analyses).set({ chunksDir: null, chunksExpireAt: null }).where(eq(analyses.id, row.id));
   }
 }
 
-async function checkCredits(userId: string, res: import("express").Response): Promise<boolean> {
+async function checkCredits(userId: string, res: import('express').Response): Promise<boolean> {
   const user = await findUser(userId);
   if (user) {
     // Reset credits if period expired
     if (user.creditsResetAt < new Date()) {
-      const resetCredits = user.plan === "free" ? 3 : user.plan === "pro" ? 30 : 999;
-      await db.update(users).set({
-        creditsRemaining: resetCredits,
-        creditsResetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      }).where(eq(users.clerkId, userId));
+      const resetCredits = user.plan === 'free' ? 3 : user.plan === 'pro' ? 30 : 999;
+      await db
+        .update(users)
+        .set({
+          creditsRemaining: resetCredits,
+          creditsResetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        })
+        .where(eq(users.clerkId, userId));
     }
 
     // Atomic decrement — returns empty if credits already 0
-    const result = await db.update(users)
+    const result = await db
+      .update(users)
       .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
       .where(and(eq(users.clerkId, userId), sql`${users.creditsRemaining} > 0`))
       .returning({ creditsRemaining: users.creditsRemaining });
 
     if (result.length === 0) {
-      res.status(403).json({ error: "No credits remaining" });
+      res.status(403).json({ error: 'No credits remaining' });
       return false;
     }
   }
@@ -77,15 +79,15 @@ export const uploadRouter = Router();
 
 const execFileAsync = promisify(execFile);
 
-uploadRouter.post("/upload", upload.single("file"), requireUser, async (req, res) => {
+uploadRouter.post('/upload', upload.single('file'), requireUser, async (req, res) => {
   const userId = getUserId(req);
   const file = req.file;
   if (!file) {
-    res.status(400).json({ error: "No file uploaded" });
+    res.status(400).json({ error: 'No file uploaded' });
     return;
   }
 
-  cleanupExpiredChunks().catch((err) => console.error("[cleanup]", err));
+  cleanupExpiredChunks().catch(err => console.error('[cleanup]', err));
 
   try {
     // Ensure user exists in DB
@@ -97,15 +99,15 @@ uploadRouter.post("/upload", upload.single("file"), requireUser, async (req, res
 
     // SHA256 file hash for full-file cache (streaming to avoid loading entire file into memory)
     const fileHash = await new Promise<string>((resolve, reject) => {
-      const hash = crypto.createHash("sha256");
+      const hash = crypto.createHash('sha256');
       const stream = createReadStream(file.path);
-      stream.on("data", (chunk) => hash.update(chunk));
-      stream.on("end", () => resolve(hash.digest("hex")));
-      stream.on("error", reject);
+      stream.on('data', chunk => hash.update(chunk));
+      stream.on('end', () => resolve(hash.digest('hex')));
+      stream.on('error', reject);
     });
 
     // Mode from form data (default: fast)
-    const mode = req.body?.mode === "detailed" ? "detailed" : "fast";
+    const mode = req.body?.mode === 'detailed' ? 'detailed' : 'fast';
 
     // Check file cache
     const cachedAnalysisId = await redis.get(`acr:file:${fileHash}`);
@@ -122,13 +124,13 @@ uploadRouter.post("/upload", upload.single("file"), requireUser, async (req, res
         filename: file.originalname,
         fileSize: file.size,
         fileHash,
-        status: "pending",
+        status: 'pending',
         userId: userId,
       })
       .returning({ id: analyses.id });
 
     // Enqueue job
-    await analysisQueue.add("analyze", {
+    await analysisQueue.add('analyze', {
       analysisId: analysis.id,
       filePath: file.path,
       fileHash,
@@ -142,47 +144,41 @@ uploadRouter.post("/upload", upload.single("file"), requireUser, async (req, res
   }
 });
 
-uploadRouter.post("/upload-url", requireUser, async (req, res) => {
+uploadRouter.post('/upload-url', requireUser, async (req, res) => {
   const userId = getUserId(req);
 
   const { url, mode: rawMode } = req.body ?? {};
-  const mode = rawMode === "detailed" ? "detailed" : "fast";
+  const mode = rawMode === 'detailed' ? 'detailed' : 'fast';
 
-  if (typeof url !== "string" || !(url.startsWith("http://") || url.startsWith("https://"))) {
-    res.status(400).json({ error: "Invalid URL. Must start with http:// or https://" });
+  if (typeof url !== 'string' || !(url.startsWith('http://') || url.startsWith('https://'))) {
+    res.status(400).json({ error: 'Invalid URL. Must start with http:// or https://' });
     return;
   }
 
-  cleanupExpiredChunks().catch((err) => console.error("[cleanup]", err));
+  cleanupExpiredChunks().catch(err => console.error('[cleanup]', err));
 
   // Ensure user exists in DB
   await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
 
   if (!(await checkCredits(userId, res))) return;
 
-  const outputPath = path.join(config.uploadDir, uuid() + ".mp3");
+  const outputPath = path.join(config.uploadDir, uuid() + '.mp3');
 
   try {
     // Get video title
-    const { stdout: title } = await execFileAsync("yt-dlp", ["--print", "title", url]);
-    const filename = title.trim() || "Unknown title";
+    const { stdout: title } = await execFileAsync('yt-dlp', ['--print', 'title', url]);
+    const filename = title.trim() || 'Unknown title';
 
     // Download audio as mp3
-    await execFileAsync("yt-dlp", [
-      "-x",
-      "--audio-format", "mp3",
-      "--max-filesize", "300m",
-      "-o", outputPath,
-      url,
-    ]);
+    await execFileAsync('yt-dlp', ['-x', '--audio-format', 'mp3', '--max-filesize', '300m', '-o', outputPath, url]);
 
     // SHA256 file hash for full-file cache (streaming to avoid loading entire file into memory)
     const fileHash = await new Promise<string>((resolve, reject) => {
-      const hash = crypto.createHash("sha256");
+      const hash = crypto.createHash('sha256');
       const stream = createReadStream(outputPath);
-      stream.on("data", (chunk) => hash.update(chunk));
-      stream.on("end", () => resolve(hash.digest("hex")));
-      stream.on("error", reject);
+      stream.on('data', chunk => hash.update(chunk));
+      stream.on('end', () => resolve(hash.digest('hex')));
+      stream.on('error', reject);
     });
 
     // Check file cache
@@ -203,13 +199,13 @@ uploadRouter.post("/upload-url", requireUser, async (req, res) => {
         filename,
         fileSize: stat.size,
         fileHash,
-        status: "pending",
+        status: 'pending',
         userId,
       })
       .returning({ id: analyses.id });
 
     // Enqueue job
-    await analysisQueue.add("analyze", {
+    await analysisQueue.add('analyze', {
       analysisId: analysis.id,
       filePath: outputPath,
       fileHash,
@@ -219,7 +215,7 @@ uploadRouter.post("/upload-url", requireUser, async (req, res) => {
     res.json({ analysisId: analysis.id });
   } catch (err: any) {
     await fs.unlink(outputPath).catch(() => {});
-    if (err?.stderr || err?.message?.includes("yt-dlp")) {
+    if (err?.stderr || err?.message?.includes('yt-dlp')) {
       res.status(400).json({ error: err.stderr?.trim() || err.message });
       return;
     }

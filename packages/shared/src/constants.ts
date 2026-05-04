@@ -10,25 +10,25 @@ export const ACRCLOUD_MIN_SCORE = 30;
 export const REDIS_FINGERPRINT_TTL = 30 * 24 * 60 * 60;
 export const REDIS_FILE_CACHE_TTL = 90 * 24 * 60 * 60;
 export const ALLOWED_MIMETYPES = [
-  "audio/mpeg",
-  "audio/wav",
-  "audio/x-wav",
-  "audio/flac",
-  "audio/x-flac",
-  "audio/mp4",
-  "audio/x-m4a",
+  'audio/mpeg',
+  'audio/wav',
+  'audio/x-wav',
+  'audio/flac',
+  'audio/x-flac',
+  'audio/mp4',
+  'audio/x-m4a',
 ];
 
 export function formatTime(totalSeconds: number): string {
   const mins = Math.floor(totalSeconds / 60);
   const secs = Math.floor(totalSeconds % 60);
-  return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
+  return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
 }
 
 export const CHUNKS_TTL_HOURS = 24;
 export const CHUNK_OVERLAP_SEC = 0;
 
 // Analysis modes — step between chunks (chunk is always 10s, ACRCloud uses first 10s)
-export const FAST_STEP_SEC = 120;    // 2 min — ~38 calls for 75min mix
+export const FAST_STEP_SEC = 120; // 2 min — ~38 calls for 75min mix
 export const DETAILED_STEP_SEC = 30; // 30s — ~150 calls for 75min mix
 export const CHUNK_STEP_SEC = FAST_STEP_SEC; // default mode

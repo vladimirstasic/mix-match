@@ -1,10 +1,10 @@
-import { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Disc3, Music, Loader2 } from "lucide-react";
+import { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Disc3, Music, Loader2 } from 'lucide-react';
 
-const API_BASE = import.meta.env.VITE_API_URL || "/api";
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 interface DjProfileData {
   username: string;
@@ -20,29 +20,40 @@ export function DjProfile() {
 
   useEffect(() => {
     if (!username) return;
-    fetch(`${API_BASE}/dj/${username}`, { credentials: "include" })
-      .then(r => { if (!r.ok) throw new Error(); return r.json(); })
+    fetch(`${API_BASE}/dj/${username}`, { credentials: 'include' })
+      .then(r => {
+        if (!r.ok) throw new Error();
+        return r.json();
+      })
       .then(setData)
       .catch(() => setData(null))
       .finally(() => setLoading(false));
   }, [username]);
 
   const toggleFollow = async () => {
-    const res = await fetch(`${API_BASE}/dj/${username}/follow`, { method: "POST", credentials: "include" });
+    const res = await fetch(`${API_BASE}/dj/${username}/follow`, { method: 'POST', credentials: 'include' });
     if (res.ok) {
       const data = await res.json();
       setFollowing(data.following);
     }
   };
 
-  if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
+  if (loading)
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    );
 
-  if (!data) return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-4">
-      <p className="text-muted-foreground">DJ not found</p>
-      <Link to="/"><Button>Go to MixMatch</Button></Link>
-    </div>
-  );
+  if (!data)
+    return (
+      <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-4">
+        <p className="text-muted-foreground">DJ not found</p>
+        <Link to="/">
+          <Button>Go to MixMatch</Button>
+        </Link>
+      </div>
+    );
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -64,31 +75,33 @@ export function DjProfile() {
               ))}
             </div>
           )}
-          <Button variant={following ? "outline" : "default"} size="sm" onClick={toggleFollow} className="mt-2">
-            {following ? "Unfollow" : "Follow"}
+          <Button variant={following ? 'outline' : 'default'} size="sm" onClick={toggleFollow} className="mt-2">
+            {following ? 'Unfollow' : 'Follow'}
           </Button>
-          <p className="text-sm text-muted-foreground mt-1">{data.mixes.length} public mix{data.mixes.length !== 1 ? "es" : ""}</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            {data.mixes.length} public mix{data.mixes.length !== 1 ? 'es' : ''}
+          </p>
         </header>
 
         <div className="space-y-3">
           {data.mixes.map(mix => (
             <Card key={mix.id} className="hover:border-primary/50 transition-colors">
               <CardContent className="py-4">
-                <Link to={mix.slug ? `/t/${mix.slug}` : "#"} className="block">
+                <Link to={mix.slug ? `/t/${mix.slug}` : '#'} className="block">
                   <p className="font-medium">{mix.filename}</p>
                   <p className="text-xs text-muted-foreground mt-1">{new Date(mix.createdAt).toLocaleDateString()}</p>
                 </Link>
               </CardContent>
             </Card>
           ))}
-          {data.mixes.length === 0 && (
-            <p className="text-center text-muted-foreground">No public mixes yet</p>
-          )}
+          {data.mixes.length === 0 && <p className="text-center text-muted-foreground">No public mixes yet</p>}
         </div>
 
         <div className="text-center border-t pt-8 mt-8">
           <p className="text-muted-foreground mb-4">Powered by MixMatch</p>
-          <Link to="/"><Button>Analyze your own mix</Button></Link>
+          <Link to="/">
+            <Button>Analyze your own mix</Button>
+          </Link>
         </div>
       </div>
     </div>

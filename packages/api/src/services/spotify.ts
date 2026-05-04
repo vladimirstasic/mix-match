@@ -1,6 +1,6 @@
-import { config } from "../config.js";
+import { config } from '../config.js';
 
-const KEY_NAMES = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const KEY_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
 
 let cachedToken: { token: string; expiresAt: number } | null = null;
 
@@ -9,16 +9,16 @@ async function getAccessToken(): Promise<string> {
     return cachedToken.token;
   }
 
-  const res = await fetch("https://accounts.spotify.com/api/token", {
-    method: "POST",
+  const res = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
     headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-      Authorization: `Basic ${Buffer.from(`${config.spotify.clientId}:${config.spotify.clientSecret}`).toString("base64")}`,
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: `Basic ${Buffer.from(`${config.spotify.clientId}:${config.spotify.clientSecret}`).toString('base64')}`,
     },
-    body: "grant_type=client_credentials",
+    body: 'grant_type=client_credentials',
   });
 
-  if (!res.ok) return "";
+  if (!res.ok) return '';
 
   const data = await res.json();
   cachedToken = {
@@ -84,8 +84,8 @@ export async function getTrackKey(spotifyUrl: string): Promise<string | null> {
     const data = await res.json();
     if (data.key === undefined || data.key === -1) return null;
 
-    const keyName = KEY_NAMES[data.key] || "?";
-    const mode = data.mode === 0 ? "m" : "";
+    const keyName = KEY_NAMES[data.key] || '?';
+    const mode = data.mode === 0 ? 'm' : '';
     return `${keyName}${mode}`;
   } catch {
     return null;

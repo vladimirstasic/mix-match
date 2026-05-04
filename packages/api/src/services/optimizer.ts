@@ -1,8 +1,6 @@
-import {
-  SILENCE_THRESHOLD_DB,
-} from "@mix-match/shared";
-import type { RawMatch, AnalysisMetrics } from "@mix-match/shared";
-import { identifyChunk, RateLimitError } from "./acrcloud.js";
+import { SILENCE_THRESHOLD_DB } from '@mix-match/shared';
+import type { RawMatch, AnalysisMetrics } from '@mix-match/shared';
+import { identifyChunk, RateLimitError } from './acrcloud.js';
 
 export interface OptimizerContext {
   chunkPaths: string[];
@@ -13,7 +11,7 @@ export interface OptimizerContext {
 
 export async function processChunksOptimized(ctx: OptimizerContext): Promise<{
   matches: RawMatch[];
-  metrics: Omit<AnalysisMetrics, "processingTimeMs" | "avgApiLatencyMs">;
+  metrics: Omit<AnalysisMetrics, 'processingTimeMs' | 'avgApiLatencyMs'>;
 }> {
   const { chunkPaths, rmsLevels, onProgress } = ctx;
   const total = chunkPaths.length;
@@ -65,7 +63,7 @@ export async function processChunksOptimized(ctx: OptimizerContext): Promise<{
     }
   }
 
-  const apiSavingsPercent = total > 0 ? ((1 - apiCalls / total) * 100) : 0;
+  const apiSavingsPercent = total > 0 ? (1 - apiCalls / total) * 100 : 0;
 
   return {
     matches,

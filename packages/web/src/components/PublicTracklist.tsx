@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import { Card, CardContent } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Check, Loader2, Disc3, Music } from "lucide-react";
-import { formatTime } from "@mix-match/shared";
+import React, { useState, useEffect } from 'react';
+import { useParams, Link } from 'react-router-dom';
+import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Check, Loader2, Disc3, Music } from 'lucide-react';
+import { formatTime } from '@mix-match/shared';
 
-const API_BASE = import.meta.env.VITE_API_URL || "/api";
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
 interface PublicSegment {
   id: string;
@@ -22,7 +22,6 @@ interface PublicData {
   createdAt: string;
 }
 
-
 export function PublicTracklist() {
   const { slug } = useParams<{ slug: string }>();
   const [data, setData] = useState<PublicData | null>(null);
@@ -32,12 +31,12 @@ export function PublicTracklist() {
   useEffect(() => {
     if (!slug) return;
     fetch(`${API_BASE}/t/${slug}`)
-      .then((res) => {
-        if (!res.ok) throw new Error("Not found");
+      .then(res => {
+        if (!res.ok) throw new Error('Not found');
         return res.json();
       })
       .then(setData)
-      .catch(() => setError("Tracklist not found"))
+      .catch(() => setError('Tracklist not found'))
       .finally(() => setLoading(false));
   }, [slug]);
 
@@ -52,7 +51,7 @@ export function PublicTracklist() {
   if (error || !data) {
     return (
       <div className="min-h-screen bg-background text-foreground flex flex-col items-center justify-center gap-4">
-        <p className="text-muted-foreground">{error || "Not found"}</p>
+        <p className="text-muted-foreground">{error || 'Not found'}</p>
         <Link to="/">
           <Button>Go to MixMatch</Button>
         </Link>
@@ -77,7 +76,7 @@ export function PublicTracklist() {
         </header>
 
         <div className="space-y-2 mb-8">
-          {data.segments.map((seg) => (
+          {data.segments.map(seg => (
             <React.Fragment key={seg.id}>
               <Card className="border-l-4 border-l-green-500">
                 <CardContent className="flex items-center gap-4 py-3">

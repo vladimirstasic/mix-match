@@ -1,8 +1,17 @@
-import {useCallback, useEffect, useRef, useState} from "react";
-import type {TrackMatch, Segment, AnalysisMode} from "@mix-match/shared";
-import {getAnalysis, subscribeProgress, uploadFile, uploadUrl, retrySegment as retrySegmentApi, retryAllUnknown as retryAllApi, editSegment as editSegmentApi, updateAnalysis} from "../api/client";
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { TrackMatch, Segment, AnalysisMode } from '@mix-match/shared';
+import {
+  getAnalysis,
+  subscribeProgress,
+  uploadFile,
+  uploadUrl,
+  retrySegment as retrySegmentApi,
+  retryAllUnknown as retryAllApi,
+  editSegment as editSegmentApi,
+  updateAnalysis,
+} from '../api/client';
 
-type Phase = "idle" | "uploading" | "processing" | "completed" | "failed";
+type Phase = 'idle' | 'uploading' | 'processing' | 'completed' | 'failed';
 
 interface AnalysisState {
   phase: Phase;
@@ -21,7 +30,7 @@ interface AnalysisState {
 
 export function useAnalysis() {
   const [state, setState] = useState<AnalysisState>({
-    phase: "idle",
+    phase: 'idle',
     analysisId: null,
     uploadProgress: 0,
     chunksProcessed: 0,
@@ -40,17 +49,17 @@ export function useAnalysis() {
   const pollResult = useCallback(async (id: string) => {
     try {
       const result = await getAnalysis(id);
-      if (result.status === "completed") {
-        setState((s) => ({
+      if (result.status === 'completed') {
+        setState(s => ({
           ...s,
-          phase: "completed",
+          phase: 'completed',
           results: result.results as TrackMatch[],
           segments: result.segments || [],
           chunksAvailable: result.chunksAvailable || false,
           waveformData: (result as any).waveformData || null,
         }));
-      } else if (result.status === "failed") {
-        setState((s) => ({ ...s, phase: "failed", error: result.error || "Failed" }));
+      } else if (result.status === 'failed') {
+        setState(s => ({ ...s, phase: 'failed', error: result.error || 'Failed' }));
       } else {
         setTimeout(() => pollResult(id), 3000);
       }
@@ -59,22 +68,27 @@ export function useAnalysis() {
     }
   }, []);
 
-  const startAnalysis = useCallback(async (file: File, mode: AnalysisMode = "fast") => {
-    setState((s) => ({ ...s, phase: "uploading", uploadProgress: 0, error: null, results: null }));
+  const startAnalysis = useCallback(
+    async (file: File, mode: AnalysisMode = 'fast') => {
+      setState(s => ({ ...s, phase: 'uploading', uploadProgress: 0, error: null, results: null }));
 
-    try {
-      const { analysisId } = await uploadFile(file, (pct) => {
-        setState((s) => ({ ...s, uploadProgress: pct }));
-      }, mode);
+      try {
+        const { analysisId } = await uploadFile(
+          file,
+          pct => {
+            setState(s => ({ ...s, uploadProgress: pct }));
+          },
+          mode,
+        );
 
-      localStorage.setItem("mixmatch_active_analysis", analysisId);
-      setState((s) => ({ ...s, phase: "processing", analysisId, uploadProgress: 100 }));
+        localStorage.setItem('mixmatch_active_analysis', analysisId);
+        setState(s => ({ ...s, phase: 'processing', analysisId, uploadProgress: 100 }));
 
-      cleanupRef.current = subscribeProgress(
+        cleanupRef.current = subscribeProgress(
           analysisId,
-          async (data) => {
-            if (data.type === "progress") {
-              setState((s) => ({
+          async data => {
+            if (data.type === 'progress') {
+              setState(s => ({
                 ...s,
                 chunksProcessed: (data.chunksProcessed as number) || s.chunksProcessed,
                 totalChunks: (data.totalChunks as number) || s.totalChunks,
@@ -84,124 +98,133 @@ export function useAnalysis() {
               // Fetch partial segments every 5 chunks
               const processed = (data.chunksProcessed as number) || 0;
               if (processed > 0 && processed % 5 === 0) {
-                getAnalysis(analysisId).then(full => {
-                  if (full.segments && full.segments.length > 0) {
-                    setState(s => ({ ...s, segments: full.segments }));
-                  }
-                }).catch(() => {});
+                getAnalysis(analysisId)
+                  .then(full => {
+                    if (full.segments && full.segments.length > 0) {
+                      setState(s => ({ ...s, segments: full.segments }));
+                    }
+                  })
+                  .catch(() => {});
               }
-            } else if (data.type === "completed") {
+            } else if (data.type === 'completed') {
               const full = await getAnalysis(analysisId);
-              setState((s) => ({
+              setState(s => ({
                 ...s,
-                phase: "completed",
+                phase: 'completed',
                 results: full.results as TrackMatch[],
                 segments: full.segments,
                 chunksAvailable: full.chunksAvailable,
                 waveformData: (full as any).waveformData || null,
               }));
-            } else if (data.type === "failed") {
-              setState((s) => ({
+            } else if (data.type === 'failed') {
+              setState(s => ({
                 ...s,
-                phase: "failed",
-                error: (data.error as string) || "Analysis failed",
+                phase: 'failed',
+                error: (data.error as string) || 'Analysis failed',
               }));
             }
           },
-          (err) => {
-            console.log(err)
+          err => {
+            console.log(err);
             pollResult(analysisId);
-          }
-      );
-    } catch (err) {
-      setState((s) => ({
-        ...s,
-        phase: "failed",
-        error: err instanceof Error ? err.message : "Upload failed",
-      }));
-    }
-  }, [pollResult]);
+          },
+        );
+      } catch (err) {
+        setState(s => ({
+          ...s,
+          phase: 'failed',
+          error: err instanceof Error ? err.message : 'Upload failed',
+        }));
+      }
+    },
+    [pollResult],
+  );
 
-  const startAnalysisFromUrl = useCallback(async (url: string, mode: AnalysisMode = "fast") => {
-    setState((s) => ({ ...s, phase: "uploading", uploadProgress: 0, error: null, results: null }));
+  const startAnalysisFromUrl = useCallback(
+    async (url: string, mode: AnalysisMode = 'fast') => {
+      setState(s => ({ ...s, phase: 'uploading', uploadProgress: 0, error: null, results: null }));
 
-    try {
-      // No progress tracking for URL download — just show indeterminate
-      setState((s) => ({ ...s, uploadProgress: -1 })); // -1 = indeterminate
+      try {
+        // No progress tracking for URL download — just show indeterminate
+        setState(s => ({ ...s, uploadProgress: -1 })); // -1 = indeterminate
 
-      const { analysisId } = await uploadUrl(url, mode);
+        const { analysisId } = await uploadUrl(url, mode);
 
-      localStorage.setItem("mixmatch_active_analysis", analysisId);
-      setState((s) => ({ ...s, phase: "processing", analysisId, uploadProgress: 100 }));
+        localStorage.setItem('mixmatch_active_analysis', analysisId);
+        setState(s => ({ ...s, phase: 'processing', analysisId, uploadProgress: 100 }));
 
-      // Same SSE subscription as startAnalysis
-      cleanupRef.current = subscribeProgress(
-        analysisId,
-        async (data) => {
-          if (data.type === "progress") {
-            setState((s) => ({
-              ...s,
-              chunksProcessed: (data.chunksProcessed as number) || s.chunksProcessed,
-              totalChunks: (data.totalChunks as number) || s.totalChunks,
-              currentTrack: (data.currentTrack as string) || s.currentTrack,
-              tracksFound: (data.tracksFound as number) || s.tracksFound,
-            }));
-            // Fetch partial segments every 5 chunks
-            const processed = (data.chunksProcessed as number) || 0;
-            if (processed > 0 && processed % 5 === 0) {
-              getAnalysis(analysisId).then(full => {
-                if (full.segments && full.segments.length > 0) {
-                  setState(s => ({ ...s, segments: full.segments }));
-                }
-              }).catch(() => {});
+        // Same SSE subscription as startAnalysis
+        cleanupRef.current = subscribeProgress(
+          analysisId,
+          async data => {
+            if (data.type === 'progress') {
+              setState(s => ({
+                ...s,
+                chunksProcessed: (data.chunksProcessed as number) || s.chunksProcessed,
+                totalChunks: (data.totalChunks as number) || s.totalChunks,
+                currentTrack: (data.currentTrack as string) || s.currentTrack,
+                tracksFound: (data.tracksFound as number) || s.tracksFound,
+              }));
+              // Fetch partial segments every 5 chunks
+              const processed = (data.chunksProcessed as number) || 0;
+              if (processed > 0 && processed % 5 === 0) {
+                getAnalysis(analysisId)
+                  .then(full => {
+                    if (full.segments && full.segments.length > 0) {
+                      setState(s => ({ ...s, segments: full.segments }));
+                    }
+                  })
+                  .catch(() => {});
+              }
+            } else if (data.type === 'completed') {
+              const full = await getAnalysis(analysisId);
+              setState(s => ({
+                ...s,
+                phase: 'completed',
+                results: full.results as TrackMatch[],
+                segments: full.segments,
+                chunksAvailable: full.chunksAvailable,
+              }));
+            } else if (data.type === 'failed') {
+              setState(s => ({
+                ...s,
+                phase: 'failed',
+                error: (data.error as string) || 'Analysis failed',
+              }));
             }
-          } else if (data.type === "completed") {
-            const full = await getAnalysis(analysisId);
-            setState((s) => ({
-              ...s,
-              phase: "completed",
-              results: full.results as TrackMatch[],
-              segments: full.segments,
-              chunksAvailable: full.chunksAvailable,
-            }));
-          } else if (data.type === "failed") {
-            setState((s) => ({
-              ...s,
-              phase: "failed",
-              error: (data.error as string) || "Analysis failed",
-            }));
-          }
-        },
-        (err) => {
-          console.log(err);
-          pollResult(analysisId);
-        }
-      );
-    } catch (err) {
-      setState((s) => ({
-        ...s,
-        phase: "failed",
-        error: err instanceof Error ? err.message : "Failed to process URL",
-      }));
-    }
-  }, [pollResult]);
+          },
+          err => {
+            console.log(err);
+            pollResult(analysisId);
+          },
+        );
+      } catch (err) {
+        setState(s => ({
+          ...s,
+          phase: 'failed',
+          error: err instanceof Error ? err.message : 'Failed to process URL',
+        }));
+      }
+    },
+    [pollResult],
+  );
 
   const loadAnalysis = useCallback(async (id: string) => {
     try {
       const full = await getAnalysis(id);
-      localStorage.setItem("mixmatch_active_analysis", id);
-      if (full.status === "completed") {
-        setState((s) => ({
+      localStorage.setItem('mixmatch_active_analysis', id);
+      if (full.status === 'completed') {
+        setState(s => ({
           ...s,
-          phase: "completed",
+          phase: 'completed',
           analysisId: id,
           segments: full.segments || [],
           chunksAvailable: full.chunksAvailable || false,
         }));
-      } else if (full.status === "failed") {
-        setState((s) => ({ ...s, phase: "failed", analysisId: id, error: full.error || "Failed" }));
+      } else if (full.status === 'failed') {
+        setState(s => ({ ...s, phase: 'failed', analysisId: id, error: full.error || 'Failed' }));
       } else {
-        setState((s) => ({ ...s, phase: "processing", analysisId: id }));
+        setState(s => ({ ...s, phase: 'processing', analysisId: id }));
       }
     } catch {
       // Analysis not found
@@ -210,9 +233,9 @@ export function useAnalysis() {
 
   const reset = useCallback(() => {
     cleanupRef.current?.();
-    localStorage.removeItem("mixmatch_active_analysis");
+    localStorage.removeItem('mixmatch_active_analysis');
     setState({
-      phase: "idle",
+      phase: 'idle',
       analysisId: null,
       uploadProgress: 0,
       chunksProcessed: 0,
@@ -228,127 +251,137 @@ export function useAnalysis() {
   }, []);
 
   useEffect(() => {
-    const savedId = localStorage.getItem("mixmatch_active_analysis");
-    if (!savedId || state.phase !== "idle") return;
+    const savedId = localStorage.getItem('mixmatch_active_analysis');
+    if (!savedId || state.phase !== 'idle') return;
 
-    getAnalysis(savedId).then((data) => {
-      if (data.status === "completed") {
-        setState((s) => ({
-          ...s,
-          phase: "completed",
-          analysisId: savedId,
-          segments: data.segments,
-          chunksAvailable: data.chunksAvailable,
-        }));
-      } else if (data.status === "processing" || data.status === "pending") {
-        setState((s) => ({ ...s, phase: "processing", analysisId: savedId }));
-        // Re-subscribe to SSE progress
-        cleanupRef.current = subscribeProgress(
-          savedId,
-          async (progressData) => {
-            if (progressData.type === "progress") {
-              setState((s) => ({
-                ...s,
-                chunksProcessed: (progressData.chunksProcessed as number) || s.chunksProcessed,
-                totalChunks: (progressData.totalChunks as number) || s.totalChunks,
-                currentTrack: (progressData.currentTrack as string) || s.currentTrack,
-                tracksFound: (progressData.tracksFound as number) || s.tracksFound,
-              }));
-            } else if (progressData.type === "completed") {
-              const full = await getAnalysis(savedId);
-              setState((s) => ({
-                ...s,
-                phase: "completed",
-                segments: full.segments,
-                chunksAvailable: full.chunksAvailable,
-                waveformData: (full as any).waveformData || null,
-              }));
-            } else if (progressData.type === "failed") {
-              setState((s) => ({
-                ...s,
-                phase: "failed",
-                error: (progressData.error as string) || "Analysis failed",
-              }));
-            }
-          },
-          () => {
-            // SSE failed, poll instead
-            const poll = async () => {
-              try {
-                const result = await getAnalysis(savedId);
-                if (result.status === "completed") {
-                  setState((s) => ({ ...s, phase: "completed", analysisId: savedId, segments: result.segments, chunksAvailable: result.chunksAvailable }));
-                } else if (result.status === "failed") {
-                  setState((s) => ({ ...s, phase: "failed", error: result.error || "Failed" }));
-                } else {
-                  setTimeout(poll, 3000);
-                }
-              } catch {
-                setTimeout(poll, 5000);
+    getAnalysis(savedId)
+      .then(data => {
+        if (data.status === 'completed') {
+          setState(s => ({
+            ...s,
+            phase: 'completed',
+            analysisId: savedId,
+            segments: data.segments,
+            chunksAvailable: data.chunksAvailable,
+          }));
+        } else if (data.status === 'processing' || data.status === 'pending') {
+          setState(s => ({ ...s, phase: 'processing', analysisId: savedId }));
+          // Re-subscribe to SSE progress
+          cleanupRef.current = subscribeProgress(
+            savedId,
+            async progressData => {
+              if (progressData.type === 'progress') {
+                setState(s => ({
+                  ...s,
+                  chunksProcessed: (progressData.chunksProcessed as number) || s.chunksProcessed,
+                  totalChunks: (progressData.totalChunks as number) || s.totalChunks,
+                  currentTrack: (progressData.currentTrack as string) || s.currentTrack,
+                  tracksFound: (progressData.tracksFound as number) || s.tracksFound,
+                }));
+              } else if (progressData.type === 'completed') {
+                const full = await getAnalysis(savedId);
+                setState(s => ({
+                  ...s,
+                  phase: 'completed',
+                  segments: full.segments,
+                  chunksAvailable: full.chunksAvailable,
+                  waveformData: (full as any).waveformData || null,
+                }));
+              } else if (progressData.type === 'failed') {
+                setState(s => ({
+                  ...s,
+                  phase: 'failed',
+                  error: (progressData.error as string) || 'Analysis failed',
+                }));
               }
-            };
-            poll();
-          }
-        );
-      } else if (data.status === "failed") {
-        setState((s) => ({ ...s, phase: "failed", analysisId: savedId, error: data.error || "Analysis failed" }));
-      }
-    }).catch(() => {
-      // Analysis no longer exists, clear saved ID
-      localStorage.removeItem("mixmatch_active_analysis");
-    });
+            },
+            () => {
+              // SSE failed, poll instead
+              const poll = async () => {
+                try {
+                  const result = await getAnalysis(savedId);
+                  if (result.status === 'completed') {
+                    setState(s => ({
+                      ...s,
+                      phase: 'completed',
+                      analysisId: savedId,
+                      segments: result.segments,
+                      chunksAvailable: result.chunksAvailable,
+                    }));
+                  } else if (result.status === 'failed') {
+                    setState(s => ({ ...s, phase: 'failed', error: result.error || 'Failed' }));
+                  } else {
+                    setTimeout(poll, 3000);
+                  }
+                } catch {
+                  setTimeout(poll, 5000);
+                }
+              };
+              poll();
+            },
+          );
+        } else if (data.status === 'failed') {
+          setState(s => ({ ...s, phase: 'failed', analysisId: savedId, error: data.error || 'Analysis failed' }));
+        }
+      })
+      .catch(() => {
+        // Analysis no longer exists, clear saved ID
+        localStorage.removeItem('mixmatch_active_analysis');
+      });
   }, []);
 
   useEffect(() => () => cleanupRef.current?.(), []);
 
-  const retrySegment = useCallback(async (segmentId: string) => {
-    if (!state.analysisId) return;
-    setState((s) => ({
-      ...s,
-      segments: s.segments.map((seg) =>
-        seg.id === segmentId ? { ...seg, status: "retrying" as const } : seg
-      ),
-    }));
-    await retrySegmentApi(state.analysisId, segmentId);
-    const poll = async () => {
-      const full = await getAnalysis(state.analysisId!);
-      const seg = full.segments.find((s) => s.id === segmentId);
-      if (seg?.status === "retrying") {
-        setTimeout(poll, 2000);
-      } else {
-        setState((s) => ({ ...s, segments: full.segments, results: full.results as TrackMatch[] }));
-      }
-    };
-    setTimeout(poll, 2000);
-  }, [state.analysisId]);
+  const retrySegment = useCallback(
+    async (segmentId: string) => {
+      if (!state.analysisId) return;
+      setState(s => ({
+        ...s,
+        segments: s.segments.map(seg => (seg.id === segmentId ? { ...seg, status: 'retrying' as const } : seg)),
+      }));
+      await retrySegmentApi(state.analysisId, segmentId);
+      const poll = async () => {
+        const full = await getAnalysis(state.analysisId!);
+        const seg = full.segments.find(s => s.id === segmentId);
+        if (seg?.status === 'retrying') {
+          setTimeout(poll, 2000);
+        } else {
+          setState(s => ({ ...s, segments: full.segments, results: full.results as TrackMatch[] }));
+        }
+      };
+      setTimeout(poll, 2000);
+    },
+    [state.analysisId],
+  );
 
   const retryAll = useCallback(async () => {
     if (!state.analysisId) return;
-    setState((s) => ({
+    setState(s => ({
       ...s,
-      segments: s.segments.map((seg) =>
-        seg.status === "unknown" ? { ...seg, status: "retrying" as const } : seg
-      ),
+      segments: s.segments.map(seg => (seg.status === 'unknown' ? { ...seg, status: 'retrying' as const } : seg)),
     }));
     await retryAllApi(state.analysisId);
     const poll = async () => {
       const full = await getAnalysis(state.analysisId!);
-      const stillRetrying = full.segments.some((s) => s.status === "retrying");
+      const stillRetrying = full.segments.some(s => s.status === 'retrying');
       if (stillRetrying) {
         setTimeout(poll, 3000);
       } else {
-        setState((s) => ({ ...s, segments: full.segments, results: full.results as TrackMatch[] }));
+        setState(s => ({ ...s, segments: full.segments, results: full.results as TrackMatch[] }));
       }
     };
     setTimeout(poll, 3000);
   }, [state.analysisId]);
 
-  const editSegment = useCallback(async (segmentId: string, trackName: string) => {
-    if (!state.analysisId) return;
-    await editSegmentApi(state.analysisId, segmentId, trackName);
-    const full = await getAnalysis(state.analysisId);
-    setState((s) => ({ ...s, segments: full.segments }));
-  }, [state.analysisId]);
+  const editSegment = useCallback(
+    async (segmentId: string, trackName: string) => {
+      if (!state.analysisId) return;
+      await editSegmentApi(state.analysisId, segmentId, trackName);
+      const full = await getAnalysis(state.analysisId);
+      setState(s => ({ ...s, segments: full.segments }));
+    },
+    [state.analysisId],
+  );
 
   const shareAnalysis = useCallback(async (): Promise<string | null> => {
     if (!state.analysisId) return null;
@@ -357,5 +390,15 @@ export function useAnalysis() {
     return slug;
   }, [state.analysisId]);
 
-  return { ...state, startAnalysis, startAnalysisFromUrl, reset, loadAnalysis, retrySegment, retryAll, editSegment, shareAnalysis };
+  return {
+    ...state,
+    startAnalysis,
+    startAnalysisFromUrl,
+    reset,
+    loadAnalysis,
+    retrySegment,
+    retryAll,
+    editSegment,
+    shareAnalysis,
+  };
 }

@@ -1,16 +1,15 @@
-import { execFile } from "child_process";
-import { promisify } from "util";
-import crypto from "crypto";
-import { FINGERPRINT_SIMILARITY_THRESHOLD } from "@mix-match/shared";
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import crypto from 'crypto';
+import { FINGERPRINT_SIMILARITY_THRESHOLD } from '@mix-match/shared';
 
 const exec = promisify(execFile);
 
 export async function generateFingerprint(chunkPath: string): Promise<Buffer> {
-  const { stdout } = await exec(
-    "ffmpeg",
-    ["-i", chunkPath, "-f", "s16le", "-ac", "1", "-ar", "11025", "-"],
-    { encoding: "buffer", maxBuffer: 10 * 1024 * 1024 }
-  );
+  const { stdout } = await exec('ffmpeg', ['-i', chunkPath, '-f', 's16le', '-ac', '1', '-ar', '11025', '-'], {
+    encoding: 'buffer',
+    maxBuffer: 10 * 1024 * 1024,
+  });
 
   const samples = new Int16Array(stdout.buffer, stdout.byteOffset, stdout.byteLength / 2);
 
@@ -36,12 +35,12 @@ export async function generateFingerprint(chunkPath: string): Promise<Buffer> {
       .map((e, i) => ({ e, i }))
       .sort((a, b) => b.e - a.e)
       .slice(0, 5)
-      .map((x) => x.i);
+      .map(x => x.i);
 
     peakData.push(...topBands);
   }
 
-  return crypto.createHash("md5").update(Buffer.from(peakData)).digest();
+  return crypto.createHash('md5').update(Buffer.from(peakData)).digest();
 }
 
 export function hammingDistance(a: Buffer, b: Buffer): number {

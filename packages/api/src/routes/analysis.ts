@@ -1,25 +1,25 @@
-import { Router } from "express";
-import { getAuth } from "@clerk/express";
-import { eq, and, sql } from "drizzle-orm";
-import { requireUser, getUserId } from "../middleware/auth.js";
-import { formatTime } from "@mix-match/shared";
-import { normalizeString } from "../services/aggregator.js";
-import { db } from "../db/client.js";
-import { analyses, segments, users } from "../db/schema.js";
-import { findAnalysis, findSegment, getAnalysisSegments } from "../db/helpers.js";
-import fs from "fs/promises";
-import path from "path";
-import { queueEvents, analysisQueue } from "../queue/index.js";
+import { Router } from 'express';
+import { getAuth } from '@clerk/express';
+import { eq, and, sql } from 'drizzle-orm';
+import { requireUser, getUserId } from '../middleware/auth.js';
+import { formatTime } from '@mix-match/shared';
+import { normalizeString } from '../services/aggregator.js';
+import { db } from '../db/client.js';
+import { analyses, segments, users } from '../db/schema.js';
+import { findAnalysis, findSegment, getAnalysisSegments } from '../db/helpers.js';
+import fs from 'fs/promises';
+import path from 'path';
+import { queueEvents, analysisQueue } from '../queue/index.js';
 
 export const analysisRouter = Router();
 
 // GET /api/analysis/compare?a=uuid1&b=uuid2
-analysisRouter.get("/analysis/compare", requireUser, async (req, res) => {
+analysisRouter.get('/analysis/compare', requireUser, async (req, res) => {
   const idA = req.query.a as string;
   const idB = req.query.b as string;
 
   if (!idA || !idB) {
-    res.status(400).json({ error: "Provide both ?a=id&b=id" });
+    res.status(400).json({ error: 'Provide both ?a=id&b=id' });
     return;
   }
 
@@ -27,15 +27,15 @@ analysisRouter.get("/analysis/compare", requireUser, async (req, res) => {
   const analysisB = await findAnalysis(idB);
 
   if (!analysisA || !analysisB) {
-    res.status(404).json({ error: "One or both analyses not found" });
+    res.status(404).json({ error: 'One or both analyses not found' });
     return;
   }
 
   const segsA = await getAnalysisSegments(idA);
   const segsB = await getAnalysisSegments(idB);
 
-  const identifiedA = segsA.filter(s => s.status === "identified");
-  const identifiedB = segsB.filter(s => s.status === "identified");
+  const identifiedA = segsA.filter(s => s.status === 'identified');
+  const identifiedB = segsB.filter(s => s.status === 'identified');
 
   // Find shared tracks by acrid
   const acridsA = new Set(identifiedA.map(s => s.acrid).filter(Boolean));
@@ -44,8 +44,8 @@ analysisRouter.get("/analysis/compare", requireUser, async (req, res) => {
   const sharedAcridsSet = new Set(sharedAcridsArr);
 
   // Also fuzzy match by normalized artist+title for tracks without matching acrids
-  const keysA = new Set(identifiedA.map(s => `${normalizeString(s.artist || "")}::${normalizeString(s.title || "")}`));
-  const keysB = new Set(identifiedB.map(s => `${normalizeString(s.artist || "")}::${normalizeString(s.title || "")}`));
+  const keysA = new Set(identifiedA.map(s => `${normalizeString(s.artist || '')}::${normalizeString(s.title || '')}`));
+  const keysB = new Set(identifiedB.map(s => `${normalizeString(s.artist || '')}::${normalizeString(s.title || '')}`));
   const sharedKeysArr = [...keysA].filter(k => keysB.has(k));
   const sharedKeysSet = new Set(sharedKeysArr);
 
@@ -61,8 +61,8 @@ analysisRouter.get("/analysis/compare", requireUser, async (req, res) => {
         addedNames.add(segA.trackName);
         sharedTracks.push({
           trackName: segA.trackName,
-          inA: `${Math.floor(segA.startSec / 60)}:${String(Math.floor(segA.startSec % 60)).padStart(2, "0")}`,
-          inB: `${Math.floor(segB.startSec / 60)}:${String(Math.floor(segB.startSec % 60)).padStart(2, "0")}`,
+          inA: `${Math.floor(segA.startSec / 60)}:${String(Math.floor(segA.startSec % 60)).padStart(2, '0')}`,
+          inB: `${Math.floor(segB.startSec / 60)}:${String(Math.floor(segB.startSec % 60)).padStart(2, '0')}`,
         });
       }
     }
@@ -70,14 +70,14 @@ analysisRouter.get("/analysis/compare", requireUser, async (req, res) => {
 
   // Add fuzzy matches not already covered by acrid
   for (const key of sharedKeysArr) {
-    const segA = identifiedA.find(s => `${normalizeString(s.artist || "")}::${normalizeString(s.title || "")}` === key);
-    const segB = identifiedB.find(s => `${normalizeString(s.artist || "")}::${normalizeString(s.title || "")}` === key);
+    const segA = identifiedA.find(s => `${normalizeString(s.artist || '')}::${normalizeString(s.title || '')}` === key);
+    const segB = identifiedB.find(s => `${normalizeString(s.artist || '')}::${normalizeString(s.title || '')}` === key);
     if (segA && segB && segA.trackName && !addedNames.has(segA.trackName)) {
       addedNames.add(segA.trackName);
       sharedTracks.push({
         trackName: segA.trackName,
-        inA: `${Math.floor(segA.startSec / 60)}:${String(Math.floor(segA.startSec % 60)).padStart(2, "0")}`,
-        inB: `${Math.floor(segB.startSec / 60)}:${String(Math.floor(segB.startSec % 60)).padStart(2, "0")}`,
+        inA: `${Math.floor(segA.startSec / 60)}:${String(Math.floor(segA.startSec % 60)).padStart(2, '0')}`,
+        inB: `${Math.floor(segB.startSec / 60)}:${String(Math.floor(segB.startSec % 60)).padStart(2, '0')}`,
       });
     }
   }
@@ -86,59 +86,73 @@ analysisRouter.get("/analysis/compare", requireUser, async (req, res) => {
     mixA: { id: idA, filename: analysisA.filename, totalTracks: identifiedA.length },
     mixB: { id: idB, filename: analysisB.filename, totalTracks: identifiedB.length },
     sharedTracks,
-    uniqueToA: identifiedA.filter(s => !sharedAcridsSet.has(s.acrid!) && !sharedKeysSet.has(`${normalizeString(s.artist || "")}::${normalizeString(s.title || "")}`)).length,
-    uniqueToB: identifiedB.filter(s => !sharedAcridsSet.has(s.acrid!) && !sharedKeysSet.has(`${normalizeString(s.artist || "")}::${normalizeString(s.title || "")}`)).length,
+    uniqueToA: identifiedA.filter(
+      s =>
+        !sharedAcridsSet.has(s.acrid!) &&
+        !sharedKeysSet.has(`${normalizeString(s.artist || '')}::${normalizeString(s.title || '')}`),
+    ).length,
+    uniqueToB: identifiedB.filter(
+      s =>
+        !sharedAcridsSet.has(s.acrid!) &&
+        !sharedKeysSet.has(`${normalizeString(s.artist || '')}::${normalizeString(s.title || '')}`),
+    ).length,
   });
 });
 
 // POST /api/analysis/manual — create tracklist from manual input
-analysisRouter.post("/analysis/manual", requireUser, async (req, res) => {
+analysisRouter.post('/analysis/manual', requireUser, async (req, res) => {
   const userId = getUserId(req);
 
   const { title, tracks } = req.body;
   // tracks: [{ trackName: string, artist: string, title: string, startSec: number, endSec: number }]
 
   if (!title || !Array.isArray(tracks) || tracks.length === 0) {
-    res.status(400).json({ error: "Title and at least one track required" });
+    res.status(400).json({ error: 'Title and at least one track required' });
     return;
   }
 
   await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
 
-  const [analysis] = await db.insert(analyses).values({
-    filename: title,
-    fileSize: 0,
-    status: "completed",
-    userId,
-  }).returning({ id: analyses.id });
+  const [analysis] = await db
+    .insert(analyses)
+    .values({
+      filename: title,
+      fileSize: 0,
+      status: 'completed',
+      userId,
+    })
+    .returning({ id: analyses.id });
 
   await db.insert(segments).values(
     tracks.map((t: any) => ({
       analysisId: analysis.id,
       startSec: t.startSec || 0,
       endSec: t.endSec || 0,
-      status: "identified",
+      status: 'identified',
       trackName: t.trackName || `${t.artist} - ${t.title}`,
       artist: t.artist || null,
       title: t.title || null,
       acrid: null,
       attempts: 1,
-    }))
+    })),
   );
 
   res.json({ analysisId: analysis.id });
 });
 
 // GET /api/analysis/:id/summary — generate mix summary
-analysisRouter.get("/analysis/:id/summary", async (req, res) => {
+analysisRouter.get('/analysis/:id/summary', async (req, res) => {
   const analysisId = req.params.id as string;
   const analysis = await findAnalysis(analysisId);
-  if (!analysis) { res.status(404).json({ error: "Not found" }); return; }
+  if (!analysis) {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
 
   const segs = await getAnalysisSegments(analysisId);
 
-  const identified = segs.filter(s => s.status === "identified");
-  const unknown = segs.filter(s => s.status === "unknown");
+  const identified = segs.filter(s => s.status === 'identified');
+  const unknown = segs.filter(s => s.status === 'unknown');
   const totalDuration = segs.length > 0 ? Math.max(...segs.map(s => s.endSec)) : 0;
 
   // Unique artists
@@ -160,8 +174,8 @@ analysisRouter.get("/analysis/:id/summary", async (req, res) => {
 
   // Generate text summary
   const durationMin = Math.round(totalDuration / 60);
-  let summary = `${durationMin} minute mix with ${uniqueTracks.length} identified track${uniqueTracks.length !== 1 ? "s" : ""}`;
-  summary += ` from ${artists.length} artist${artists.length !== 1 ? "s" : ""}.`;
+  let summary = `${durationMin} minute mix with ${uniqueTracks.length} identified track${uniqueTracks.length !== 1 ? 's' : ''}`;
+  summary += ` from ${artists.length} artist${artists.length !== 1 ? 's' : ''}.`;
 
   if (topArtist && topArtist[1] > 1) {
     summary += ` Most featured: ${topArtist[0]} (${topArtist[1]} segments).`;
@@ -170,7 +184,7 @@ analysisRouter.get("/analysis/:id/summary", async (req, res) => {
   summary += ` ${coveragePercent}% of the mix was identified.`;
 
   if (unknown.length > 0) {
-    summary += ` ${unknown.length} section${unknown.length !== 1 ? "s" : ""} remain unidentified.`;
+    summary += ` ${unknown.length} section${unknown.length !== 1 ? 's' : ''} remain unidentified.`;
   }
 
   res.json({
@@ -188,17 +202,17 @@ analysisRouter.get("/analysis/:id/summary", async (req, res) => {
 });
 
 // GET /api/analysis/:id — poll result
-analysisRouter.get("/analysis/:id", async (req, res) => {
+analysisRouter.get('/analysis/:id', async (req, res) => {
   const analysis = await findAnalysis(req.params.id);
 
   if (!analysis) {
-    res.status(404).json({ error: "Analysis not found" });
+    res.status(404).json({ error: 'Analysis not found' });
     return;
   }
 
   const { userId } = getAuth(req);
   if (analysis.userId && analysis.userId !== userId) {
-    res.status(403).json({ error: "Not authorized" });
+    res.status(403).json({ error: 'Not authorized' });
     return;
   }
 
@@ -222,25 +236,25 @@ analysisRouter.get("/analysis/:id", async (req, res) => {
 });
 
 // GET /api/analysis/:id/progress — SSE stream
-analysisRouter.get("/analysis/:id/progress", async (req, res) => {
+analysisRouter.get('/analysis/:id/progress', async (req, res) => {
   const analysis = await findAnalysis(req.params.id);
 
   if (!analysis) {
-    res.status(404).json({ error: "Analysis not found" });
+    res.status(404).json({ error: 'Analysis not found' });
     return;
   }
 
   // If already done, send result immediately
-  if (analysis.status === "completed" || analysis.status === "failed") {
+  if (analysis.status === 'completed' || analysis.status === 'failed') {
     res.json(analysis);
     return;
   }
 
   // SSE headers
   res.writeHead(200, {
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive",
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache',
+    Connection: 'keep-alive',
   });
 
   const send = (data: Record<string, unknown>) => {
@@ -250,7 +264,7 @@ analysisRouter.get("/analysis/:id/progress", async (req, res) => {
   const onProgress = ({ jobId, data }: { jobId: string; data: unknown }) => {
     const progress = data as Record<string, unknown>;
     if (progress.analysisId === req.params.id) {
-      send({ type: "progress", ...progress });
+      send({ type: 'progress', ...progress });
     }
   };
 
@@ -258,7 +272,7 @@ analysisRouter.get("/analysis/:id/progress", async (req, res) => {
     const job = await analysisQueue.getJob(jobId);
     if (job?.data.analysisId === req.params.id) {
       const updated = await findAnalysis(req.params.id);
-      send({ type: "completed", results: updated!.results });
+      send({ type: 'completed', results: updated!.results });
       cleanup();
       res.end();
     }
@@ -267,45 +281,45 @@ analysisRouter.get("/analysis/:id/progress", async (req, res) => {
   const onFailed = async ({ jobId, failedReason }: { jobId: string; failedReason: string }) => {
     const job = await analysisQueue.getJob(jobId);
     if (job?.data.analysisId === req.params.id) {
-      send({ type: "failed", error: failedReason });
+      send({ type: 'failed', error: failedReason });
       cleanup();
       res.end();
     }
   };
 
   const cleanup = () => {
-    queueEvents.off("progress", onProgress);
-    queueEvents.off("completed", onCompleted);
-    queueEvents.off("failed", onFailed);
+    queueEvents.off('progress', onProgress);
+    queueEvents.off('completed', onCompleted);
+    queueEvents.off('failed', onFailed);
   };
 
-  queueEvents.on("progress", onProgress);
-  queueEvents.on("completed", onCompleted);
-  queueEvents.on("failed", onFailed);
+  queueEvents.on('progress', onProgress);
+  queueEvents.on('completed', onCompleted);
+  queueEvents.on('failed', onFailed);
 
-  req.on("close", cleanup);
+  req.on('close', cleanup);
 });
 
 // PATCH /api/analysis/:id/segments/:segId — manual track edit
-analysisRouter.patch("/analysis/:id/segments/:segId", async (req, res) => {
+analysisRouter.patch('/analysis/:id/segments/:segId', async (req, res) => {
   const { userId } = getAuth(req);
   const analysisId = req.params.id as string;
   const segId = req.params.segId as string;
   const { trackName, artist, title } = req.body;
 
   if (!trackName && !artist && !title) {
-    res.status(400).json({ error: "Provide trackName, artist, or title" });
+    res.status(400).json({ error: 'Provide trackName, artist, or title' });
     return;
   }
 
   // Verify ownership
   const analysis = await findAnalysis(analysisId);
   if (!analysis) {
-    res.status(404).json({ error: "Analysis not found" });
+    res.status(404).json({ error: 'Analysis not found' });
     return;
   }
   if (analysis.userId && analysis.userId !== userId) {
-    res.status(403).json({ error: "Not authorized" });
+    res.status(403).json({ error: 'Not authorized' });
     return;
   }
 
@@ -316,16 +330,13 @@ analysisRouter.patch("/analysis/:id/segments/:segId", async (req, res) => {
     .where(and(eq(segments.id, segId), eq(segments.analysisId, analysisId)))
     .limit(1);
   if (!segment) {
-    res.status(404).json({ error: "Segment not found" });
+    res.status(404).json({ error: 'Segment not found' });
     return;
   }
 
   // Build update - if only trackName provided, parse artist/title from it
-  const finalArtist =
-    artist || (trackName ? trackName.split(" - ")[0] : segment.artist);
-  const finalTitle =
-    title ||
-    (trackName ? trackName.split(" - ").slice(1).join(" - ") : segment.title);
+  const finalArtist = artist || (trackName ? trackName.split(' - ')[0] : segment.artist);
+  const finalTitle = title || (trackName ? trackName.split(' - ').slice(1).join(' - ') : segment.title);
   const finalTrackName = trackName || `${finalArtist} - ${finalTitle}`;
 
   await db
@@ -334,7 +345,7 @@ analysisRouter.patch("/analysis/:id/segments/:segId", async (req, res) => {
       trackName: finalTrackName,
       artist: finalArtist,
       title: finalTitle,
-      status: "identified",
+      status: 'identified',
       updatedAt: new Date(),
     })
     .where(eq(segments.id, segId));
@@ -344,68 +355,80 @@ analysisRouter.patch("/analysis/:id/segments/:segId", async (req, res) => {
 });
 
 // GET /api/analysis/:id/export/text
-analysisRouter.get("/analysis/:id/export/text", requireUser, async (req, res) => {
+analysisRouter.get('/analysis/:id/export/text', requireUser, async (req, res) => {
   const analysisId = req.params.id as string;
   const analysis = await findAnalysis(analysisId);
-  if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
+  if (!analysis) {
+    res.status(404).json({ error: 'Analysis not found' });
+    return;
+  }
 
   const segs = await getAnalysisSegments(analysisId);
 
-  const identified = segs.filter(s => s.status === "identified");
+  const identified = segs.filter(s => s.status === 'identified');
   const lines = identified.map((s, i) => {
     const start = formatTime(s.startSec);
     const end = formatTime(s.endSec);
     return `${i + 1}. ${start} - ${end}  ${s.trackName}`;
   });
 
-  res.setHeader("Content-Type", "text/plain");
-  res.setHeader("Content-Disposition", `attachment; filename="${analysis.filename || "tracklist"}.txt"`);
-  res.send(lines.join("\n"));
+  res.setHeader('Content-Type', 'text/plain');
+  res.setHeader('Content-Disposition', `attachment; filename="${analysis.filename || 'tracklist'}.txt"`);
+  res.send(lines.join('\n'));
 });
 
 // GET /api/analysis/:id/export/mixcloud
-analysisRouter.get("/analysis/:id/export/mixcloud", requireUser, async (req, res) => {
+analysisRouter.get('/analysis/:id/export/mixcloud', requireUser, async (req, res) => {
   const analysisId = req.params.id as string;
   const analysis = await findAnalysis(analysisId);
-  if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
+  if (!analysis) {
+    res.status(404).json({ error: 'Analysis not found' });
+    return;
+  }
 
   const segs = await getAnalysisSegments(analysisId);
 
-  const identified = segs.filter(s => s.status === "identified");
+  const identified = segs.filter(s => s.status === 'identified');
   const lines = identified.map(s => `${s.artist} - ${s.title} @ ${formatTime(s.startSec)}`);
 
-  res.setHeader("Content-Type", "text/plain");
-  res.setHeader("Content-Disposition", `attachment; filename="${analysis.filename || "tracklist"}_mixcloud.txt"`);
-  res.send(lines.join("\n"));
+  res.setHeader('Content-Type', 'text/plain');
+  res.setHeader('Content-Disposition', `attachment; filename="${analysis.filename || 'tracklist'}_mixcloud.txt"`);
+  res.send(lines.join('\n'));
 });
 
 // GET /api/analysis/:id/export/soundcloud
-analysisRouter.get("/analysis/:id/export/soundcloud", requireUser, async (req, res) => {
+analysisRouter.get('/analysis/:id/export/soundcloud', requireUser, async (req, res) => {
   const analysisId = req.params.id as string;
   const analysis = await findAnalysis(analysisId);
-  if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
+  if (!analysis) {
+    res.status(404).json({ error: 'Analysis not found' });
+    return;
+  }
 
   const segs = await getAnalysisSegments(analysisId);
 
-  const identified = segs.filter(s => s.status === "identified");
-  const lines = ["Tracklist:", ...identified.map(s => `${formatTime(s.startSec)} ${s.trackName}`)];
+  const identified = segs.filter(s => s.status === 'identified');
+  const lines = ['Tracklist:', ...identified.map(s => `${formatTime(s.startSec)} ${s.trackName}`)];
 
-  res.setHeader("Content-Type", "text/plain");
-  res.setHeader("Content-Disposition", `attachment; filename="${analysis.filename || "tracklist"}_soundcloud.txt"`);
-  res.send(lines.join("\n"));
+  res.setHeader('Content-Type', 'text/plain');
+  res.setHeader('Content-Disposition', `attachment; filename="${analysis.filename || 'tracklist'}_soundcloud.txt"`);
+  res.send(lines.join('\n'));
 });
 
 // POST /api/analysis/:id/export/spotify-playlist
-analysisRouter.post("/analysis/:id/export/spotify-playlist", requireUser, async (req, res) => {
+analysisRouter.post('/analysis/:id/export/spotify-playlist', requireUser, async (req, res) => {
   const userId = getUserId(req);
 
   const analysisId = req.params.id as string;
   const analysis = await findAnalysis(analysisId);
-  if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
+  if (!analysis) {
+    res.status(404).json({ error: 'Analysis not found' });
+    return;
+  }
 
   const segs = await getAnalysisSegments(analysisId);
 
-  const identified = segs.filter(s => s.status === "identified" && s.externalLinks);
+  const identified = segs.filter(s => s.status === 'identified' && s.externalLinks);
 
   // Extract Spotify track URIs
   const trackUris: string[] = [];
@@ -418,7 +441,7 @@ analysisRouter.post("/analysis/:id/export/spotify-playlist", requireUser, async 
   }
 
   if (trackUris.length === 0) {
-    res.status(400).json({ error: "No tracks with Spotify links found" });
+    res.status(400).json({ error: 'No tracks with Spotify links found' });
     return;
   }
 
@@ -426,44 +449,53 @@ analysisRouter.post("/analysis/:id/export/spotify-playlist", requireUser, async 
   const uniqueUris = [...new Set(trackUris)];
 
   res.json({
-    playlistName: analysis.filename || "MixMatch Tracklist",
+    playlistName: analysis.filename || 'MixMatch Tracklist',
     trackCount: uniqueUris.length,
     spotifyUris: uniqueUris,
   });
 });
 
 // GET /api/analysis/:id/export/youtube
-analysisRouter.get("/analysis/:id/export/youtube", requireUser, async (req, res) => {
+analysisRouter.get('/analysis/:id/export/youtube', requireUser, async (req, res) => {
   const analysisId = req.params.id as string;
   const analysis = await findAnalysis(analysisId);
-  if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
+  if (!analysis) {
+    res.status(404).json({ error: 'Analysis not found' });
+    return;
+  }
 
   const segs = await getAnalysisSegments(analysisId);
 
-  const identified = segs.filter(s => s.status === "identified");
+  const identified = segs.filter(s => s.status === 'identified');
   const lines = identified.map(s => `${formatTime(s.startSec)} ${s.trackName}`);
 
-  res.setHeader("Content-Type", "text/plain");
-  res.setHeader("Content-Disposition", `attachment; filename="${analysis.filename || "tracklist"}_youtube.txt"`);
-  res.send(lines.join("\n"));
+  res.setHeader('Content-Type', 'text/plain');
+  res.setHeader('Content-Disposition', `attachment; filename="${analysis.filename || 'tracklist'}_youtube.txt"`);
+  res.send(lines.join('\n'));
 });
 
 // PATCH /api/analysis/:id — update metadata (is_public, slug)
-analysisRouter.patch("/analysis/:id", requireUser, async (req, res) => {
+analysisRouter.patch('/analysis/:id', requireUser, async (req, res) => {
   const { userId } = getAuth(req);
   const analysisId = req.params.id as string;
   const { isPublic, slug } = req.body;
 
   const analysis = await findAnalysis(analysisId);
-  if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
-  if (analysis.userId && analysis.userId !== userId) { res.status(403).json({ error: "Not authorized" }); return; }
+  if (!analysis) {
+    res.status(404).json({ error: 'Analysis not found' });
+    return;
+  }
+  if (analysis.userId && analysis.userId !== userId) {
+    res.status(403).json({ error: 'Not authorized' });
+    return;
+  }
 
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   if (isPublic !== undefined) updates.isPublic = isPublic;
   if (slug !== undefined || isPublic) {
     // Generate slug server-side — ignore any client-provided value
-    const crypto = await import("crypto");
-    updates.slug = crypto.randomBytes(6).toString("hex");
+    const crypto = await import('crypto');
+    updates.slug = crypto.randomBytes(6).toString('hex');
   }
 
   await db.update(analyses).set(updates).where(eq(analyses.id, analysisId));
@@ -473,13 +505,19 @@ analysisRouter.patch("/analysis/:id", requireUser, async (req, res) => {
 });
 
 // DELETE /api/analysis/:id
-analysisRouter.delete("/analysis/:id", requireUser, async (req, res) => {
+analysisRouter.delete('/analysis/:id', requireUser, async (req, res) => {
   const { userId } = getAuth(req);
   const analysisId = req.params.id as string;
 
   const analysis = await findAnalysis(analysisId);
-  if (!analysis) { res.status(404).json({ error: "Not found" }); return; }
-  if (analysis.userId && analysis.userId !== userId) { res.status(403).json({ error: "Not authorized" }); return; }
+  if (!analysis) {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
+  if (analysis.userId && analysis.userId !== userId) {
+    res.status(403).json({ error: 'Not authorized' });
+    return;
+  }
 
   // Delete chunks directory if it exists
   if (analysis.chunksDir) {
@@ -494,26 +532,33 @@ analysisRouter.delete("/analysis/:id", requireUser, async (req, res) => {
 });
 
 // GET /api/t/:slug/og — returns HTML with OG meta tags for social sharing
-analysisRouter.get("/t/:slug/og", async (req, res) => {
+analysisRouter.get('/t/:slug/og', async (req, res) => {
   const slug = req.params.slug as string;
   const [analysis] = await db.select().from(analyses).where(eq(analyses.slug, slug)).limit(1);
-  if (!analysis || !analysis.isPublic) { res.status(404).send("Not found"); return; }
+  if (!analysis || !analysis.isPublic) {
+    res.status(404).send('Not found');
+    return;
+  }
 
   const segs = await getAnalysisSegments(analysis.id);
-  const identified = segs.filter(s => s.status === "identified");
+  const identified = segs.filter(s => s.status === 'identified');
 
-  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const esc = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
   const title = esc(`${analysis.filename} — MixMatch`);
   const description = esc(
     identified.length > 0
-      ? `${identified.length} tracks: ${identified.slice(0, 3).map(s => s.trackName).join(", ")}${identified.length > 3 ? "..." : ""}`
-      : "Tracklist identified by MixMatch"
+      ? `${identified.length} tracks: ${identified
+          .slice(0, 3)
+          .map(s => s.trackName)
+          .join(', ')}${identified.length > 3 ? '...' : ''}`
+      : 'Tracklist identified by MixMatch',
   );
-  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
   const publicUrl = `${frontendUrl}/t/${encodeURIComponent(slug)}`;
 
-  res.setHeader("Content-Type", "text/html");
+  res.setHeader('Content-Type', 'text/html');
   res.send(`<!DOCTYPE html>
 <html>
 <head>
@@ -528,40 +573,49 @@ analysisRouter.get("/t/:slug/og", async (req, res) => {
 </head>
 <body>
   <h1>${title}</h1>
-  <ul>${identified.map(s => `<li>${esc(s.trackName || "Unknown")}</li>`).join("")}</ul>
+  <ul>${identified.map(s => `<li>${esc(s.trackName || 'Unknown')}</li>`).join('')}</ul>
   <p><a href="${publicUrl}">View on MixMatch</a></p>
 </body>
 </html>`);
 });
 
 // GET /api/t/:slug — public tracklist (no auth required)
-analysisRouter.get("/t/:slug", async (req, res) => {
+analysisRouter.get('/t/:slug', async (req, res) => {
   const slug = req.params.slug as string;
 
   const [analysis] = await db.select().from(analyses).where(eq(analyses.slug, slug)).limit(1);
-  if (!analysis || !analysis.isPublic) { res.status(404).json({ error: "Not found" }); return; }
+  if (!analysis || !analysis.isPublic) {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
 
   const segs = await getAnalysisSegments(analysis.id);
 
   // Increment view count
-  await db.update(analyses).set({ viewCount: sql`${analyses.viewCount} + 1` }).where(eq(analyses.id, analysis.id));
+  await db
+    .update(analyses)
+    .set({ viewCount: sql`${analyses.viewCount} + 1` })
+    .where(eq(analyses.id, analysis.id));
 
   res.json({
     filename: analysis.filename,
-    segments: segs.filter(s => s.status === "identified"),
+    segments: segs.filter(s => s.status === 'identified'),
     createdAt: analysis.createdAt,
   });
 });
 
 // GET /api/analysis/:id/recommendations
-analysisRouter.get("/analysis/:id/recommendations", async (req, res) => {
+analysisRouter.get('/analysis/:id/recommendations', async (req, res) => {
   const analysisId = req.params.id as string;
   const analysis = await findAnalysis(analysisId);
-  if (!analysis) { res.status(404).json({ error: "Not found" }); return; }
+  if (!analysis) {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
 
   const segs = await getAnalysisSegments(analysisId);
 
-  const identified = segs.filter(s => s.status === "identified");
+  const identified = segs.filter(s => s.status === 'identified');
 
   // Artist frequency
   const artistFreq = new Map<string, { count: number; tracks: string[] }>();
@@ -569,7 +623,7 @@ analysisRouter.get("/analysis/:id/recommendations", async (req, res) => {
     if (!s.artist) return;
     const entry = artistFreq.get(s.artist) || { count: 0, tracks: [] };
     entry.count++;
-    if (!entry.tracks.includes(s.title || "")) entry.tracks.push(s.title || "");
+    if (!entry.tracks.includes(s.title || '')) entry.tracks.push(s.title || '');
     artistFreq.set(s.artist, entry);
   });
 
@@ -581,17 +635,20 @@ analysisRouter.get("/analysis/:id/recommendations", async (req, res) => {
   // Unique tracks with Spotify links for discovery
   const tracksWithLinks = identified
     .filter(s => s.externalLinks && (s.externalLinks as Record<string, string>).spotify)
-    .reduce((acc, s) => {
-      if (!acc.find(t => t.acrid === s.acrid)) {
-        acc.push({
-          trackName: s.trackName,
-          artist: s.artist,
-          acrid: s.acrid,
-          spotifyUrl: (s.externalLinks as Record<string, string>).spotify,
-        });
-      }
-      return acc;
-    }, [] as { trackName: string | null; artist: string | null; acrid: string | null; spotifyUrl: string }[]);
+    .reduce(
+      (acc, s) => {
+        if (!acc.find(t => t.acrid === s.acrid)) {
+          acc.push({
+            trackName: s.trackName,
+            artist: s.artist,
+            acrid: s.acrid,
+            spotifyUrl: (s.externalLinks as Record<string, string>).spotify,
+          });
+        }
+        return acc;
+      },
+      [] as { trackName: string | null; artist: string | null; acrid: string | null; spotifyUrl: string }[],
+    );
 
   res.json({
     topArtists,

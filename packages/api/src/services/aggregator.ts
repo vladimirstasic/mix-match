@@ -1,13 +1,13 @@
-import type { RawMatch, TrackMatch } from "@mix-match/shared";
-import { CHUNK_DURATION_SEC } from "@mix-match/shared";
-import { formatTimestamp } from "./ffmpeg.js";
+import type { RawMatch, TrackMatch } from '@mix-match/shared';
+import { CHUNK_DURATION_SEC } from '@mix-match/shared';
+import { formatTimestamp } from './ffmpeg.js';
 
 export function normalizeString(s: string): string {
   return s
     .toLowerCase()
-    .replace(/\(.*?\)/g, "")
-    .replace(/\[.*?\]/g, "")
-    .replace(/\s+/g, " ")
+    .replace(/\(.*?\)/g, '')
+    .replace(/\[.*?\]/g, '')
+    .replace(/\s+/g, ' ')
     .trim();
 }
 
@@ -33,7 +33,7 @@ function pickRepresentative(matches: RawMatch[]): RawMatch {
       bestCount = count;
     }
   }
-  return matches.find((m) => m.acrid === bestAcrid) || matches[0];
+  return matches.find(m => m.acrid === bestAcrid) || matches[0];
 }
 
 export function aggregateMatches(raw: RawMatch[]): TrackMatch[] {

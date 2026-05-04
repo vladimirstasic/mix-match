@@ -1,6 +1,6 @@
-import { useState, useRef } from "react";
-import type { Segment } from "@mix-match/shared";
-import { formatTime } from "@mix-match/shared";
+import { useState, useRef } from 'react';
+import type { Segment } from '@mix-match/shared';
+import { formatTime } from '@mix-match/shared';
 
 interface Props {
   segments: Segment[];
@@ -8,7 +8,6 @@ interface Props {
   waveformData?: number[] | null;
   onSegmentClick?: (segmentId: string) => void;
 }
-
 
 export function Waveform({ segments, totalDuration, waveformData, onSegmentClick }: Props) {
   const [hover, setHover] = useState<{ x: number; seconds: number; segment: Segment | null } | null>(null);
@@ -30,19 +29,19 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
   };
 
   const getBarColor = (segment: Segment | null, isHovered: boolean) => {
-    if (!segment) return isHovered ? "bg-muted-foreground/40" : "bg-muted-foreground/15";
-    if (segment.status === "retrying") return isHovered ? "bg-yellow-400" : "bg-yellow-500/70";
-    if (segment.status === "unknown") return isHovered ? "bg-muted-foreground/40" : "bg-muted-foreground/25";
-    if (segment.status === "identified") {
+    if (!segment) return isHovered ? 'bg-muted-foreground/40' : 'bg-muted-foreground/15';
+    if (segment.status === 'retrying') return isHovered ? 'bg-yellow-400' : 'bg-yellow-500/70';
+    if (segment.status === 'unknown') return isHovered ? 'bg-muted-foreground/40' : 'bg-muted-foreground/25';
+    if (segment.status === 'identified') {
       const conf = segment.confidence;
       if (conf != null) {
-        if (conf >= 80) return isHovered ? "bg-green-400" : "bg-green-500/70";
-        if (conf >= 50) return isHovered ? "bg-lime-400" : "bg-lime-500/70";
-        return isHovered ? "bg-orange-400" : "bg-orange-500/70";
+        if (conf >= 80) return isHovered ? 'bg-green-400' : 'bg-green-500/70';
+        if (conf >= 50) return isHovered ? 'bg-lime-400' : 'bg-lime-500/70';
+        return isHovered ? 'bg-orange-400' : 'bg-orange-500/70';
       }
-      return isHovered ? "bg-green-400" : "bg-green-500/70";
+      return isHovered ? 'bg-green-400' : 'bg-green-500/70';
     }
-    return isHovered ? "bg-muted-foreground/40" : "bg-muted-foreground/20";
+    return isHovered ? 'bg-muted-foreground/40' : 'bg-muted-foreground/20';
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -74,7 +73,7 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
         >
           <div className="bg-popover border border-border rounded-lg shadow-lg px-3 py-2 w-[280px] text-center">
             <p className="text-xs font-mono text-muted-foreground">{formatTime(hover.seconds)}</p>
-            {hover.segment?.status === "identified" ? (
+            {hover.segment?.status === 'identified' ? (
               <>
                 <p className="text-sm font-medium mt-0.5">{hover.segment.trackName}</p>
                 {hover.segment.confidence != null && (
@@ -84,9 +83,7 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
             ) : (
               <p className="text-xs text-muted-foreground italic mt-0.5">Unknown</p>
             )}
-            {hover.segment?.bpm && (
-              <p className="text-xs text-muted-foreground mt-0.5">{hover.segment.bpm} BPM</p>
-            )}
+            {hover.segment?.bpm && <p className="text-xs text-muted-foreground mt-0.5">{hover.segment.bpm} BPM</p>}
           </div>
         </div>
       )}
@@ -124,7 +121,11 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
 
         {/* Energy curve overlay */}
         {waveformData && waveformData.length > 10 && (
-          <svg className="absolute inset-0 pointer-events-none" viewBox={`0 0 ${barCount} 100`} preserveAspectRatio="none">
+          <svg
+            className="absolute inset-0 pointer-events-none"
+            viewBox={`0 0 ${barCount} 100`}
+            preserveAspectRatio="none"
+          >
             <path
               d={(() => {
                 // Smooth the data with a moving average (window of 10)
@@ -137,7 +138,7 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
                   return sum / (end - start);
                 });
                 const points = smoothed.map((v, i) => `${i},${100 - v * 95}`);
-                return `M${points.join(" L")}`;
+                return `M${points.join(' L')}`;
               })()}
               fill="none"
               stroke="currentColor"
@@ -150,30 +151,30 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
 
       {/* Transition markers */}
       <div className="absolute top-0 bottom-6 left-0 right-0 pointer-events-none">
-        {segments.filter(s => s.status === "identified").map((seg, i, arr) => {
-          if (i === 0) return null;
-          const prev = arr[i - 1];
-          if (!prev || prev.endSec === seg.startSec || Math.abs(prev.endSec - seg.startSec) < 5) {
-            const xPercent = (seg.startSec / totalDuration) * 100;
-            return (
-              <div
-                key={seg.id}
-                className="absolute top-0 bottom-0 w-px bg-white/30"
-                style={{ left: `${xPercent}%` }}
-                title={`Transition at ${formatTime(seg.startSec)}`}
-              />
-            );
-          }
-          return null;
-        })}
+        {segments
+          .filter(s => s.status === 'identified')
+          .map((seg, i, arr) => {
+            if (i === 0) return null;
+            const prev = arr[i - 1];
+            if (!prev || prev.endSec === seg.startSec || Math.abs(prev.endSec - seg.startSec) < 5) {
+              const xPercent = (seg.startSec / totalDuration) * 100;
+              return (
+                <div
+                  key={seg.id}
+                  className="absolute top-0 bottom-0 w-px bg-white/30"
+                  style={{ left: `${xPercent}%` }}
+                  title={`Transition at ${formatTime(seg.startSec)}`}
+                />
+              );
+            }
+            return null;
+          })}
       </div>
 
       {/* Time axis */}
       <div className="flex justify-between mt-1 px-0.5">
         <span className="text-xs text-muted-foreground">0:00</span>
-        {totalDuration > 600 && (
-          <span className="text-xs text-muted-foreground">{formatTime(totalDuration / 2)}</span>
-        )}
+        {totalDuration > 600 && <span className="text-xs text-muted-foreground">{formatTime(totalDuration / 2)}</span>}
         <span className="text-xs text-muted-foreground">{formatTime(totalDuration)}</span>
       </div>
 

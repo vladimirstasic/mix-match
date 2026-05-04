@@ -1,23 +1,23 @@
-import { Router } from "express";
-import { config } from "../config.js";
-import { findAnalysis, getAnalysisSegments } from "../db/helpers.js";
+import { Router } from 'express';
+import { config } from '../config.js';
+import { findAnalysis, getAnalysisSegments } from '../db/helpers.js';
 
 export const spotifyRouter = Router();
 
-const SPOTIFY_REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || "http://127.0.0.1:3001/api/spotify/callback";
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const SPOTIFY_REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:3001/api/spotify/callback';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
 // GET /api/spotify/auth?analysisId=xxx — redirect to Spotify login
-spotifyRouter.get("/spotify/auth", (req, res) => {
+spotifyRouter.get('/spotify/auth', (req, res) => {
   const analysisId = req.query.analysisId as string;
   if (!analysisId) {
-    res.status(400).json({ error: "Missing analysisId" });
+    res.status(400).json({ error: 'Missing analysisId' });
     return;
   }
 
-  const scopes = "playlist-modify-public playlist-modify-private";
+  const scopes = 'playlist-modify-public playlist-modify-private';
   const params = new URLSearchParams({
-    response_type: "code",
+    response_type: 'code',
     client_id: config.spotify.clientId,
     scope: scopes,
     redirect_uri: SPOTIFY_REDIRECT_URI,
@@ -28,7 +28,7 @@ spotifyRouter.get("/spotify/auth", (req, res) => {
 });
 
 // GET /api/spotify/callback — Spotify returns auth code
-spotifyRouter.get("/spotify/callback", async (req, res) => {
+spotifyRouter.get('/spotify/callback', async (req, res) => {
   const code = req.query.code as string;
   const analysisId = req.query.state as string;
   const error = req.query.error as string;
@@ -40,21 +40,21 @@ spotifyRouter.get("/spotify/callback", async (req, res) => {
 
   try {
     // Exchange code for access token
-    const tokenRes = await fetch("https://accounts.spotify.com/api/token", {
-      method: "POST",
+    const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
       headers: {
-        "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Basic ${Buffer.from(`${config.spotify.clientId}:${config.spotify.clientSecret}`).toString("base64")}`,
+        'Content-Type': 'application/x-www-form-urlencoded',
+        Authorization: `Basic ${Buffer.from(`${config.spotify.clientId}:${config.spotify.clientSecret}`).toString('base64')}`,
       },
       body: new URLSearchParams({
-        grant_type: "authorization_code",
+        grant_type: 'authorization_code',
         code,
         redirect_uri: SPOTIFY_REDIRECT_URI,
       }),
     });
 
     if (!tokenRes.ok) {
-      console.error("[spotify] Token exchange failed:", await tokenRes.text());
+      console.error('[spotify] Token exchange failed:', await tokenRes.text());
       res.redirect(`${FRONTEND_URL}?spotify=error`);
       return;
     }
@@ -63,7 +63,7 @@ spotifyRouter.get("/spotify/callback", async (req, res) => {
     const accessToken = tokenData.access_token;
 
     // Get user profile
-    const profileRes = await fetch("https://api.spotify.com/v1/me", {
+    const profileRes = await fetch('https://api.spotify.com/v1/me', {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
     const profile = await profileRes.json();
@@ -80,7 +80,7 @@ spotifyRouter.get("/spotify/callback", async (req, res) => {
     // Collect Spotify URIs
     const trackUris: string[] = [];
     for (const seg of segs) {
-      if (seg.status === "identified" && seg.externalLinks) {
+      if (seg.status === 'identified' && seg.externalLinks) {
         const links = seg.externalLinks as Record<string, string>;
         if (links.spotify) {
           const match = links.spotify.match(/track\/([a-zA-Z0-9]+)/);
@@ -98,12 +98,12 @@ spotifyRouter.get("/spotify/callback", async (req, res) => {
     }
 
     // Create playlist
-    const playlistName = analysis.filename ? `${analysis.filename} — MixMatch` : "MixMatch Tracklist";
+    const playlistName = analysis.filename ? `${analysis.filename} — MixMatch` : 'MixMatch Tracklist';
     const createRes = await fetch(`https://api.spotify.com/v1/users/${profile.id}/playlists`, {
-      method: "POST",
+      method: 'POST',
       headers: {
         Authorization: `Bearer ${accessToken}`,
-        "Content-Type": "application/json",
+        'Content-Type': 'application/json',
       },
       body: JSON.stringify({
         name: playlistName,
@@ -113,7 +113,7 @@ spotifyRouter.get("/spotify/callback", async (req, res) => {
     });
 
     if (!createRes.ok) {
-      console.error("[spotify] Create playlist failed:", await createRes.text());
+      console.error('[spotify] Create playlist failed:', await createRes.text());
       res.redirect(`${FRONTEND_URL}?spotify=error`);
       return;
     }
@@ -124,10 +124,10 @@ spotifyRouter.get("/spotify/callback", async (req, res) => {
     for (let i = 0; i < trackUris.length; i += 100) {
       const batch = trackUris.slice(i, i + 100);
       await fetch(`https://api.spotify.com/v1/playlists/${playlist.id}/tracks`, {
-        method: "POST",
+        method: 'POST',
         headers: {
           Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({ uris: batch }),
       });
@@ -138,7 +138,7 @@ spotifyRouter.get("/spotify/callback", async (req, res) => {
     const playlistUrl = encodeURIComponent(playlist.external_urls.spotify);
     res.redirect(`${FRONTEND_URL}?spotify=success&playlist=${playlistUrl}`);
   } catch (err) {
-    console.error("[spotify] Error:", err);
+    console.error('[spotify] Error:', err);
     res.redirect(`${FRONTEND_URL}?spotify=error`);
   }
 });

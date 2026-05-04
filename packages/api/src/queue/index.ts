@@ -1,10 +1,10 @@
-import { Queue, QueueEvents } from "bullmq";
-import IORedis from "ioredis";
-import { config } from "../config.js";
+import { Queue, QueueEvents } from 'bullmq';
+import IORedis from 'ioredis';
+import { config } from '../config.js';
 
 export const redis = new IORedis(config.redisUrl, { maxRetriesPerRequest: null });
 
-export const analysisQueue = new Queue("analysis", {
+export const analysisQueue = new Queue('analysis', {
   connection: redis,
   defaultJobOptions: {
     attempts: 1,
@@ -13,7 +13,7 @@ export const analysisQueue = new Queue("analysis", {
   },
 });
 
-export const retryQueue = new Queue("retry", {
+export const retryQueue = new Queue('retry', {
   connection: redis,
   defaultJobOptions: {
     attempts: 1,
@@ -22,4 +22,4 @@ export const retryQueue = new Queue("retry", {
   },
 });
 
-export const queueEvents = new QueueEvents("analysis", { connection: redis.duplicate() });
+export const queueEvents = new QueueEvents('analysis', { connection: redis.duplicate() });
