@@ -2,9 +2,9 @@ import React, { useCallback, useRef, useState } from "react";
 import type { Segment, ExternalLinks } from "@mix-match/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RotateCw, Check, HelpCircle, Loader2, Pencil, Share2, EyeOff, Eye, Copy, Search, Bookmark } from "lucide-react";
+import { RotateCw, Check, HelpCircle, Loader2, Pencil, Share2, EyeOff, Eye, Copy, Search, Bookmark, ThumbsUp, ThumbsDown, Link2 } from "lucide-react";
 import { Waveform } from "./Waveform";
-import { toggleBookmark } from "../api/client";
+import { toggleBookmark, voteSegment } from "../api/client";
 
 interface Props {
   segments: Segment[];
@@ -133,6 +133,20 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
     }
     navigator.clipboard.writeText(text);
     setCopied(format);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const copyAsMarkdown = () => {
+    const identified = segments.filter(s => s.status === "identified");
+    const lines = [
+      `## ${analysisId} — Tracklist`,
+      "",
+      ...identified.map((s, i) => `${i + 1}. **${formatTime(s.startSec)}** — ${s.trackName}`),
+      "",
+      `_Identified by MixMatch_`,
+    ];
+    navigator.clipboard.writeText(lines.join("\n"));
+    setCopied("markdown");
     setTimeout(() => setCopied(null), 2000);
   };
 
@@ -303,6 +317,21 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
                       >
                         <Pencil className="w-3 h-3" />
                       </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Copy link to this timestamp"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const base = shareUrl || `${window.location.origin}/t/share`;
+                          const url = `${base}#t=${seg.startSec}`;
+                          navigator.clipboard.writeText(`${seg.trackName} @ ${formatTime(seg.startSec)} — ${url}`);
+                          setCopied(`share-${seg.id}`);
+                          setTimeout(() => setCopied(null), 2000);
+                        }}
+                      >
+                        {copied === `share-${seg.id}` ? <Check className="w-3 h-3" /> : <Link2 className="w-3 h-3" />}
+                      </Button>
                       <button
                         className={`p-1 rounded transition-colors shrink-0 ${
                           bookmarkedIds.has(seg.id)
@@ -314,6 +343,12 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
                       >
                         <Bookmark className={`w-4 h-4 ${bookmarkedIds.has(seg.id) ? "fill-blue-500" : ""}`} />
                       </button>
+                      <Button variant="ghost" size="sm" className="text-green-500" onClick={(e) => { e.stopPropagation(); voteSegment(seg.id, 1); }}>
+                        <ThumbsUp className="w-3 h-3" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-red-500" onClick={(e) => { e.stopPropagation(); voteSegment(seg.id, -1); }}>
+                        <ThumbsDown className="w-3 h-3" />
+                      </Button>
                     </>
                   )}
                 </>
@@ -401,6 +436,10 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
         <Button variant="outline" size="sm" onClick={() => copyTracklist("youtube")}>
           <Copy className="w-4 h-4 mr-1" />
           {copied === "youtube" ? "Copied!" : "YT Chapters"}
+        </Button>
+        <Button variant="outline" size="sm" onClick={copyAsMarkdown}>
+          <Copy className="w-4 h-4 mr-1" />
+          {copied === "markdown" ? "Copied!" : "Markdown"}
         </Button>
         {segments.some(s => s.status === "identified" && s.externalLinks && (s.externalLinks as Record<string, string>).spotify) && (
           <Button

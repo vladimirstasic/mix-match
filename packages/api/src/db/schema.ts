@@ -52,3 +52,19 @@ export const segments = pgTable("segments", {
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
+
+export const votes = pgTable("votes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  segmentId: uuid("segment_id").notNull().references(() => segments.id, { onDelete: "cascade" }),
+  userId: varchar("user_id", { length: 255 }).notNull().references(() => users.clerkId),
+  value: integer("value").notNull(), // +1 or -1
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const comments = pgTable("comments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  segmentId: uuid("segment_id").notNull().references(() => segments.id, { onDelete: "cascade" }),
+  userId: varchar("user_id", { length: 255 }).notNull().references(() => users.clerkId),
+  text: varchar("text", { length: 500 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});

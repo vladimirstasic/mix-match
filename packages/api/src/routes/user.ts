@@ -6,6 +6,16 @@ import { analyses, users, segments } from "../db/schema.js";
 
 export const userRouter = Router();
 
+userRouter.get("/user/profile", async (req, res) => {
+  const { userId } = getAuth(req);
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const [user] = await db.select().from(users).where(eq(users.clerkId, userId)).limit(1);
+  if (!user) { res.json({ username: null }); return; }
+
+  res.json({ username: user.username, plan: user.plan });
+});
+
 userRouter.get("/user/analyses", async (req, res) => {
   const { userId } = getAuth(req);
   if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }

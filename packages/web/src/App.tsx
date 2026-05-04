@@ -4,6 +4,7 @@ import { FileUpload } from "./components/FileUpload";
 import { ProgressBar } from "./components/ProgressBar";
 import { Timeline } from "./components/Timeline";
 import { Dashboard } from "./components/Dashboard";
+import { ProfileSettings } from "./components/ProfileSettings";
 import { LandingPage } from "./components/LandingPage";
 import { PublicTracklist } from "./components/PublicTracklist";
 import { DjProfile } from "./components/DjProfile";
@@ -87,6 +88,9 @@ function App() {
                         </Button>
                       </div>
                       <FileUpload onFileSelected={startAnalysis} onUrlSubmitted={startAnalysisFromUrl} />
+                      <div className="mt-8">
+                        <ProfileSettings />
+                      </div>
                     </>
                   )}
 

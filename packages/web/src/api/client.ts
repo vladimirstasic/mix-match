@@ -155,6 +155,15 @@ export async function compareMixes(idA: string, idB: string): Promise<CompareRes
   return res.json();
 }
 
+export async function voteSegment(segmentId: string, value: 1 | -1): Promise<{ score: number }> {
+  const res = await fetch(`${API_BASE}/segments/${segmentId}/vote`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ value }),
+  });
+  return res.json();
+}
+
 export async function editSegment(
   analysisId: string, segmentId: string, trackName: string
 ): Promise<Segment> {

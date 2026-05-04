@@ -422,6 +422,48 @@ analysisRouter.delete("/analysis/:id", async (req, res) => {
   res.json({ ok: true });
 });
 
+// GET /api/t/:slug/og — returns HTML with OG meta tags for social sharing
+analysisRouter.get("/t/:slug/og", async (req, res) => {
+  const slug = req.params.slug as string;
+  const [analysis] = await db.select().from(analyses).where(eq(analyses.slug, slug)).limit(1);
+  if (!analysis || !analysis.isPublic) { res.status(404).send("Not found"); return; }
+
+  const segs = await db.select().from(segments)
+    .where(eq(segments.analysisId, analysis.id)).orderBy(segments.startSec);
+  const identified = segs.filter(s => s.status === "identified");
+
+  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+  const title = esc(`${analysis.filename} — MixMatch`);
+  const description = esc(
+    identified.length > 0
+      ? `${identified.length} tracks: ${identified.slice(0, 3).map(s => s.trackName).join(", ")}${identified.length > 3 ? "..." : ""}`
+      : "Tracklist identified by MixMatch"
+  );
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const publicUrl = `${frontendUrl}/t/${encodeURIComponent(slug)}`;
+
+  res.setHeader("Content-Type", "text/html");
+  res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <title>${title}</title>
+  <meta property="og:title" content="${title}" />
+  <meta property="og:description" content="${description}" />
+  <meta property="og:type" content="music.playlist" />
+  <meta property="og:url" content="${publicUrl}" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="${title}" />
+  <meta name="twitter:description" content="${description}" />
+</head>
+<body>
+  <h1>${title}</h1>
+  <ul>${identified.map(s => `<li>${esc(s.trackName || "Unknown")}</li>`).join("")}</ul>
+  <p><a href="${publicUrl}">View on MixMatch</a></p>
+</body>
+</html>`);
+});
+
 // GET /api/t/:slug — public tracklist (no auth required)
 analysisRouter.get("/t/:slug", async (req, res) => {
   const slug = req.params.slug as string;

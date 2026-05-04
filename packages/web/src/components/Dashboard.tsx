@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { getUserAnalyses, deleteAnalysis, toggleFavorite, updateAnalysisTags, type AnalysisSummary } from "../api/client";
-import { Clock, CheckCircle, Loader2, XCircle, ExternalLink, Trash2, Star, Plus, X, Filter } from "lucide-react";
+import { getUserAnalyses, deleteAnalysis, toggleFavorite, updateAnalysisTags, updateAnalysis, type AnalysisSummary } from "../api/client";
+import { Clock, CheckCircle, Loader2, XCircle, ExternalLink, Trash2, Star, Plus, X, Filter, Lock, Unlock } from "lucide-react";
 
 interface Props {
   onSelectAnalysis: (id: string) => void;
@@ -69,6 +69,15 @@ export function Dashboard({ onSelectAnalysis }: Props) {
     const updated = (analysis.tags ?? []).filter((t) => t !== tag);
     await updateAnalysisTags(analysisId, updated);
     setAnalyses((prev) => prev.map((a) => a.id === analysisId ? { ...a, tags: updated } : a));
+  };
+
+  const handleTogglePublic = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    const analysis = analyses.find((a) => a.id === id);
+    if (!analysis) return;
+    const newVal = !analysis.isPublic;
+    await updateAnalysis(id, { isPublic: newVal });
+    setAnalyses((prev) => prev.map((a) => a.id === id ? { ...a, isPublic: newVal } : a));
   };
 
   if (loading) {
@@ -159,6 +168,17 @@ export function Dashboard({ onSelectAnalysis }: Props) {
                 title={a.isFavorite ? "Remove from favorites" : "Add to favorites"}
               >
                 <Star className={`w-4 h-4 ${a.isFavorite ? "fill-yellow-500" : ""}`} />
+              </button>
+              <button
+                className={`p-1 rounded transition-colors shrink-0 ${
+                  a.isPublic
+                    ? "text-green-500 hover:text-green-400"
+                    : "text-muted-foreground/40 hover:text-muted-foreground"
+                }`}
+                onClick={(e) => handleTogglePublic(e, a.id)}
+                title={a.isPublic ? "Public — click to make private" : "Private — click to make public"}
+              >
+                {a.isPublic ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
               </button>
               <button
                 className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0"
