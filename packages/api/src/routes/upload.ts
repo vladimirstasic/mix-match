@@ -9,7 +9,7 @@ import { promisify } from 'util';
 import { v4 as uuid } from 'uuid';
 import { eq, lt, and, sql } from 'drizzle-orm';
 import { requireUser, getUserId } from '../middleware/auth.js';
-import { MAX_FILE_SIZE, ALLOWED_MIMETYPES } from '@mix-match/shared';
+import { MAX_FILE_SIZE, ALLOWED_MIMETYPES, PLANS, PLAN_CREDITS, ANALYSIS_MODES } from '@mix-match/shared';
 import { db } from '../db/client.js';
 import { analyses, users } from '../db/schema.js';
 import { findUser } from '../db/helpers.js';
@@ -50,7 +50,7 @@ async function checkCredits(userId: string, res: import('express').Response): Pr
   if (user) {
     // Reset credits if period expired
     if (user.creditsResetAt < new Date()) {
-      const resetCredits = user.plan === 'free' ? 3 : user.plan === 'pro' ? 30 : 999;
+      const resetCredits = PLAN_CREDITS[user.plan as keyof typeof PLAN_CREDITS] ?? PLAN_CREDITS[PLANS.FREE];
       await db
         .update(users)
         .set({
@@ -107,7 +107,7 @@ uploadRouter.post('/upload', upload.single('file'), requireUser, async (req, res
     });
 
     // Mode from form data (default: fast)
-    const mode = req.body?.mode === 'detailed' ? 'detailed' : 'fast';
+    const mode = req.body?.mode === ANALYSIS_MODES.DETAILED ? ANALYSIS_MODES.DETAILED : ANALYSIS_MODES.FAST;
 
     // Check file cache
     const cachedAnalysisId = await redis.get(`acr:file:${fileHash}`);
@@ -148,7 +148,7 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
   const userId = getUserId(req);
 
   const { url, mode: rawMode } = req.body ?? {};
-  const mode = rawMode === 'detailed' ? 'detailed' : 'fast';
+  const mode = rawMode === ANALYSIS_MODES.DETAILED ? ANALYSIS_MODES.DETAILED : ANALYSIS_MODES.FAST;
 
   if (typeof url !== 'string' || !(url.startsWith('http://') || url.startsWith('https://'))) {
     res.status(400).json({ error: 'Invalid URL. Must start with http:// or https://' });

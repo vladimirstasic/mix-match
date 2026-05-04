@@ -28,6 +28,23 @@ export function formatTime(totalSeconds: number): string {
 export const CHUNKS_TTL_HOURS = 24;
 export const CHUNK_OVERLAP_SEC = 0;
 
+export const ANALYSIS_MODES = {
+  FAST: 'fast',
+  DETAILED: 'detailed',
+} as const;
+
+export const PLANS = {
+  FREE: 'free',
+  PRO: 'pro',
+  STUDIO: 'studio',
+} as const;
+
+export const PLAN_CREDITS = {
+  [PLANS.FREE]: 3,
+  [PLANS.PRO]: 30,
+  [PLANS.STUDIO]: 999,
+} as const;
+
 // Analysis modes — step between chunks (chunk is always 10s, ACRCloud uses first 10s)
 export const FAST_STEP_SEC = 120; // 2 min — ~38 calls for 75min mix
 export const DETAILED_STEP_SEC = 30; // 30s — ~150 calls for 75min mix
