@@ -1,0 +1,1 @@
+ALTER TABLE "segments" ADD COLUMN "genre" varchar(100);

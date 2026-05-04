@@ -82,6 +82,7 @@ export async function identifyChunk(chunkPath: string, startSec: number): Promis
           album: track.album?.name,
           score,
           bpm: track.bpm ?? null,
+          genre: track.genres?.[0]?.name ?? null,
           durationMs: track.duration_ms ?? null,
           startSec,
           externalLinks: Object.keys(externalLinks).length > 0 ? externalLinks : undefined,

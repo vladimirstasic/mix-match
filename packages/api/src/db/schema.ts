@@ -29,6 +29,7 @@ export const analyses = pgTable("analyses", {
   isPublic: boolean("is_public").default(false),
   isFavorite: boolean("is_favorite").default(false),
   slug: varchar("slug", { length: 50 }).unique(),
+  viewCount: integer("view_count").default(0),
   tags: jsonb("tags").$type<string[]>().default([]),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -46,6 +47,7 @@ export const segments = pgTable("segments", {
   acrid: varchar("acrid", { length: 100 }),
   confidence: real("confidence"),
   bpm: integer("bpm"),
+  genre: varchar("genre", { length: 100 }),
   externalLinks: jsonb("external_links"),
   isBookmarked: boolean("is_bookmarked").default(false),
   attempts: integer("attempts").notNull().default(1),
@@ -66,5 +68,12 @@ export const comments = pgTable("comments", {
   segmentId: uuid("segment_id").notNull().references(() => segments.id, { onDelete: "cascade" }),
   userId: varchar("user_id", { length: 255 }).notNull().references(() => users.clerkId),
   text: varchar("text", { length: 500 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const follows = pgTable("follows", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  followerId: varchar("follower_id", { length: 255 }).notNull().references(() => users.clerkId, { onDelete: "cascade" }),
+  followingUsername: varchar("following_username", { length: 50 }).notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });

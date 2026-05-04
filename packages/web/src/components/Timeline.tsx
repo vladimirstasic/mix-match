@@ -2,10 +2,11 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { Segment, ExternalLinks } from "@mix-match/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RotateCw, Check, HelpCircle, Loader2, Pencil, Share2, EyeOff, Eye, Copy, Search, Bookmark, ThumbsUp, ThumbsDown, Link2 } from "lucide-react";
+import { RotateCw, Check, HelpCircle, Loader2, Pencil, Share2, EyeOff, Eye, Copy, Search, Bookmark, ThumbsUp, ThumbsDown, Link2, MessageCircle } from "lucide-react";
 import { Waveform } from "./Waveform";
 import { Recommendations } from "./Recommendations";
-import { toggleBookmark, voteSegment } from "../api/client";
+import { toggleBookmark, voteSegment, getComments, addComment } from "../api/client";
+import type { Comment } from "../api/client";
 
 interface Props {
   segments: Segment[];
@@ -102,6 +103,9 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
     return new Set(segments.filter(s => s.isBookmarked).map(s => s.id));
   });
   const [summary, setSummary] = useState<{ summary: string; stats: any; artists: string[] } | null>(null);
+  const [commentSegId, setCommentSegId] = useState<string | null>(null);
+  const [commentsList, setCommentsList] = useState<Comment[]>([]);
+  const [commentText, setCommentText] = useState("");
 
   useEffect(() => {
     fetch(`/api/analysis/${analysisId}/summary`)
@@ -331,6 +335,11 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
                           {seg.bpm} BPM
                         </span>
                       )}
+                      {seg.genre && (
+                        <span className="text-xs text-muted-foreground bg-muted rounded px-1.5 py-0.5">
+                          {seg.genre}
+                        </span>
+                      )}
                       {seg.externalLinks && (
                         <StreamingLinks
                           links={seg.externalLinks}
@@ -383,6 +392,22 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
                       </Button>
                       <Button variant="ghost" size="sm" className="text-red-500" onClick={(e) => { e.stopPropagation(); voteSegment(seg.id, -1); }}>
                         <ThumbsDown className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={async (e) => {
+                          e.stopPropagation();
+                          if (commentSegId === seg.id) {
+                            setCommentSegId(null);
+                          } else {
+                            setCommentSegId(seg.id);
+                            const comments = await getComments(seg.id);
+                            setCommentsList(comments);
+                          }
+                        }}
+                      >
+                        <MessageCircle className="w-3 h-3" />
                       </Button>
                     </>
                   )}
@@ -443,6 +468,28 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
                     style={{ border: "none" }}
                   />
                 )}
+              </div>
+            )}
+            {commentSegId === seg.id && (
+              <div className="px-4 pb-4 space-y-2">
+                {commentsList.map(c => (
+                  <p key={c.id} className="text-xs text-muted-foreground">{c.text}</p>
+                ))}
+                <div className="flex gap-2">
+                  <input
+                    value={commentText}
+                    onChange={e => setCommentText(e.target.value)}
+                    placeholder="Add a comment..."
+                    className="flex-1 px-2 py-1 text-xs rounded border border-input bg-background"
+                    onKeyDown={async e => {
+                      if (e.key === "Enter" && commentText.trim()) {
+                        const comment = await addComment(seg.id, commentText.trim());
+                        setCommentsList(prev => [...prev, comment]);
+                        setCommentText("");
+                      }
+                    }}
+                  />
+                </div>
               </div>
             )}
           </Card>

@@ -86,6 +86,7 @@ const worker = new Worker<AnalysisJobData>(
           title: s.title,
           acrid: s.acrid,
           bpm: s.bpm,
+          genre: s.genre,
           externalLinks: s.externalLinks,
           attempts: 1,
         }))

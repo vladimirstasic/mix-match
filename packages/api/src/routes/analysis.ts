@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { getAuth } from "@clerk/express";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { analyses, segments } from "../db/schema.js";
+import { analyses, segments, users } from "../db/schema.js";
 import fs from "fs/promises";
 import path from "path";
 import { queueEvents, analysisQueue } from "../queue/index.js";
@@ -88,6 +88,45 @@ analysisRouter.get("/analysis/compare", async (req, res) => {
     uniqueToA: identifiedA.filter(s => !sharedAcridsSet.has(s.acrid!) && !sharedKeysSet.has(`${normalize(s.artist || "")}::${normalize(s.title || "")}`)).length,
     uniqueToB: identifiedB.filter(s => !sharedAcridsSet.has(s.acrid!) && !sharedKeysSet.has(`${normalize(s.artist || "")}::${normalize(s.title || "")}`)).length,
   });
+});
+
+// POST /api/analysis/manual — create tracklist from manual input
+analysisRouter.post("/analysis/manual", async (req, res) => {
+  const { userId } = getAuth(req);
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const { title, tracks } = req.body;
+  // tracks: [{ trackName: string, artist: string, title: string, startSec: number, endSec: number }]
+
+  if (!title || !Array.isArray(tracks) || tracks.length === 0) {
+    res.status(400).json({ error: "Title and at least one track required" });
+    return;
+  }
+
+  await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
+
+  const [analysis] = await db.insert(analyses).values({
+    filename: title,
+    fileSize: 0,
+    status: "completed",
+    userId,
+  }).returning({ id: analyses.id });
+
+  await db.insert(segments).values(
+    tracks.map((t: any) => ({
+      analysisId: analysis.id,
+      startSec: t.startSec || 0,
+      endSec: t.endSec || 0,
+      status: "identified",
+      trackName: t.trackName || `${t.artist} - ${t.title}`,
+      artist: t.artist || null,
+      title: t.title || null,
+      acrid: null,
+      attempts: 1,
+    }))
+  );
+
+  res.json({ analysisId: analysis.id });
 });
 
 // GET /api/analysis/:id/summary — generate mix summary
@@ -532,6 +571,9 @@ analysisRouter.get("/t/:slug", async (req, res) => {
 
   const segs = await db.select().from(segments)
     .where(eq(segments.analysisId, analysis.id)).orderBy(segments.startSec);
+
+  // Increment view count
+  await db.update(analyses).set({ viewCount: sql`${analyses.viewCount} + 1` }).where(eq(analyses.id, analysis.id));
 
   res.json({
     filename: analysis.filename,
