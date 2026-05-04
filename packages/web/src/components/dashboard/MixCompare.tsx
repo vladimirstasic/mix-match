@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, ArrowLeft, Music, Check } from 'lucide-react';
-import { compareMixes, getUserAnalyses, type CompareResult, type AnalysisSummary } from '../api/client';
+import { compareMixes, getUserAnalyses, type CompareResult, type AnalysisSummary } from '../../api/client';
 
 interface Props {
   onBack: () => void;

@@ -1,8 +1,7 @@
 import type { AnalysisMode } from '@mix-match/shared';
-import { Dashboard } from './Dashboard';
-import { FileUpload } from './FileUpload';
-import { ProfileSettings } from './ProfileSettings';
-import { Analytics } from './Analytics';
+import { Dashboard, Analytics } from '../dashboard';
+import { FileUpload } from '../upload';
+import { ProfileSettings } from '../profile';
 import { Button } from '@/components/ui/button';
 
 interface HomeViewProps {

@@ -7,7 +7,7 @@ import {
   updateAnalysisTags,
   updateAnalysis,
   type AnalysisSummary,
-} from '../api/client';
+} from '../../api/client';
 import {
   Clock,
   CheckCircle,

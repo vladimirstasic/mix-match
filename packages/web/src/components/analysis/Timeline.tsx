@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { Waveform } from './Waveform';
 import { Recommendations } from './Recommendations';
-import { toggleBookmark, voteSegment } from '../api/client';
+import { toggleBookmark, voteSegment } from '../../api/client';
 
 interface Props {
   segments: Segment[];
