@@ -8,6 +8,7 @@ import { retryRouter } from "./routes/retry.js";
 import { userRouter } from "./routes/user.js";
 import { spotifyRouter } from "./routes/spotify.js";
 import { communityRouter } from "./routes/community.js";
+import { errorHandler } from "./middleware/errorHandler.js";
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use("/api", retryRouter);
 app.use("/api", userRouter);
 app.use("/api", spotifyRouter);
 app.use("/api", communityRouter);
+app.use(errorHandler);
 
 app.listen(config.port, () => {
   console.log(`API server running on port ${config.port}`);

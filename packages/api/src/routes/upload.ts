@@ -6,11 +6,12 @@ import path from "path";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { v4 as uuid } from "uuid";
-import { getAuth } from "@clerk/express";
 import { eq, lt } from "drizzle-orm";
+import { requireUser, getUserId } from "../middleware/auth.js";
 import { MAX_FILE_SIZE, ALLOWED_MIMETYPES } from "@mix-match/shared";
 import { db } from "../db/client.js";
 import { analyses, users } from "../db/schema.js";
+import { findUser } from "../db/helpers.js";
 import { analysisQueue } from "../queue/index.js";
 import { redis } from "../queue/index.js";
 import { config } from "../config.js";
@@ -49,9 +50,8 @@ export const uploadRouter = Router();
 
 const execFileAsync = promisify(execFile);
 
-uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+uploadRouter.post("/upload", upload.single("file"), requireUser, async (req, res) => {
+  const userId = getUserId(req);
   const file = req.file;
   if (!file) {
     res.status(400).json({ error: "No file uploaded" });
@@ -67,7 +67,7 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
     }
 
     // Check credits
-    const [user] = await db.select().from(users).where(eq(users.clerkId, userId)).limit(1);
+    const user = await findUser(userId);
     if (user) {
       // Reset credits if period expired
       if (user.creditsResetAt < new Date()) {
@@ -127,9 +127,8 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
   }
 });
 
-uploadRouter.post("/upload-url", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+uploadRouter.post("/upload-url", requireUser, async (req, res) => {
+  const userId = getUserId(req);
 
   const { url, mode: rawMode } = req.body ?? {};
   const mode = rawMode === "detailed" ? "detailed" : "fast";
@@ -145,7 +144,7 @@ uploadRouter.post("/upload-url", async (req, res) => {
   await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
 
   // Check credits
-  const [user] = await db.select().from(users).where(eq(users.clerkId, userId)).limit(1);
+  const user = await findUser(userId);
   if (user) {
     // Reset credits if period expired
     if (user.creditsResetAt < new Date()) {
