@@ -135,7 +135,14 @@ function App() {
                           Feed
                         </Button>
                       </div>
-                      <FileUpload onFileSelected={startAnalysis} onUrlSubmitted={startAnalysisFromUrl} />
+                      {credits === 0 ? (
+                        <div className="text-center py-8 text-muted-foreground">
+                          <p className="font-medium">No credits remaining</p>
+                          <p className="text-sm mt-1">Credits reset monthly. Upgrade for more.</p>
+                        </div>
+                      ) : (
+                        <FileUpload onFileSelected={startAnalysis} onUrlSubmitted={startAnalysisFromUrl} />
+                      )}
                       <div className="mt-8">
                         <ProfileSettings />
                       </div>
