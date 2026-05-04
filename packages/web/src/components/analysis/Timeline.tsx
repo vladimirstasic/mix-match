@@ -275,7 +275,7 @@ export function Timeline({
         <h2 className="text-xl font-semibold">
           Found {identified.length} track{identified.length !== 1 ? 's' : ''}
           {unknown.length > 0 && (
-            <span className="text-muted-foreground font-normal text-base ml-2">({unknown.length} unidentified)</span>
+            <span className="text-muted-foreground font-normal text-base ml-2">({unknown.length} unidentified section{unknown.length !== 1 ? 's' : ''})</span>
           )}
         </h2>
         <div className="flex gap-2">
