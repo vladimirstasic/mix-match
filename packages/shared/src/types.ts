@@ -7,6 +7,7 @@ export interface TrackMatch {
   acrid?: string;
   bpm?: number | null;
   genre?: string | null;
+  score?: number | null;
   externalLinks?: ExternalLinks;
 }
 
