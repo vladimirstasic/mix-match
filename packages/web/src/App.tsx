@@ -111,7 +111,12 @@ function App() {
                     )}
                     <UserButton />
                   </div>
-                  <h1 className="text-3xl font-bold tracking-tight">Mix Match</h1>
+                  <h1
+                    className="text-3xl font-bold tracking-tight cursor-pointer hover:text-primary transition-colors"
+                    onClick={() => { reset(); setShowCompare(false); setShowManual(false); setShowFeed(false); }}
+                  >
+                    Mix Match
+                  </h1>
                   <p className="text-muted-foreground mt-2">Upload a DJ mix and identify every track</p>
                 </header>
 
