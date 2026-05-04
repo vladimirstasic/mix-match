@@ -32,7 +32,6 @@ export function PublicTracklist() {
   const [data, setData] = useState<PublicData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [comments, setComments] = useState<Record<string, { text: string; createdAt: string }[]>>({});
 
   useEffect(() => {
     if (!slug) return;
@@ -45,17 +44,6 @@ export function PublicTracklist() {
       .catch(() => setError("Tracklist not found"))
       .finally(() => setLoading(false));
   }, [slug]);
-
-  useEffect(() => {
-    if (!data) return;
-    data.segments.forEach(seg => {
-      fetch(`${API_BASE}/segments/${seg.id}/comments`)
-        .then(r => r.ok ? r.json() : [])
-        .then((c: { text: string; createdAt: string }[]) => {
-          if (c.length > 0) setComments(prev => ({ ...prev, [seg.id]: c }));
-        });
-    });
-  }, [data]);
 
   if (loading) {
     return (
@@ -114,13 +102,6 @@ export function PublicTracklist() {
                   )}
                 </CardContent>
               </Card>
-              {comments[seg.id] && comments[seg.id].length > 0 && (
-                <div className="ml-[140px] space-y-1 -mt-1 mb-1">
-                  {comments[seg.id].map((c, i) => (
-                    <p key={i} className="text-xs text-muted-foreground">{c.text}</p>
-                  ))}
-                </div>
-              )}
             </React.Fragment>
           ))}
         </div>
