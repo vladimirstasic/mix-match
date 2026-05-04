@@ -108,7 +108,9 @@ export interface AnalysisSummary {
   mode: string | null;
   createdAt: string;
   isPublic: boolean | null;
+  isFavorite: boolean | null;
   slug: string | null;
+  tags: string[] | null;
 }
 
 export async function getUserAnalyses(): Promise<AnalysisSummary[]> {
@@ -119,6 +121,24 @@ export async function getUserAnalyses(): Promise<AnalysisSummary[]> {
 
 export async function deleteAnalysis(id: string): Promise<void> {
   await fetch(`${API_BASE}/analysis/${id}`, { method: "DELETE" });
+}
+
+export async function updateAnalysisTags(analysisId: string, tags: string[]): Promise<void> {
+  await fetch(`${API_BASE}/analysis/${analysisId}/tags`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ tags }),
+  });
+}
+
+export async function toggleFavorite(analysisId: string): Promise<{ isFavorite: boolean }> {
+  const res = await fetch(`${API_BASE}/analysis/${analysisId}/favorite`, { method: "PATCH" });
+  return res.json();
+}
+
+export async function toggleBookmark(segmentId: string): Promise<{ isBookmarked: boolean }> {
+  const res = await fetch(`${API_BASE}/segments/${segmentId}/bookmark`, { method: "PATCH" });
+  return res.json();
 }
 
 export interface CompareResult {

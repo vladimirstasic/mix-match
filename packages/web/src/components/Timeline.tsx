@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import type { Segment, ExternalLinks } from "@mix-match/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RotateCw, Check, HelpCircle, Loader2, Pencil, Share2, EyeOff, Eye, Copy, Search } from "lucide-react";
+import { RotateCw, Check, HelpCircle, Loader2, Pencil, Share2, EyeOff, Eye, Copy, Search, Bookmark } from "lucide-react";
 import { Waveform } from "./Waveform";
+import { toggleBookmark } from "../api/client";
 
 interface Props {
   segments: Segment[];
@@ -96,6 +97,20 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
   const [expandedEmbed, setExpandedEmbed] = useState<{ segId: string; service: string } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(() => {
+    return new Set(segments.filter(s => s.isBookmarked).map(s => s.id));
+  });
+
+  const handleToggleBookmark = async (e: React.MouseEvent, segmentId: string) => {
+    e.stopPropagation();
+    const { isBookmarked } = await toggleBookmark(segmentId);
+    setBookmarkedIds(prev => {
+      const next = new Set(prev);
+      if (isBookmarked) next.add(segmentId);
+      else next.delete(segmentId);
+      return next;
+    });
+  };
 
   const copyTracklist = (format: "text" | "youtube") => {
     const identified = segments.filter(s => s.status === "identified");
@@ -184,7 +199,7 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
           <Card
             className={`border-l-4 ${
               seg.status === "identified"
-                ? "border-l-green-500"
+                ? bookmarkedIds.has(seg.id) ? "border-l-green-500 ring-1 ring-green-500/20 bg-green-500/5" : "border-l-green-500"
                 : seg.status === "retrying"
                 ? "border-l-yellow-500"
                 : "border-l-muted-foreground/30"
@@ -261,6 +276,17 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
                       >
                         <Pencil className="w-3 h-3" />
                       </Button>
+                      <button
+                        className={`p-1 rounded transition-colors shrink-0 ${
+                          bookmarkedIds.has(seg.id)
+                            ? "text-blue-500 hover:text-blue-400"
+                            : "text-muted-foreground/40 hover:text-blue-500"
+                        }`}
+                        onClick={(e) => handleToggleBookmark(e, seg.id)}
+                        title={bookmarkedIds.has(seg.id) ? "Remove bookmark" : "Bookmark segment"}
+                      >
+                        <Bookmark className={`w-4 h-4 ${bookmarkedIds.has(seg.id) ? "fill-blue-500" : ""}`} />
+                      </button>
                     </>
                   )}
                 </>
