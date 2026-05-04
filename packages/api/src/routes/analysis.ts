@@ -1,8 +1,10 @@
 import { Router } from "express";
 import { getAuth } from "@clerk/express";
 import { eq, and, sql } from "drizzle-orm";
+import { requireUser, getUserId } from "../middleware/auth.js";
 import { db } from "../db/client.js";
 import { analyses, segments, users } from "../db/schema.js";
+import { findAnalysis, findSegment, getAnalysisSegments } from "../db/helpers.js";
 import fs from "fs/promises";
 import path from "path";
 import { queueEvents, analysisQueue } from "../queue/index.js";
@@ -19,18 +21,16 @@ analysisRouter.get("/analysis/compare", async (req, res) => {
     return;
   }
 
-  const [analysisA] = await db.select().from(analyses).where(eq(analyses.id, idA)).limit(1);
-  const [analysisB] = await db.select().from(analyses).where(eq(analyses.id, idB)).limit(1);
+  const analysisA = await findAnalysis(idA);
+  const analysisB = await findAnalysis(idB);
 
   if (!analysisA || !analysisB) {
     res.status(404).json({ error: "One or both analyses not found" });
     return;
   }
 
-  const segsA = await db.select().from(segments)
-    .where(eq(segments.analysisId, idA)).orderBy(segments.startSec);
-  const segsB = await db.select().from(segments)
-    .where(eq(segments.analysisId, idB)).orderBy(segments.startSec);
+  const segsA = await getAnalysisSegments(idA);
+  const segsB = await getAnalysisSegments(idB);
 
   const identifiedA = segsA.filter(s => s.status === "identified");
   const identifiedB = segsB.filter(s => s.status === "identified");
@@ -91,9 +91,8 @@ analysisRouter.get("/analysis/compare", async (req, res) => {
 });
 
 // POST /api/analysis/manual — create tracklist from manual input
-analysisRouter.post("/analysis/manual", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+analysisRouter.post("/analysis/manual", requireUser, async (req, res) => {
+  const userId = getUserId(req);
 
   const { title, tracks } = req.body;
   // tracks: [{ trackName: string, artist: string, title: string, startSec: number, endSec: number }]
@@ -132,11 +131,10 @@ analysisRouter.post("/analysis/manual", async (req, res) => {
 // GET /api/analysis/:id/summary — generate mix summary
 analysisRouter.get("/analysis/:id/summary", async (req, res) => {
   const analysisId = req.params.id as string;
-  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  const analysis = await findAnalysis(analysisId);
   if (!analysis) { res.status(404).json({ error: "Not found" }); return; }
 
-  const segs = await db.select().from(segments)
-    .where(eq(segments.analysisId, analysisId)).orderBy(segments.startSec);
+  const segs = await getAnalysisSegments(analysisId);
 
   const identified = segs.filter(s => s.status === "identified");
   const unknown = segs.filter(s => s.status === "unknown");
@@ -190,11 +188,7 @@ analysisRouter.get("/analysis/:id/summary", async (req, res) => {
 
 // GET /api/analysis/:id — poll result
 analysisRouter.get("/analysis/:id", async (req, res) => {
-  const [analysis] = await db
-    .select()
-    .from(analyses)
-    .where(eq(analyses.id, req.params.id))
-    .limit(1);
+  const analysis = await findAnalysis(req.params.id);
 
   if (!analysis) {
     res.status(404).json({ error: "Analysis not found" });
@@ -207,11 +201,7 @@ analysisRouter.get("/analysis/:id", async (req, res) => {
     return;
   }
 
-  const segs = await db
-    .select()
-    .from(segments)
-    .where(eq(segments.analysisId, req.params.id))
-    .orderBy(segments.startSec);
+  const segs = await getAnalysisSegments(req.params.id);
 
   let chunksAvailable = false;
   if (analysis.chunksDir) {
@@ -232,11 +222,7 @@ analysisRouter.get("/analysis/:id", async (req, res) => {
 
 // GET /api/analysis/:id/progress — SSE stream
 analysisRouter.get("/analysis/:id/progress", async (req, res) => {
-  const [analysis] = await db
-    .select()
-    .from(analyses)
-    .where(eq(analyses.id, req.params.id))
-    .limit(1);
+  const analysis = await findAnalysis(req.params.id);
 
   if (!analysis) {
     res.status(404).json({ error: "Analysis not found" });
@@ -270,12 +256,8 @@ analysisRouter.get("/analysis/:id/progress", async (req, res) => {
   const onCompleted = async ({ jobId }: { jobId: string }) => {
     const job = await analysisQueue.getJob(jobId);
     if (job?.data.analysisId === req.params.id) {
-      const [updated] = await db
-        .select()
-        .from(analyses)
-        .where(eq(analyses.id, req.params.id))
-        .limit(1);
-      send({ type: "completed", results: updated.results });
+      const updated = await findAnalysis(req.params.id);
+      send({ type: "completed", results: updated!.results });
       cleanup();
       res.end();
     }
@@ -316,11 +298,7 @@ analysisRouter.patch("/analysis/:id/segments/:segId", async (req, res) => {
   }
 
   // Verify ownership
-  const [analysis] = await db
-    .select()
-    .from(analyses)
-    .where(eq(analyses.id, analysisId))
-    .limit(1);
+  const analysis = await findAnalysis(analysisId);
   if (!analysis) {
     res.status(404).json({ error: "Analysis not found" });
     return;
@@ -360,22 +338,17 @@ analysisRouter.patch("/analysis/:id/segments/:segId", async (req, res) => {
     })
     .where(eq(segments.id, segId));
 
-  const [updated] = await db
-    .select()
-    .from(segments)
-    .where(eq(segments.id, segId))
-    .limit(1);
+  const updated = await findSegment(segId);
   res.json(updated);
 });
 
 // GET /api/analysis/:id/export/text
 analysisRouter.get("/analysis/:id/export/text", async (req, res) => {
   const analysisId = req.params.id as string;
-  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  const analysis = await findAnalysis(analysisId);
   if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
 
-  const segs = await db.select().from(segments)
-    .where(eq(segments.analysisId, analysisId)).orderBy(segments.startSec);
+  const segs = await getAnalysisSegments(analysisId);
 
   const identified = segs.filter(s => s.status === "identified");
   const lines = identified.map((s, i) => {
@@ -392,11 +365,10 @@ analysisRouter.get("/analysis/:id/export/text", async (req, res) => {
 // GET /api/analysis/:id/export/mixcloud
 analysisRouter.get("/analysis/:id/export/mixcloud", async (req, res) => {
   const analysisId = req.params.id as string;
-  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  const analysis = await findAnalysis(analysisId);
   if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
 
-  const segs = await db.select().from(segments)
-    .where(eq(segments.analysisId, analysisId)).orderBy(segments.startSec);
+  const segs = await getAnalysisSegments(analysisId);
 
   const identified = segs.filter(s => s.status === "identified");
   const lines = identified.map(s => `${s.artist} - ${s.title} @ ${formatTime(s.startSec)}`);
@@ -409,11 +381,10 @@ analysisRouter.get("/analysis/:id/export/mixcloud", async (req, res) => {
 // GET /api/analysis/:id/export/soundcloud
 analysisRouter.get("/analysis/:id/export/soundcloud", async (req, res) => {
   const analysisId = req.params.id as string;
-  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  const analysis = await findAnalysis(analysisId);
   if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
 
-  const segs = await db.select().from(segments)
-    .where(eq(segments.analysisId, analysisId)).orderBy(segments.startSec);
+  const segs = await getAnalysisSegments(analysisId);
 
   const identified = segs.filter(s => s.status === "identified");
   const lines = ["Tracklist:", ...identified.map(s => `${formatTime(s.startSec)} ${s.trackName}`)];
@@ -424,16 +395,14 @@ analysisRouter.get("/analysis/:id/export/soundcloud", async (req, res) => {
 });
 
 // POST /api/analysis/:id/export/spotify-playlist
-analysisRouter.post("/analysis/:id/export/spotify-playlist", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+analysisRouter.post("/analysis/:id/export/spotify-playlist", requireUser, async (req, res) => {
+  const userId = getUserId(req);
 
   const analysisId = req.params.id as string;
-  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  const analysis = await findAnalysis(analysisId);
   if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
 
-  const segs = await db.select().from(segments)
-    .where(eq(segments.analysisId, analysisId)).orderBy(segments.startSec);
+  const segs = await getAnalysisSegments(analysisId);
 
   const identified = segs.filter(s => s.status === "identified" && s.externalLinks);
 
@@ -465,11 +434,10 @@ analysisRouter.post("/analysis/:id/export/spotify-playlist", async (req, res) =>
 // GET /api/analysis/:id/export/youtube
 analysisRouter.get("/analysis/:id/export/youtube", async (req, res) => {
   const analysisId = req.params.id as string;
-  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  const analysis = await findAnalysis(analysisId);
   if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
 
-  const segs = await db.select().from(segments)
-    .where(eq(segments.analysisId, analysisId)).orderBy(segments.startSec);
+  const segs = await getAnalysisSegments(analysisId);
 
   const identified = segs.filter(s => s.status === "identified");
   const lines = identified.map(s => `${formatTime(s.startSec)} ${s.trackName}`);
@@ -485,7 +453,7 @@ analysisRouter.patch("/analysis/:id", async (req, res) => {
   const analysisId = req.params.id as string;
   const { isPublic, slug } = req.body;
 
-  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  const analysis = await findAnalysis(analysisId);
   if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
   if (analysis.userId && analysis.userId !== userId) { res.status(403).json({ error: "Not authorized" }); return; }
 
@@ -495,7 +463,7 @@ analysisRouter.patch("/analysis/:id", async (req, res) => {
 
   await db.update(analyses).set(updates).where(eq(analyses.id, analysisId));
 
-  const [updated] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  const updated = await findAnalysis(analysisId);
   res.json(updated);
 });
 
@@ -504,7 +472,7 @@ analysisRouter.delete("/analysis/:id", async (req, res) => {
   const { userId } = getAuth(req);
   const analysisId = req.params.id as string;
 
-  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  const analysis = await findAnalysis(analysisId);
   if (!analysis) { res.status(404).json({ error: "Not found" }); return; }
   if (analysis.userId && analysis.userId !== userId) { res.status(403).json({ error: "Not authorized" }); return; }
 
@@ -526,8 +494,7 @@ analysisRouter.get("/t/:slug/og", async (req, res) => {
   const [analysis] = await db.select().from(analyses).where(eq(analyses.slug, slug)).limit(1);
   if (!analysis || !analysis.isPublic) { res.status(404).send("Not found"); return; }
 
-  const segs = await db.select().from(segments)
-    .where(eq(segments.analysisId, analysis.id)).orderBy(segments.startSec);
+  const segs = await getAnalysisSegments(analysis.id);
   const identified = segs.filter(s => s.status === "identified");
 
   const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
@@ -569,8 +536,7 @@ analysisRouter.get("/t/:slug", async (req, res) => {
   const [analysis] = await db.select().from(analyses).where(eq(analyses.slug, slug)).limit(1);
   if (!analysis || !analysis.isPublic) { res.status(404).json({ error: "Not found" }); return; }
 
-  const segs = await db.select().from(segments)
-    .where(eq(segments.analysisId, analysis.id)).orderBy(segments.startSec);
+  const segs = await getAnalysisSegments(analysis.id);
 
   // Increment view count
   await db.update(analyses).set({ viewCount: sql`${analyses.viewCount} + 1` }).where(eq(analyses.id, analysis.id));
@@ -585,11 +551,10 @@ analysisRouter.get("/t/:slug", async (req, res) => {
 // GET /api/analysis/:id/recommendations
 analysisRouter.get("/analysis/:id/recommendations", async (req, res) => {
   const analysisId = req.params.id as string;
-  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  const analysis = await findAnalysis(analysisId);
   if (!analysis) { res.status(404).json({ error: "Not found" }); return; }
 
-  const segs = await db.select().from(segments)
-    .where(eq(segments.analysisId, analysisId)).orderBy(segments.startSec);
+  const segs = await getAnalysisSegments(analysisId);
 
   const identified = segs.filter(s => s.status === "identified");
 

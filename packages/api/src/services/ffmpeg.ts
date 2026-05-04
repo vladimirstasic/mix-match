@@ -53,7 +53,7 @@ export async function splitIntoChunks(wavPath: string, outputDir: string, stepSe
   return { paths, positions };
 }
 
-export async function extractRmsLevels(_wavPath: string, chunkCount: number, chunkPaths: string[]): Promise<number[]> {
+export async function extractRmsLevels(chunkPaths: string[]): Promise<number[]> {
   const rmsValues: number[] = [];
 
   for (const chunkPath of chunkPaths) {

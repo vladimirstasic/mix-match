@@ -1,20 +1,20 @@
 import { Router } from "express";
-import { getAuth } from "@clerk/express";
 import { eq, and } from "drizzle-orm";
+import { requireUser, getUserId } from "../middleware/auth.js";
 import fs from "fs/promises";
 import { db } from "../db/client.js";
-import { analyses, segments } from "../db/schema.js";
+import { segments } from "../db/schema.js";
+import { findAnalysis } from "../db/helpers.js";
 import { retryQueue } from "../queue/index.js";
 
 export const retryRouter = Router();
 
-retryRouter.post("/analysis/:id/segments/:segmentId/retry", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+retryRouter.post("/analysis/:id/segments/:segmentId/retry", requireUser, async (req, res) => {
+  const userId = getUserId(req);
   const id = req.params.id as string;
   const segmentId = req.params.segmentId as string;
 
-  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, id)).limit(1);
+  const analysis = await findAnalysis(id);
   if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
 
   if (!analysis.chunksDir) { res.status(410).json({ error: "Chunk files not available" }); return; }
@@ -34,12 +34,11 @@ retryRouter.post("/analysis/:id/segments/:segmentId/retry", async (req, res) => 
   res.json({ jobId: job.id });
 });
 
-retryRouter.post("/analysis/:id/retry-unknown", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+retryRouter.post("/analysis/:id/retry-unknown", requireUser, async (req, res) => {
+  const userId = getUserId(req);
   const id = req.params.id as string;
 
-  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, id)).limit(1);
+  const analysis = await findAnalysis(id);
   if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
   if (!analysis.chunksDir) { res.status(410).json({ error: "Chunk files not available" }); return; }
   try { await fs.access(analysis.chunksDir); } catch { res.status(410).json({ error: "Chunk files expired" }); return; }

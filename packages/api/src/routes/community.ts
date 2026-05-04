@@ -1,15 +1,14 @@
 import { Router } from "express";
-import { getAuth } from "@clerk/express";
 import { eq, and, sql } from "drizzle-orm";
+import { requireUser, getUserId } from "../middleware/auth.js";
 import { db } from "../db/client.js";
 import { votes, comments, segments, users } from "../db/schema.js";
 
 export const communityRouter = Router();
 
 // POST /api/segments/:id/vote — upvote or downvote
-communityRouter.post("/segments/:id/vote", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+communityRouter.post("/segments/:id/vote", requireUser, async (req, res) => {
+  const userId = getUserId(req);
 
   await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
 
@@ -50,9 +49,8 @@ communityRouter.get("/segments/:id/comments", async (req, res) => {
 });
 
 // POST /api/segments/:id/comments — add comment
-communityRouter.post("/segments/:id/comments", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+communityRouter.post("/segments/:id/comments", requireUser, async (req, res) => {
+  const userId = getUserId(req);
 
   await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
 

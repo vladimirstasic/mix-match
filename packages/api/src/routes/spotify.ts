@@ -1,8 +1,6 @@
 import { Router } from "express";
-import { eq } from "drizzle-orm";
 import { config } from "../config.js";
-import { db } from "../db/client.js";
-import { analyses, segments } from "../db/schema.js";
+import { findAnalysis, getAnalysisSegments } from "../db/helpers.js";
 
 export const spotifyRouter = Router();
 
@@ -71,15 +69,13 @@ spotifyRouter.get("/spotify/callback", async (req, res) => {
     const profile = await profileRes.json();
 
     // Get analysis and segments
-    const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+    const analysis = await findAnalysis(analysisId);
     if (!analysis) {
       res.redirect(`${FRONTEND_URL}?spotify=error`);
       return;
     }
 
-    const segs = await db.select().from(segments)
-      .where(eq(segments.analysisId, analysisId))
-      .orderBy(segments.startSec);
+    const segs = await getAnalysisSegments(analysisId);
 
     // Collect Spotify URIs
     const trackUris: string[] = [];

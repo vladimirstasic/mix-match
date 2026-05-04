@@ -1,16 +1,16 @@
 import { Router } from "express";
-import { getAuth } from "@clerk/express";
 import { eq, desc, and, sql } from "drizzle-orm";
+import { requireUser, getUserId } from "../middleware/auth.js";
 import { db } from "../db/client.js";
 import { analyses, users, segments, follows } from "../db/schema.js";
+import { findAnalysis, findSegment, findUser } from "../db/helpers.js";
 
 export const userRouter = Router();
 
-userRouter.get("/user/profile", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+userRouter.get("/user/profile", requireUser, async (req, res) => {
+  const userId = getUserId(req);
 
-  const [user] = await db.select().from(users).where(eq(users.clerkId, userId)).limit(1);
+  const user = await findUser(userId);
   if (!user) { res.json({ username: null }); return; }
 
   // Compute badges dynamically
@@ -28,9 +28,8 @@ userRouter.get("/user/profile", async (req, res) => {
   });
 });
 
-userRouter.get("/user/analyses", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+userRouter.get("/user/analyses", requireUser, async (req, res) => {
+  const userId = getUserId(req);
 
   const rows = await db.select({
     id: analyses.id,
@@ -51,9 +50,8 @@ userRouter.get("/user/analyses", async (req, res) => {
   res.json(rows);
 });
 
-userRouter.patch("/user/profile", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+userRouter.patch("/user/profile", requireUser, async (req, res) => {
+  const userId = getUserId(req);
 
   const { username } = req.body;
   if (!username || typeof username !== "string") {
@@ -106,15 +104,14 @@ userRouter.get("/dj/:username", async (req, res) => {
   res.json({ username: user.username, mixes, badges });
 });
 
-userRouter.patch("/analysis/:id/tags", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+userRouter.patch("/analysis/:id/tags", requireUser, async (req, res) => {
+  const userId = getUserId(req);
 
   const analysisId = req.params.id as string;
   const { tags } = req.body;
   if (!Array.isArray(tags)) { res.status(400).json({ error: "Tags must be an array" }); return; }
 
-  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  const analysis = await findAnalysis(analysisId);
   if (!analysis) { res.status(404).json({ error: "Not found" }); return; }
   if (analysis.userId !== userId) { res.status(403).json({ error: "Not authorized" }); return; }
 
@@ -122,12 +119,11 @@ userRouter.patch("/analysis/:id/tags", async (req, res) => {
   res.json({ tags });
 });
 
-userRouter.patch("/analysis/:id/favorite", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+userRouter.patch("/analysis/:id/favorite", requireUser, async (req, res) => {
+  const userId = getUserId(req);
 
   const analysisId = req.params.id as string;
-  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  const analysis = await findAnalysis(analysisId);
   if (!analysis || analysis.userId !== userId) { res.status(404).json({ error: "Not found" }); return; }
 
   const newVal = !analysis.isFavorite;
@@ -135,12 +131,11 @@ userRouter.patch("/analysis/:id/favorite", async (req, res) => {
   res.json({ isFavorite: newVal });
 });
 
-userRouter.patch("/segments/:id/bookmark", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+userRouter.patch("/segments/:id/bookmark", requireUser, async (req, res) => {
+  const userId = getUserId(req);
 
   const segmentId = req.params.id as string;
-  const [segment] = await db.select().from(segments).where(eq(segments.id, segmentId)).limit(1);
+  const segment = await findSegment(segmentId);
   if (!segment) { res.status(404).json({ error: "Not found" }); return; }
 
   const newVal = !(segment as any).isBookmarked;
@@ -148,12 +143,11 @@ userRouter.patch("/segments/:id/bookmark", async (req, res) => {
   res.json({ isBookmarked: newVal });
 });
 
-userRouter.post("/analysis/:id/reprocess", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+userRouter.post("/analysis/:id/reprocess", requireUser, async (req, res) => {
+  const userId = getUserId(req);
 
   const analysisId = req.params.id as string;
-  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  const analysis = await findAnalysis(analysisId);
   if (!analysis) { res.status(404).json({ error: "Not found" }); return; }
   if (analysis.userId !== userId) { res.status(403).json({ error: "Not authorized" }); return; }
   if (!analysis.chunksDir) { res.status(410).json({ error: "Audio files expired, please re-upload" }); return; }
@@ -168,9 +162,8 @@ userRouter.post("/analysis/:id/reprocess", async (req, res) => {
 });
 
 // POST /api/dj/:username/follow — toggle follow
-userRouter.post("/dj/:username/follow", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+userRouter.post("/dj/:username/follow", requireUser, async (req, res) => {
+  const userId = getUserId(req);
 
   await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
 
@@ -188,9 +181,8 @@ userRouter.post("/dj/:username/follow", async (req, res) => {
 });
 
 // GET /api/user/feed — mixes from followed DJs
-userRouter.get("/user/feed", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+userRouter.get("/user/feed", requireUser, async (req, res) => {
+  const userId = getUserId(req);
 
   const myFollows = await db.select().from(follows).where(eq(follows.followerId, userId));
   const usernames = myFollows.map(f => f.followingUsername);
@@ -223,9 +215,8 @@ userRouter.get("/user/feed", async (req, res) => {
 });
 
 // GET /api/user/analytics — view counts for user's mixes
-userRouter.get("/user/analytics", async (req, res) => {
-  const { userId } = getAuth(req);
-  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+userRouter.get("/user/analytics", requireUser, async (req, res) => {
+  const userId = getUserId(req);
 
   const mixes = await db.select({
     id: analyses.id,

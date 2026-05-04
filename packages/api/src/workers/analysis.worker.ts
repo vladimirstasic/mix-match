@@ -25,6 +25,7 @@ const worker = new Worker<AnalysisJobData>(
     const { analysisId, filePath, fileHash, mode } = job.data;
     const stepSec = mode === "detailed" ? DETAILED_STEP_SEC : FAST_STEP_SEC;
     const workDir = path.join(config.uploadDir, analysisId);
+    const wavPath = path.join(workDir, "normalized.wav");
 
     try {
       await db
@@ -33,8 +34,6 @@ const worker = new Worker<AnalysisJobData>(
         .where(eq(analyses.id, analysisId));
 
       await fs.mkdir(workDir, { recursive: true });
-
-      const wavPath = path.join(workDir, "normalized.wav");
       await normalizeAudio(filePath, wavPath);
 
       const duration = await getDuration(wavPath);
@@ -52,7 +51,7 @@ const worker = new Worker<AnalysisJobData>(
 
       const { paths: chunkPaths, positions: chunkPositions } = await splitIntoChunks(wavPath, chunksDir, stepSec);
 
-      const rmsLevels = await extractRmsLevels(wavPath, totalChunks, chunkPaths);
+      const rmsLevels = await extractRmsLevels(chunkPaths);
 
       const startTime = Date.now();
       const { matches, metrics } = await processChunksOptimized({
@@ -140,8 +139,7 @@ const worker = new Worker<AnalysisJobData>(
       throw err;
     } finally {
       // Keep chunks for retry, only clean up source files
-      const wavPath2 = path.join(workDir, "normalized.wav");
-      await fs.unlink(wavPath2).catch(() => {});
+      await fs.unlink(wavPath).catch(() => {});
       await fs.unlink(filePath).catch(() => {});
     }
   },
