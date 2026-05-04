@@ -6,7 +6,7 @@ import path from "path";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { v4 as uuid } from "uuid";
-import { eq, lt } from "drizzle-orm";
+import { eq, lt, and, sql } from "drizzle-orm";
 import { requireUser, getUserId } from "../middleware/auth.js";
 import { MAX_FILE_SIZE, ALLOWED_MIMETYPES } from "@mix-match/shared";
 import { db } from "../db/client.js";
@@ -76,13 +76,18 @@ uploadRouter.post("/upload", upload.single("file"), requireUser, async (req, res
           creditsRemaining: resetCredits,
           creditsResetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
         }).where(eq(users.clerkId, userId));
-      } else if (user.creditsRemaining <= 0) {
-        res.status(403).json({ error: "No credits remaining. Credits reset on " + user.creditsResetAt.toLocaleDateString() });
-        return;
       }
 
-      // Decrement credits
-      await db.update(users).set({ creditsRemaining: user.creditsRemaining - 1 }).where(eq(users.clerkId, userId));
+      // Atomic decrement — returns empty if credits already 0
+      const result = await db.update(users)
+        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
+        .where(and(eq(users.clerkId, userId), sql`${users.creditsRemaining} > 0`))
+        .returning({ creditsRemaining: users.creditsRemaining });
+
+      if (result.length === 0) {
+        res.status(403).json({ error: "No credits remaining" });
+        return;
+      }
     }
 
     // SHA256 file hash for full-file cache
@@ -153,13 +158,18 @@ uploadRouter.post("/upload-url", requireUser, async (req, res) => {
         creditsRemaining: resetCredits,
         creditsResetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
       }).where(eq(users.clerkId, userId));
-    } else if (user.creditsRemaining <= 0) {
-      res.status(403).json({ error: "No credits remaining. Credits reset on " + user.creditsResetAt.toLocaleDateString() });
-      return;
     }
 
-    // Decrement credits
-    await db.update(users).set({ creditsRemaining: user.creditsRemaining - 1 }).where(eq(users.clerkId, userId));
+    // Atomic decrement — returns empty if credits already 0
+    const result = await db.update(users)
+      .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
+      .where(and(eq(users.clerkId, userId), sql`${users.creditsRemaining} > 0`))
+      .returning({ creditsRemaining: users.creditsRemaining });
+
+    if (result.length === 0) {
+      res.status(403).json({ error: "No credits remaining" });
+      return;
+    }
   }
 
   const outputPath = path.join(config.uploadDir, uuid() + ".mp3");

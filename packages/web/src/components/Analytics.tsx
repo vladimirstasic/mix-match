@@ -14,7 +14,7 @@ export function Analytics() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_BASE}/user/analytics`)
+    fetch(`${API_BASE}/user/analytics`, { credentials: "include" })
       .then(r => r.ok ? r.json() : null)
       .then(setData)
       .finally(() => setLoading(false));

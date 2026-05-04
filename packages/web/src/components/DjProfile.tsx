@@ -20,7 +20,7 @@ export function DjProfile() {
 
   useEffect(() => {
     if (!username) return;
-    fetch(`${API_BASE}/dj/${username}`)
+    fetch(`${API_BASE}/dj/${username}`, { credentials: "include" })
       .then(r => { if (!r.ok) throw new Error(); return r.json(); })
       .then(setData)
       .catch(() => setData(null))

@@ -11,7 +11,7 @@ export function ProfileSettings() {
   const [currentUsername, setCurrentUsername] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE}/user/profile`)
+    fetch(`${API_BASE}/user/profile`, { credentials: "include" })
       .then((r) => (r.ok ? r.json() : null))
       .then((data) => {
         if (data?.username) {
@@ -28,6 +28,7 @@ export function ProfileSettings() {
       const res = await fetch(`${API_BASE}/user/profile`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify({ username }),
       });
       if (!res.ok) {

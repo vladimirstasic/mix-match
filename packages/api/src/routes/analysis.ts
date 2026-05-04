@@ -12,7 +12,7 @@ import { queueEvents, analysisQueue } from "../queue/index.js";
 export const analysisRouter = Router();
 
 // GET /api/analysis/compare?a=uuid1&b=uuid2
-analysisRouter.get("/analysis/compare", async (req, res) => {
+analysisRouter.get("/analysis/compare", requireUser, async (req, res) => {
   const idA = req.query.a as string;
   const idB = req.query.b as string;
 
@@ -343,7 +343,7 @@ analysisRouter.patch("/analysis/:id/segments/:segId", async (req, res) => {
 });
 
 // GET /api/analysis/:id/export/text
-analysisRouter.get("/analysis/:id/export/text", async (req, res) => {
+analysisRouter.get("/analysis/:id/export/text", requireUser, async (req, res) => {
   const analysisId = req.params.id as string;
   const analysis = await findAnalysis(analysisId);
   if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
@@ -363,7 +363,7 @@ analysisRouter.get("/analysis/:id/export/text", async (req, res) => {
 });
 
 // GET /api/analysis/:id/export/mixcloud
-analysisRouter.get("/analysis/:id/export/mixcloud", async (req, res) => {
+analysisRouter.get("/analysis/:id/export/mixcloud", requireUser, async (req, res) => {
   const analysisId = req.params.id as string;
   const analysis = await findAnalysis(analysisId);
   if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
@@ -379,7 +379,7 @@ analysisRouter.get("/analysis/:id/export/mixcloud", async (req, res) => {
 });
 
 // GET /api/analysis/:id/export/soundcloud
-analysisRouter.get("/analysis/:id/export/soundcloud", async (req, res) => {
+analysisRouter.get("/analysis/:id/export/soundcloud", requireUser, async (req, res) => {
   const analysisId = req.params.id as string;
   const analysis = await findAnalysis(analysisId);
   if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
@@ -432,7 +432,7 @@ analysisRouter.post("/analysis/:id/export/spotify-playlist", requireUser, async 
 });
 
 // GET /api/analysis/:id/export/youtube
-analysisRouter.get("/analysis/:id/export/youtube", async (req, res) => {
+analysisRouter.get("/analysis/:id/export/youtube", requireUser, async (req, res) => {
   const analysisId = req.params.id as string;
   const analysis = await findAnalysis(analysisId);
   if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
@@ -448,7 +448,7 @@ analysisRouter.get("/analysis/:id/export/youtube", async (req, res) => {
 });
 
 // PATCH /api/analysis/:id — update metadata (is_public, slug)
-analysisRouter.patch("/analysis/:id", async (req, res) => {
+analysisRouter.patch("/analysis/:id", requireUser, async (req, res) => {
   const { userId } = getAuth(req);
   const analysisId = req.params.id as string;
   const { isPublic, slug } = req.body;
@@ -459,7 +459,11 @@ analysisRouter.patch("/analysis/:id", async (req, res) => {
 
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   if (isPublic !== undefined) updates.isPublic = isPublic;
-  if (slug !== undefined) updates.slug = slug;
+  if (slug !== undefined || isPublic) {
+    // Generate slug server-side — ignore any client-provided value
+    const crypto = await import("crypto");
+    updates.slug = crypto.randomBytes(6).toString("hex");
+  }
 
   await db.update(analyses).set(updates).where(eq(analyses.id, analysisId));
 
@@ -468,7 +472,7 @@ analysisRouter.patch("/analysis/:id", async (req, res) => {
 });
 
 // DELETE /api/analysis/:id
-analysisRouter.delete("/analysis/:id", async (req, res) => {
+analysisRouter.delete("/analysis/:id", requireUser, async (req, res) => {
   const { userId } = getAuth(req);
   const analysisId = req.params.id as string;
 

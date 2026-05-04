@@ -21,7 +21,7 @@ export function Feed({ onSelectAnalysis }: Props) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_BASE}/user/feed`)
+    fetch(`${API_BASE}/user/feed`, { credentials: "include" })
       .then(r => r.ok ? r.json() : [])
       .then(setMixes)
       .finally(() => setLoading(false));
