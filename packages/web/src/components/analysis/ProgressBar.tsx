@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Music, Disc3 } from 'lucide-react';
+import { Disc3 } from 'lucide-react';
 
 interface Props {
   phase: 'uploading' | 'processing';
@@ -34,10 +34,7 @@ export function ProgressBar({ phase, uploadProgress, chunksProcessed, totalChunk
     <Card>
       <CardContent className="pt-6 space-y-6">
         <div className="flex justify-center">
-          <div className="relative">
-            <Disc3 className="w-16 h-16 text-primary animate-spin" style={{ animationDuration: '3s' }} />
-            <Music className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-          </div>
+          <Disc3 className="w-16 h-16 text-primary animate-spin" style={{ animationDuration: '3s' }} />
         </div>
 
         {phase === 'processing' && chunksProcessed === 0 && (
