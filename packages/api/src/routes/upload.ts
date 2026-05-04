@@ -3,6 +3,7 @@ import multer from "multer";
 import crypto from "crypto";
 import fs from "fs/promises";
 import path from "path";
+import { createReadStream } from "fs";
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { v4 as uuid } from "uuid";
@@ -94,9 +95,14 @@ uploadRouter.post("/upload", upload.single("file"), requireUser, async (req, res
 
     if (!(await checkCredits(userId, res))) return;
 
-    // SHA256 file hash for full-file cache
-    const fileBuffer = await fs.readFile(file.path);
-    const fileHash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
+    // SHA256 file hash for full-file cache (streaming to avoid loading entire file into memory)
+    const fileHash = await new Promise<string>((resolve, reject) => {
+      const hash = crypto.createHash("sha256");
+      const stream = createReadStream(file.path);
+      stream.on("data", (chunk) => hash.update(chunk));
+      stream.on("end", () => resolve(hash.digest("hex")));
+      stream.on("error", reject);
+    });
 
     // Mode from form data (default: fast)
     const mode = req.body?.mode === "detailed" ? "detailed" : "fast";
@@ -170,9 +176,14 @@ uploadRouter.post("/upload-url", requireUser, async (req, res) => {
       url,
     ]);
 
-    // SHA256 file hash for full-file cache
-    const fileBuffer = await fs.readFile(outputPath);
-    const fileHash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
+    // SHA256 file hash for full-file cache (streaming to avoid loading entire file into memory)
+    const fileHash = await new Promise<string>((resolve, reject) => {
+      const hash = crypto.createHash("sha256");
+      const stream = createReadStream(outputPath);
+      stream.on("data", (chunk) => hash.update(chunk));
+      stream.on("end", () => resolve(hash.digest("hex")));
+      stream.on("error", reject);
+    });
 
     // Check file cache
     const cachedAnalysisId = await redis.get(`acr:file:${fileHash}`);
