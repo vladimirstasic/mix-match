@@ -7,7 +7,7 @@ import { config } from "../config.js";
 import { redis } from "../queue";
 import { db } from "../db/client.js";
 import { analyses, segments as segmentsTable } from "../db/schema.js";
-import { normalizeAudio, getDuration, splitIntoChunks, extractRmsLevels } from "../services/ffmpeg.js";
+import { normalizeAudio, getDuration, splitIntoChunks, extractRmsLevels, generateWaveform } from "../services/ffmpeg.js";
 import { processChunksOptimized } from "../services/optimizer.js";
 import { aggregateMatches } from "../services/aggregator.js";
 import { buildSegments } from "../services/segments.js";
@@ -40,11 +40,14 @@ const worker = new Worker<AnalysisJobData>(
       const duration = await getDuration(wavPath);
       const totalChunks = Math.ceil(duration / CHUNK_DURATION_SEC);
 
+      // Generate waveform data (1 point per second)
+      const waveformData = await generateWaveform(wavPath);
+
       const chunksDir = path.join(workDir, "chunks");
       const chunksExpireAt = new Date(Date.now() + CHUNKS_TTL_HOURS * 60 * 60 * 1000);
         await db
             .update(analyses)
-            .set({ totalChunks, chunksDir, chunksExpireAt, updatedAt: new Date() })
+            .set({ totalChunks, chunksDir, chunksExpireAt, waveformData, updatedAt: new Date() })
             .where(eq(analyses.id, analysisId));
 
       const { paths: chunkPaths, positions: chunkPositions } = await splitIntoChunks(wavPath, chunksDir, stepSec);
@@ -82,6 +85,7 @@ const worker = new Worker<AnalysisJobData>(
           artist: s.artist,
           title: s.title,
           acrid: s.acrid,
+          bpm: s.bpm,
           externalLinks: s.externalLinks,
           attempts: 1,
         }))

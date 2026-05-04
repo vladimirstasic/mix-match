@@ -8,6 +8,87 @@ import { queueEvents, analysisQueue } from "../queue/index.js";
 
 export const analysisRouter = Router();
 
+// GET /api/analysis/compare?a=uuid1&b=uuid2
+analysisRouter.get("/analysis/compare", async (req, res) => {
+  const idA = req.query.a as string;
+  const idB = req.query.b as string;
+
+  if (!idA || !idB) {
+    res.status(400).json({ error: "Provide both ?a=id&b=id" });
+    return;
+  }
+
+  const [analysisA] = await db.select().from(analyses).where(eq(analyses.id, idA)).limit(1);
+  const [analysisB] = await db.select().from(analyses).where(eq(analyses.id, idB)).limit(1);
+
+  if (!analysisA || !analysisB) {
+    res.status(404).json({ error: "One or both analyses not found" });
+    return;
+  }
+
+  const segsA = await db.select().from(segments)
+    .where(eq(segments.analysisId, idA)).orderBy(segments.startSec);
+  const segsB = await db.select().from(segments)
+    .where(eq(segments.analysisId, idB)).orderBy(segments.startSec);
+
+  const identifiedA = segsA.filter(s => s.status === "identified");
+  const identifiedB = segsB.filter(s => s.status === "identified");
+
+  // Find shared tracks by acrid
+  const acridsA = new Set(identifiedA.map(s => s.acrid).filter(Boolean));
+  const acridsB = new Set(identifiedB.map(s => s.acrid).filter(Boolean));
+  const sharedAcridsArr = [...acridsA].filter(id => acridsB.has(id));
+  const sharedAcridsSet = new Set(sharedAcridsArr);
+
+  // Also fuzzy match by normalized artist+title for tracks without matching acrids
+  const normalize = (s: string) => s.toLowerCase().replace(/\(.*?\)/g, "").replace(/\[.*?\]/g, "").replace(/\s+/g, " ").trim();
+  const keysA = new Set(identifiedA.map(s => `${normalize(s.artist || "")}::${normalize(s.title || "")}`));
+  const keysB = new Set(identifiedB.map(s => `${normalize(s.artist || "")}::${normalize(s.title || "")}`));
+  const sharedKeysArr = [...keysA].filter(k => keysB.has(k));
+  const sharedKeysSet = new Set(sharedKeysArr);
+
+  // Build shared tracks list (combine acrid + fuzzy matches, deduplicate)
+  const sharedTracks: { trackName: string; inA: string; inB: string }[] = [];
+  const addedNames = new Set<string>();
+
+  for (const acrid of sharedAcridsArr) {
+    const segA = identifiedA.find(s => s.acrid === acrid);
+    const segB = identifiedB.find(s => s.acrid === acrid);
+    if (segA && segB && segA.trackName) {
+      if (!addedNames.has(segA.trackName)) {
+        addedNames.add(segA.trackName);
+        sharedTracks.push({
+          trackName: segA.trackName,
+          inA: `${Math.floor(segA.startSec / 60)}:${String(Math.floor(segA.startSec % 60)).padStart(2, "0")}`,
+          inB: `${Math.floor(segB.startSec / 60)}:${String(Math.floor(segB.startSec % 60)).padStart(2, "0")}`,
+        });
+      }
+    }
+  }
+
+  // Add fuzzy matches not already covered by acrid
+  for (const key of sharedKeysArr) {
+    const segA = identifiedA.find(s => `${normalize(s.artist || "")}::${normalize(s.title || "")}` === key);
+    const segB = identifiedB.find(s => `${normalize(s.artist || "")}::${normalize(s.title || "")}` === key);
+    if (segA && segB && segA.trackName && !addedNames.has(segA.trackName)) {
+      addedNames.add(segA.trackName);
+      sharedTracks.push({
+        trackName: segA.trackName,
+        inA: `${Math.floor(segA.startSec / 60)}:${String(Math.floor(segA.startSec % 60)).padStart(2, "0")}`,
+        inB: `${Math.floor(segB.startSec / 60)}:${String(Math.floor(segB.startSec % 60)).padStart(2, "0")}`,
+      });
+    }
+  }
+
+  res.json({
+    mixA: { id: idA, filename: analysisA.filename, totalTracks: identifiedA.length },
+    mixB: { id: idB, filename: analysisB.filename, totalTracks: identifiedB.length },
+    sharedTracks,
+    uniqueToA: identifiedA.filter(s => !sharedAcridsSet.has(s.acrid!) && !sharedKeysSet.has(`${normalize(s.artist || "")}::${normalize(s.title || "")}`)).length,
+    uniqueToB: identifiedB.filter(s => !sharedAcridsSet.has(s.acrid!) && !sharedKeysSet.has(`${normalize(s.artist || "")}::${normalize(s.title || "")}`)).length,
+  });
+});
+
 // GET /api/analysis/:id — poll result
 analysisRouter.get("/analysis/:id", async (req, res) => {
   const [analysis] = await db
@@ -240,6 +321,62 @@ analysisRouter.get("/analysis/:id/export/soundcloud", async (req, res) => {
 
   res.setHeader("Content-Type", "text/plain");
   res.setHeader("Content-Disposition", `attachment; filename="${analysis.filename || "tracklist"}_soundcloud.txt"`);
+  res.send(lines.join("\n"));
+});
+
+// POST /api/analysis/:id/export/spotify-playlist
+analysisRouter.post("/analysis/:id/export/spotify-playlist", async (req, res) => {
+  const { userId } = getAuth(req);
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const analysisId = req.params.id as string;
+  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
+
+  const segs = await db.select().from(segments)
+    .where(eq(segments.analysisId, analysisId)).orderBy(segments.startSec);
+
+  const identified = segs.filter(s => s.status === "identified" && s.externalLinks);
+
+  // Extract Spotify track URIs
+  const trackUris: string[] = [];
+  for (const seg of identified) {
+    const links = seg.externalLinks as Record<string, string> | null;
+    if (links?.spotify) {
+      const match = links.spotify.match(/track\/([a-zA-Z0-9]+)/);
+      if (match) trackUris.push(`spotify:track:${match[1]}`);
+    }
+  }
+
+  if (trackUris.length === 0) {
+    res.status(400).json({ error: "No tracks with Spotify links found" });
+    return;
+  }
+
+  // Remove duplicates
+  const uniqueUris = [...new Set(trackUris)];
+
+  res.json({
+    playlistName: analysis.filename || "MixMatch Tracklist",
+    trackCount: uniqueUris.length,
+    spotifyUris: uniqueUris,
+  });
+});
+
+// GET /api/analysis/:id/export/youtube
+analysisRouter.get("/analysis/:id/export/youtube", async (req, res) => {
+  const analysisId = req.params.id as string;
+  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  if (!analysis) { res.status(404).json({ error: "Analysis not found" }); return; }
+
+  const segs = await db.select().from(segments)
+    .where(eq(segments.analysisId, analysisId)).orderBy(segments.startSec);
+
+  const identified = segs.filter(s => s.status === "identified");
+  const lines = identified.map(s => `${formatTime(s.startSec)} ${s.trackName}`);
+
+  res.setHeader("Content-Type", "text/plain");
+  res.setHeader("Content-Disposition", `attachment; filename="${analysis.filename || "tracklist"}_youtube.txt"`);
   res.send(lines.join("\n"));
 });
 

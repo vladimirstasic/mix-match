@@ -1,0 +1,1 @@
+ALTER TABLE "analyses" ADD COLUMN "waveform_data" jsonb;

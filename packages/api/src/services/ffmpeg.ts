@@ -84,3 +84,41 @@ export function formatTimestamp(totalSeconds: number): string {
   const secs = Math.floor(totalSeconds % 60);
   return `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`;
 }
+
+/**
+ * Generate waveform data from a WAV file.
+ * Returns an array of normalized amplitudes (0-1), one per second.
+ */
+export async function generateWaveform(wavPath: string): Promise<number[]> {
+  const duration = await getDuration(wavPath);
+  const pointCount = Math.ceil(duration);
+
+  // Extract raw PCM at low sample rate (one sample per ~10ms = 100Hz)
+  const { stdout } = await exec("ffmpeg", [
+    "-i", wavPath,
+    "-ac", "1",
+    "-ar", "100",
+    "-f", "s16le",
+    "-",
+  ], { encoding: "buffer", maxBuffer: 50 * 1024 * 1024 });
+
+  const samples = new Int16Array(stdout.buffer, stdout.byteOffset, stdout.byteLength / 2);
+  const samplesPerPoint = Math.floor(samples.length / pointCount) || 1;
+
+  // Calculate RMS per second
+  const waveform: number[] = [];
+  for (let i = 0; i < pointCount; i++) {
+    const start = i * samplesPerPoint;
+    const end = Math.min(start + samplesPerPoint, samples.length);
+    let sumSq = 0;
+    for (let j = start; j < end; j++) {
+      sumSq += samples[j] * samples[j];
+    }
+    const rms = Math.sqrt(sumSq / (end - start || 1));
+    waveform.push(rms);
+  }
+
+  // Normalize to 0-1
+  const max = Math.max(...waveform) || 1;
+  return waveform.map(v => Math.round((v / max) * 100) / 100);
+}

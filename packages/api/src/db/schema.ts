@@ -2,6 +2,7 @@ import { pgTable, uuid, varchar, integer, jsonb, text, timestamp, real, boolean 
 
 export const users = pgTable("users", {
   clerkId: varchar("clerk_id", { length: 255 }).primaryKey(),
+  username: varchar("username", { length: 50 }).unique(),
   plan: varchar("plan", { length: 20 }).notNull().default("free"),
   creditsRemaining: integer("credits_remaining").notNull().default(3),
   creditsResetAt: timestamp("credits_reset_at").notNull().defaultNow(),
@@ -20,6 +21,7 @@ export const analyses = pgTable("analyses", {
   results: jsonb("results"),
   metrics: jsonb("metrics"),
   error: text("error"),
+  waveformData: jsonb("waveform_data"),
   chunksDir: varchar("chunks_dir", { length: 500 }),
   chunksExpireAt: timestamp("chunks_expire_at"),
   userId: varchar("user_id", { length: 255 }).references(() => users.clerkId),
@@ -41,6 +43,7 @@ export const segments = pgTable("segments", {
   title: varchar("title", { length: 255 }),
   acrid: varchar("acrid", { length: 100 }),
   confidence: real("confidence"),
+  bpm: integer("bpm"),
   externalLinks: jsonb("external_links"),
   attempts: integer("attempts").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow(),
