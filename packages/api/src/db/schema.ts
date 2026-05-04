@@ -4,7 +4,7 @@ export const users = pgTable("users", {
   clerkId: varchar("clerk_id", { length: 255 }).primaryKey(),
   username: varchar("username", { length: 50 }).unique(),
   plan: varchar("plan", { length: 20 }).notNull().default("free"),
-  creditsRemaining: integer("credits_remaining").notNull().default(999),
+  creditsRemaining: integer("credits_remaining").notNull().default(3),
   creditsResetAt: timestamp("credits_reset_at").notNull().defaultNow(),
   stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
   createdAt: timestamp("created_at").defaultNow(),
