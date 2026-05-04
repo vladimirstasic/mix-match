@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { Segment, ExternalLinks } from "@mix-match/shared";
 import { Card, CardContent } from "@/components/ui/card";
+import { ExportModal } from "./ExportModal";
 import { Button } from "@/components/ui/button";
-import { RotateCw, Check, HelpCircle, Loader2, Pencil, Share2, EyeOff, Eye, Copy, Search, Bookmark, ThumbsUp, ThumbsDown, Link2, MessageCircle } from "lucide-react";
+import { RotateCw, Check, HelpCircle, Loader2, Pencil, Share2, EyeOff, Eye, Search, Bookmark, ThumbsUp, ThumbsDown, Link2, MessageCircle } from "lucide-react";
 import { Waveform } from "./Waveform";
 import { Recommendations } from "./Recommendations";
 import { toggleBookmark, voteSegment, getComments, addComment } from "../api/client";
@@ -99,6 +100,7 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
   const [expandedEmbed, setExpandedEmbed] = useState<{ segId: string; service: string } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [exportModal, setExportModal] = useState<{ title: string; content: string } | null>(null);
   const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(() => {
     return new Set(segments.filter(s => s.isBookmarked).map(s => s.id));
   });
@@ -136,31 +138,33 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
     });
   };
 
-  const copyTracklist = (format: "text" | "youtube") => {
+  const openExport = (format: "text" | "mixcloud" | "soundcloud" | "youtube" | "markdown") => {
     const identified = segments.filter(s => s.status === "identified");
-    let text: string;
-    if (format === "text") {
-      text = identified.map((s, i) => `${i + 1}. ${formatTime(s.startSec)} - ${formatTime(s.endSec)}  ${s.trackName}`).join("\n");
-    } else {
-      text = identified.map(s => `${formatTime(s.startSec)} ${s.trackName}`).join("\n");
+    let title: string;
+    let content: string;
+    switch (format) {
+      case "text":
+        title = "Text Tracklist";
+        content = identified.map((s, i) => `${i + 1}. ${formatTime(s.startSec)} - ${formatTime(s.endSec)}  ${s.trackName}`).join("\n");
+        break;
+      case "mixcloud":
+        title = "Mixcloud Format";
+        content = identified.map(s => `${s.artist} - ${s.title} @ ${formatTime(s.startSec)}`).join("\n");
+        break;
+      case "soundcloud":
+        title = "SoundCloud Format";
+        content = ["Tracklist:", ...identified.map(s => `${formatTime(s.startSec)} ${s.trackName}`)].join("\n");
+        break;
+      case "youtube":
+        title = "YouTube Chapters";
+        content = identified.map(s => `${formatTime(s.startSec)} ${s.trackName}`).join("\n");
+        break;
+      case "markdown":
+        title = "Markdown";
+        content = [`## Tracklist`, "", ...identified.map((s, i) => `${i + 1}. **${formatTime(s.startSec)}** — ${s.trackName}`), "", `_Identified by MixMatch_`].join("\n");
+        break;
     }
-    navigator.clipboard.writeText(text);
-    setCopied(format);
-    setTimeout(() => setCopied(null), 2000);
-  };
-
-  const copyAsMarkdown = () => {
-    const identified = segments.filter(s => s.status === "identified");
-    const lines = [
-      `## ${analysisId} — Tracklist`,
-      "",
-      ...identified.map((s, i) => `${i + 1}. **${formatTime(s.startSec)}** — ${s.trackName}`),
-      "",
-      `_Identified by MixMatch_`,
-    ];
-    navigator.clipboard.writeText(lines.join("\n"));
-    setCopied("markdown");
-    setTimeout(() => setCopied(null), 2000);
+    setExportModal({ title, content });
   };
 
   const exportAsImage = () => {
@@ -481,33 +485,12 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
 
       <div className="flex flex-wrap items-center gap-2 pt-4 border-t">
         <span className="text-sm text-muted-foreground">Export:</span>
-        <Button variant="outline" size="sm" asChild>
-          <a href={`/api/analysis/${analysisId}/export/text`} download>Text</a>
-        </Button>
-        <Button variant="outline" size="sm" asChild>
-          <a href={`/api/analysis/${analysisId}/export/mixcloud`} download>Mixcloud</a>
-        </Button>
-        <Button variant="outline" size="sm" asChild>
-          <a href={`/api/analysis/${analysisId}/export/soundcloud`} download>SoundCloud</a>
-        </Button>
-        <Button variant="outline" size="sm" asChild>
-          <a href={`/api/analysis/${analysisId}/export/youtube`} download>YouTube</a>
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => copyTracklist("text")}>
-          <Copy className="w-4 h-4 mr-1" />
-          {copied === "text" ? "Copied!" : "Copy Text"}
-        </Button>
-        <Button variant="outline" size="sm" onClick={() => copyTracklist("youtube")}>
-          <Copy className="w-4 h-4 mr-1" />
-          {copied === "youtube" ? "Copied!" : "YT Chapters"}
-        </Button>
-        <Button variant="outline" size="sm" onClick={copyAsMarkdown}>
-          <Copy className="w-4 h-4 mr-1" />
-          {copied === "markdown" ? "Copied!" : "Markdown"}
-        </Button>
-        <Button variant="outline" size="sm" onClick={exportAsImage}>
-          Image
-        </Button>
+        <Button variant="outline" size="sm" onClick={() => openExport("text")}>Text</Button>
+        <Button variant="outline" size="sm" onClick={() => openExport("mixcloud")}>Mixcloud</Button>
+        <Button variant="outline" size="sm" onClick={() => openExport("soundcloud")}>SoundCloud</Button>
+        <Button variant="outline" size="sm" onClick={() => openExport("youtube")}>YouTube</Button>
+        <Button variant="outline" size="sm" onClick={() => openExport("markdown")}>Markdown</Button>
+        <Button variant="outline" size="sm" onClick={exportAsImage}>Image</Button>
         {segments.some(s => s.status === "identified" && s.externalLinks && (s.externalLinks as Record<string, string>).spotify) && (
           <Button
             variant="outline"
@@ -557,6 +540,14 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
       )}
 
       <Recommendations analysisId={analysisId} />
+
+      {exportModal && (
+        <ExportModal
+          title={exportModal.title}
+          content={exportModal.content}
+          onClose={() => setExportModal(null)}
+        />
+      )}
     </div>
   );
 }
