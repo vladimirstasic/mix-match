@@ -1,9 +1,11 @@
-import React, { useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { Segment, ExternalLinks } from "@mix-match/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { RotateCw, Check, HelpCircle, Loader2, Pencil, Share2, EyeOff, Eye, Copy, Search } from "lucide-react";
+import { RotateCw, Check, HelpCircle, Loader2, Pencil, Share2, EyeOff, Eye, Copy, Search, Bookmark, ThumbsUp, ThumbsDown, Link2 } from "lucide-react";
 import { Waveform } from "./Waveform";
+import { Recommendations } from "./Recommendations";
+import { toggleBookmark, voteSegment } from "../api/client";
 
 interface Props {
   segments: Segment[];
@@ -96,6 +98,39 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
   const [expandedEmbed, setExpandedEmbed] = useState<{ segId: string; service: string } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
+  const [bookmarkedIds, setBookmarkedIds] = useState<Set<string>>(() => {
+    return new Set(segments.filter(s => s.isBookmarked).map(s => s.id));
+  });
+  const [summary, setSummary] = useState<{ summary: string; stats: any; artists: string[] } | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/analysis/${analysisId}/summary`)
+      .then(r => r.ok ? r.json() : null)
+      .then(setSummary)
+      .catch(() => {});
+  }, [analysisId]);
+
+  const segmentRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  const scrollToSegment = useCallback((segmentId: string) => {
+    const el = segmentRefs.current.get(segmentId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-2", "ring-primary");
+      setTimeout(() => el.classList.remove("ring-2", "ring-primary"), 2000);
+    }
+  }, []);
+
+  const handleToggleBookmark = async (e: React.MouseEvent, segmentId: string) => {
+    e.stopPropagation();
+    const { isBookmarked } = await toggleBookmark(segmentId);
+    setBookmarkedIds(prev => {
+      const next = new Set(prev);
+      if (isBookmarked) next.add(segmentId);
+      else next.delete(segmentId);
+      return next;
+    });
+  };
 
   const copyTracklist = (format: "text" | "youtube") => {
     const identified = segments.filter(s => s.status === "identified");
@@ -107,6 +142,20 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
     }
     navigator.clipboard.writeText(text);
     setCopied(format);
+    setTimeout(() => setCopied(null), 2000);
+  };
+
+  const copyAsMarkdown = () => {
+    const identified = segments.filter(s => s.status === "identified");
+    const lines = [
+      `## ${analysisId} — Tracklist`,
+      "",
+      ...identified.map((s, i) => `${i + 1}. **${formatTime(s.startSec)}** — ${s.trackName}`),
+      "",
+      `_Identified by MixMatch_`,
+    ];
+    navigator.clipboard.writeText(lines.join("\n"));
+    setCopied("markdown");
     setTimeout(() => setCopied(null), 2000);
   };
 
@@ -127,9 +176,16 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
     return true;
   });
 
+  // Detect duplicate tracks
+  const trackCounts = new Map<string, number>();
+  segments.filter(s => s.status === "identified" && s.acrid).forEach(s => {
+    trackCounts.set(s.acrid!, (trackCounts.get(s.acrid!) || 0) + 1);
+  });
+  const isDuplicate = (acrid: string | null) => acrid ? (trackCounts.get(acrid) || 0) > 1 : false;
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <h2 className="text-xl font-semibold">
           Found {identified.length} track{identified.length !== 1 ? "s" : ""}
           {unknown.length > 0 && (
@@ -161,8 +217,34 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
         </div>
       </div>
 
+      {summary && (
+        <Card className="bg-muted/30">
+          <CardContent className="py-4">
+            <p className="text-sm text-muted-foreground">{summary.summary}</p>
+            <div className="flex flex-wrap gap-4 mt-3 text-center">
+              <div>
+                <p className="text-2xl font-bold">{summary.stats.totalTracks}</p>
+                <p className="text-xs text-muted-foreground">Tracks</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{summary.stats.totalArtists}</p>
+                <p className="text-xs text-muted-foreground">Artists</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{summary.stats.coveragePercent}%</p>
+                <p className="text-xs text-muted-foreground">Identified</p>
+              </div>
+              <div>
+                <p className="text-2xl font-bold">{summary.stats.durationMin}m</p>
+                <p className="text-xs text-muted-foreground">Duration</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {totalDuration > 0 && (
-        <Waveform segments={segments} totalDuration={totalDuration} waveformData={waveformData} />
+        <Waveform segments={segments} totalDuration={totalDuration} waveformData={waveformData} onSegmentClick={scrollToSegment} />
       )}
 
       {segments.some(s => s.status === "identified") && (
@@ -182,16 +264,20 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
         {visibleSegments.map((seg) => (
           <React.Fragment key={seg.id}>
           <Card
-            className={`border-l-4 ${
+            ref={(el: HTMLDivElement | null) => {
+              if (el) segmentRefs.current.set(seg.id, el);
+              else segmentRefs.current.delete(seg.id);
+            }}
+            className={`border-l-4 transition-shadow ${
               seg.status === "identified"
-                ? "border-l-green-500"
+                ? bookmarkedIds.has(seg.id) ? "border-l-green-500 ring-1 ring-green-500/20 bg-green-500/5" : "border-l-green-500"
                 : seg.status === "retrying"
                 ? "border-l-yellow-500"
                 : "border-l-muted-foreground/30"
             }`}
           >
-            <CardContent className="flex items-center gap-4 py-3">
-              <span className="font-mono text-sm text-muted-foreground whitespace-nowrap min-w-[120px]">
+            <CardContent className="flex items-center gap-3 py-3 flex-wrap sm:flex-nowrap">
+              <span className="font-mono text-xs sm:text-sm text-muted-foreground whitespace-nowrap min-w-[100px] sm:min-w-[120px]">
                 {formatTime(seg.startSec)} — {formatTime(seg.endSec)}
               </span>
 
@@ -235,6 +321,11 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
                   ) : (
                     <>
                       <span className="font-medium">{seg.trackName}</span>
+                      {isDuplicate(seg.acrid) && (
+                        <span className="text-xs bg-yellow-500/10 text-yellow-500 rounded px-1.5 py-0.5 shrink-0">
+                          x{trackCounts.get(seg.acrid!)}
+                        </span>
+                      )}
                       {seg.bpm && (
                         <span className="text-xs text-muted-foreground bg-muted rounded px-1.5 py-0.5">
                           {seg.bpm} BPM
@@ -260,6 +351,38 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
                         }}
                       >
                         <Pencil className="w-3 h-3" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        title="Copy link to this timestamp"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const base = shareUrl || `${window.location.origin}/t/share`;
+                          const url = `${base}#t=${seg.startSec}`;
+                          navigator.clipboard.writeText(`${seg.trackName} @ ${formatTime(seg.startSec)} — ${url}`);
+                          setCopied(`share-${seg.id}`);
+                          setTimeout(() => setCopied(null), 2000);
+                        }}
+                      >
+                        {copied === `share-${seg.id}` ? <Check className="w-3 h-3" /> : <Link2 className="w-3 h-3" />}
+                      </Button>
+                      <button
+                        className={`p-1 rounded transition-colors shrink-0 ${
+                          bookmarkedIds.has(seg.id)
+                            ? "text-blue-500 hover:text-blue-400"
+                            : "text-muted-foreground/40 hover:text-blue-500"
+                        }`}
+                        onClick={(e) => handleToggleBookmark(e, seg.id)}
+                        title={bookmarkedIds.has(seg.id) ? "Remove bookmark" : "Bookmark segment"}
+                      >
+                        <Bookmark className={`w-4 h-4 ${bookmarkedIds.has(seg.id) ? "fill-blue-500" : ""}`} />
+                      </button>
+                      <Button variant="ghost" size="sm" className="text-green-500" onClick={(e) => { e.stopPropagation(); voteSegment(seg.id, 1); }}>
+                        <ThumbsUp className="w-3 h-3" />
+                      </Button>
+                      <Button variant="ghost" size="sm" className="text-red-500" onClick={(e) => { e.stopPropagation(); voteSegment(seg.id, -1); }}>
+                        <ThumbsDown className="w-3 h-3" />
                       </Button>
                     </>
                   )}
@@ -349,6 +472,10 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
           <Copy className="w-4 h-4 mr-1" />
           {copied === "youtube" ? "Copied!" : "YT Chapters"}
         </Button>
+        <Button variant="outline" size="sm" onClick={copyAsMarkdown}>
+          <Copy className="w-4 h-4 mr-1" />
+          {copied === "markdown" ? "Copied!" : "Markdown"}
+        </Button>
         {segments.some(s => s.status === "identified" && s.externalLinks && (s.externalLinks as Record<string, string>).spotify) && (
           <Button
             variant="outline"
@@ -396,6 +523,8 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
           </a>
         </p>
       )}
+
+      <Recommendations analysisId={analysisId} />
     </div>
   );
 }

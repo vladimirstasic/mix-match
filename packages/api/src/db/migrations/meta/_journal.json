@@ -43,6 +43,20 @@
       "when": 1777879614272,
       "tag": "0005_chunky_dormammu",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1777888072196,
+      "tag": "0006_pretty_shotgun",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1777888663202,
+      "tag": "0007_rare_catseye",
+      "breakpoints": true
     }
   ]
 }

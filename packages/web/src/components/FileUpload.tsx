@@ -131,6 +131,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
         <Button
           variant={mode === "fast" ? "default" : "outline"}
           size="sm"
+          className="text-xs sm:text-sm"
           onClick={(e) => { e.stopPropagation(); setMode("fast"); }}
         >
           Fast
@@ -138,6 +139,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
         <Button
           variant={mode === "detailed" ? "default" : "outline"}
           size="sm"
+          className="text-xs sm:text-sm"
           onClick={(e) => { e.stopPropagation(); setMode("detailed"); }}
         >
           Detailed

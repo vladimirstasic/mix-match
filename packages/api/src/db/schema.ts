@@ -27,7 +27,9 @@ export const analyses = pgTable("analyses", {
   userId: varchar("user_id", { length: 255 }).references(() => users.clerkId),
   mode: varchar("mode", { length: 10 }).default("fast"),
   isPublic: boolean("is_public").default(false),
+  isFavorite: boolean("is_favorite").default(false),
   slug: varchar("slug", { length: 50 }).unique(),
+  tags: jsonb("tags").$type<string[]>().default([]),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -45,7 +47,24 @@ export const segments = pgTable("segments", {
   confidence: real("confidence"),
   bpm: integer("bpm"),
   externalLinks: jsonb("external_links"),
+  isBookmarked: boolean("is_bookmarked").default(false),
   attempts: integer("attempts").notNull().default(1),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const votes = pgTable("votes", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  segmentId: uuid("segment_id").notNull().references(() => segments.id, { onDelete: "cascade" }),
+  userId: varchar("user_id", { length: 255 }).notNull().references(() => users.clerkId),
+  value: integer("value").notNull(), // +1 or -1
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const comments = pgTable("comments", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  segmentId: uuid("segment_id").notNull().references(() => segments.id, { onDelete: "cascade" }),
+  userId: varchar("user_id", { length: 255 }).notNull().references(() => users.clerkId),
+  text: varchar("text", { length: 500 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 });

@@ -4,6 +4,7 @@ import { eq, and } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { analyses, segments } from "../db/schema.js";
 import fs from "fs/promises";
+import path from "path";
 import { queueEvents, analysisQueue } from "../queue/index.js";
 
 export const analysisRouter = Router();
@@ -86,6 +87,65 @@ analysisRouter.get("/analysis/compare", async (req, res) => {
     sharedTracks,
     uniqueToA: identifiedA.filter(s => !sharedAcridsSet.has(s.acrid!) && !sharedKeysSet.has(`${normalize(s.artist || "")}::${normalize(s.title || "")}`)).length,
     uniqueToB: identifiedB.filter(s => !sharedAcridsSet.has(s.acrid!) && !sharedKeysSet.has(`${normalize(s.artist || "")}::${normalize(s.title || "")}`)).length,
+  });
+});
+
+// GET /api/analysis/:id/summary — generate mix summary
+analysisRouter.get("/analysis/:id/summary", async (req, res) => {
+  const analysisId = req.params.id as string;
+  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  if (!analysis) { res.status(404).json({ error: "Not found" }); return; }
+
+  const segs = await db.select().from(segments)
+    .where(eq(segments.analysisId, analysisId)).orderBy(segments.startSec);
+
+  const identified = segs.filter(s => s.status === "identified");
+  const unknown = segs.filter(s => s.status === "unknown");
+  const totalDuration = segs.length > 0 ? Math.max(...segs.map(s => s.endSec)) : 0;
+
+  // Unique artists
+  const artists = [...new Set(identified.map(s => s.artist).filter(Boolean))];
+
+  // Unique tracks
+  const uniqueTracks = [...new Set(identified.map(s => s.acrid).filter(Boolean))];
+
+  // Most featured artist
+  const artistCounts = new Map<string, number>();
+  identified.forEach(s => {
+    if (s.artist) artistCounts.set(s.artist, (artistCounts.get(s.artist) || 0) + 1);
+  });
+  const topArtist = [...artistCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+
+  // Coverage
+  const identifiedDuration = identified.reduce((sum, s) => sum + (s.endSec - s.startSec), 0);
+  const coveragePercent = totalDuration > 0 ? Math.round((identifiedDuration / totalDuration) * 100) : 0;
+
+  // Generate text summary
+  const durationMin = Math.round(totalDuration / 60);
+  let summary = `${durationMin} minute mix with ${uniqueTracks.length} identified track${uniqueTracks.length !== 1 ? "s" : ""}`;
+  summary += ` from ${artists.length} artist${artists.length !== 1 ? "s" : ""}.`;
+
+  if (topArtist && topArtist[1] > 1) {
+    summary += ` Most featured: ${topArtist[0]} (${topArtist[1]} segments).`;
+  }
+
+  summary += ` ${coveragePercent}% of the mix was identified.`;
+
+  if (unknown.length > 0) {
+    summary += ` ${unknown.length} section${unknown.length !== 1 ? "s" : ""} remain unidentified.`;
+  }
+
+  res.json({
+    summary,
+    stats: {
+      durationMin,
+      totalTracks: uniqueTracks.length,
+      totalArtists: artists.length,
+      coveragePercent,
+      topArtist: topArtist ? { name: topArtist[0], segments: topArtist[1] } : null,
+      unknownSections: unknown.length,
+    },
+    artists,
   });
 });
 
@@ -400,6 +460,69 @@ analysisRouter.patch("/analysis/:id", async (req, res) => {
   res.json(updated);
 });
 
+// DELETE /api/analysis/:id
+analysisRouter.delete("/analysis/:id", async (req, res) => {
+  const { userId } = getAuth(req);
+  const analysisId = req.params.id as string;
+
+  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  if (!analysis) { res.status(404).json({ error: "Not found" }); return; }
+  if (analysis.userId && analysis.userId !== userId) { res.status(403).json({ error: "Not authorized" }); return; }
+
+  // Delete chunks directory if it exists
+  if (analysis.chunksDir) {
+    await fs.rm(analysis.chunksDir, { recursive: true, force: true }).catch(() => {});
+    await fs.rmdir(path.dirname(analysis.chunksDir)).catch(() => {});
+  }
+
+  // Cascade delete handles segments
+  await db.delete(analyses).where(eq(analyses.id, analysisId));
+
+  res.json({ ok: true });
+});
+
+// GET /api/t/:slug/og — returns HTML with OG meta tags for social sharing
+analysisRouter.get("/t/:slug/og", async (req, res) => {
+  const slug = req.params.slug as string;
+  const [analysis] = await db.select().from(analyses).where(eq(analyses.slug, slug)).limit(1);
+  if (!analysis || !analysis.isPublic) { res.status(404).send("Not found"); return; }
+
+  const segs = await db.select().from(segments)
+    .where(eq(segments.analysisId, analysis.id)).orderBy(segments.startSec);
+  const identified = segs.filter(s => s.status === "identified");
+
+  const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+  const title = esc(`${analysis.filename} — MixMatch`);
+  const description = esc(
+    identified.length > 0
+      ? `${identified.length} tracks: ${identified.slice(0, 3).map(s => s.trackName).join(", ")}${identified.length > 3 ? "..." : ""}`
+      : "Tracklist identified by MixMatch"
+  );
+  const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+  const publicUrl = `${frontendUrl}/t/${encodeURIComponent(slug)}`;
+
+  res.setHeader("Content-Type", "text/html");
+  res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <title>${title}</title>
+  <meta property="og:title" content="${title}" />
+  <meta property="og:description" content="${description}" />
+  <meta property="og:type" content="music.playlist" />
+  <meta property="og:url" content="${publicUrl}" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="${title}" />
+  <meta name="twitter:description" content="${description}" />
+</head>
+<body>
+  <h1>${title}</h1>
+  <ul>${identified.map(s => `<li>${esc(s.trackName || "Unknown")}</li>`).join("")}</ul>
+  <p><a href="${publicUrl}">View on MixMatch</a></p>
+</body>
+</html>`);
+});
+
 // GET /api/t/:slug — public tracklist (no auth required)
 analysisRouter.get("/t/:slug", async (req, res) => {
   const slug = req.params.slug as string;
@@ -414,6 +537,54 @@ analysisRouter.get("/t/:slug", async (req, res) => {
     filename: analysis.filename,
     segments: segs.filter(s => s.status === "identified"),
     createdAt: analysis.createdAt,
+  });
+});
+
+// GET /api/analysis/:id/recommendations
+analysisRouter.get("/analysis/:id/recommendations", async (req, res) => {
+  const analysisId = req.params.id as string;
+  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  if (!analysis) { res.status(404).json({ error: "Not found" }); return; }
+
+  const segs = await db.select().from(segments)
+    .where(eq(segments.analysisId, analysisId)).orderBy(segments.startSec);
+
+  const identified = segs.filter(s => s.status === "identified");
+
+  // Artist frequency
+  const artistFreq = new Map<string, { count: number; tracks: string[] }>();
+  identified.forEach(s => {
+    if (!s.artist) return;
+    const entry = artistFreq.get(s.artist) || { count: 0, tracks: [] };
+    entry.count++;
+    if (!entry.tracks.includes(s.title || "")) entry.tracks.push(s.title || "");
+    artistFreq.set(s.artist, entry);
+  });
+
+  const topArtists = [...artistFreq.entries()]
+    .sort((a, b) => b[1].count - a[1].count)
+    .slice(0, 10)
+    .map(([name, data]) => ({ name, count: data.count, tracks: data.tracks }));
+
+  // Unique tracks with Spotify links for discovery
+  const tracksWithLinks = identified
+    .filter(s => s.externalLinks && (s.externalLinks as Record<string, string>).spotify)
+    .reduce((acc, s) => {
+      if (!acc.find(t => t.acrid === s.acrid)) {
+        acc.push({
+          trackName: s.trackName,
+          artist: s.artist,
+          acrid: s.acrid,
+          spotifyUrl: (s.externalLinks as Record<string, string>).spotify,
+        });
+      }
+      return acc;
+    }, [] as { trackName: string | null; artist: string | null; acrid: string | null; spotifyUrl: string }[]);
+
+  res.json({
+    topArtists,
+    tracksWithSpotify: tracksWithLinks,
+    totalIdentified: identified.length,
   });
 });
 

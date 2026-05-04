@@ -4,6 +4,7 @@ import { FileUpload } from "./components/FileUpload";
 import { ProgressBar } from "./components/ProgressBar";
 import { Timeline } from "./components/Timeline";
 import { Dashboard } from "./components/Dashboard";
+import { ProfileSettings } from "./components/ProfileSettings";
 import { LandingPage } from "./components/LandingPage";
 import { PublicTracklist } from "./components/PublicTracklist";
 import { DjProfile } from "./components/DjProfile";
@@ -20,6 +21,7 @@ function App() {
     useAnalysis();
   const { toasts, addToast, removeToast } = useToast();
   const [showCompare, setShowCompare] = useState(false);
+  const [credits, setCredits] = useState<number | null>(null);
   const prevPhase = useRef(phase);
 
   // Handle Spotify OAuth callback
@@ -39,10 +41,38 @@ function App() {
     }
   }, [addToast]);
 
+  // Request browser notification permission on mount
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission === "default") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // Fetch user credits on mount
+  useEffect(() => {
+    const API_BASE = import.meta.env.VITE_API_URL || "/api";
+    fetch(`${API_BASE}/user/profile`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data && data.creditsRemaining != null) {
+          setCredits(data.creditsRemaining);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     if (prevPhase.current === "processing" && phase === "completed") {
       const count = segments.filter(s => s.status === "identified").length;
       addToast(`Analysis complete — ${count} track${count !== 1 ? "s" : ""} identified`);
+
+      // Browser notification
+      if (Notification.permission === "granted") {
+        new Notification("MixMatch", {
+          body: `Analysis complete — ${count} track${count !== 1 ? "s" : ""} identified`,
+          icon: "/favicon.svg",
+        });
+      }
     }
     if (prevPhase.current === "processing" && phase === "failed") {
       addToast(error || "Analysis failed", "error");
@@ -71,6 +101,9 @@ function App() {
                 <header className="text-center mb-12">
                   <div className="flex justify-end items-center gap-2 mb-4">
                     <ThemeToggle />
+                    {credits !== null && (
+                      <span className="text-xs text-muted-foreground">{credits} credits</span>
+                    )}
                     <UserButton />
                   </div>
                   <h1 className="text-3xl font-bold tracking-tight">Mix Match</h1>
@@ -87,6 +120,9 @@ function App() {
                         </Button>
                       </div>
                       <FileUpload onFileSelected={startAnalysis} onUrlSubmitted={startAnalysisFromUrl} />
+                      <div className="mt-8">
+                        <ProfileSettings />
+                      </div>
                     </>
                   )}
 

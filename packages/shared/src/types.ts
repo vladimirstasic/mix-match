@@ -85,6 +85,7 @@ export interface Segment {
   bpm: number | null;
   confidence: number | null;
   externalLinks: ExternalLinks | null;
+  isBookmarked: boolean;
   attempts: number;
   createdAt: string;
   updatedAt: string;
