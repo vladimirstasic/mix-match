@@ -3,6 +3,7 @@ import { useParams, Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check, Loader2, Disc3, Music } from "lucide-react";
+import { formatTime } from "@mix-match/shared";
 
 const API_BASE = import.meta.env.VITE_API_URL || "/api";
 
@@ -21,11 +22,6 @@ interface PublicData {
   createdAt: string;
 }
 
-function formatTime(sec: number): string {
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-}
 
 export function PublicTracklist() {
   const { slug } = useParams<{ slug: string }>();

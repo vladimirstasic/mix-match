@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import type { Segment, ExternalLinks } from "@mix-match/shared";
+import { formatTime } from "@mix-match/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { ExportModal } from "./ExportModal";
 import { Button } from "@/components/ui/button";
@@ -20,11 +21,6 @@ interface Props {
   onShare: () => Promise<string | null>;
 }
 
-function formatTime(sec: number): string {
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-}
 
 const LINK_LABELS: { key: keyof ExternalLinks; label: string; color: string }[] = [
   { key: "spotify", label: "Spotify", color: "text-green-500 hover:text-green-400" },

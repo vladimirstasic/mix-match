@@ -2,6 +2,8 @@ import { Router } from "express";
 import { getAuth } from "@clerk/express";
 import { eq, and, sql } from "drizzle-orm";
 import { requireUser, getUserId } from "../middleware/auth.js";
+import { formatTime } from "@mix-match/shared";
+import { normalizeString } from "../services/aggregator.js";
 import { db } from "../db/client.js";
 import { analyses, segments, users } from "../db/schema.js";
 import { findAnalysis, findSegment, getAnalysisSegments } from "../db/helpers.js";
@@ -42,9 +44,8 @@ analysisRouter.get("/analysis/compare", requireUser, async (req, res) => {
   const sharedAcridsSet = new Set(sharedAcridsArr);
 
   // Also fuzzy match by normalized artist+title for tracks without matching acrids
-  const normalize = (s: string) => s.toLowerCase().replace(/\(.*?\)/g, "").replace(/\[.*?\]/g, "").replace(/\s+/g, " ").trim();
-  const keysA = new Set(identifiedA.map(s => `${normalize(s.artist || "")}::${normalize(s.title || "")}`));
-  const keysB = new Set(identifiedB.map(s => `${normalize(s.artist || "")}::${normalize(s.title || "")}`));
+  const keysA = new Set(identifiedA.map(s => `${normalizeString(s.artist || "")}::${normalizeString(s.title || "")}`));
+  const keysB = new Set(identifiedB.map(s => `${normalizeString(s.artist || "")}::${normalizeString(s.title || "")}`));
   const sharedKeysArr = [...keysA].filter(k => keysB.has(k));
   const sharedKeysSet = new Set(sharedKeysArr);
 
@@ -69,8 +70,8 @@ analysisRouter.get("/analysis/compare", requireUser, async (req, res) => {
 
   // Add fuzzy matches not already covered by acrid
   for (const key of sharedKeysArr) {
-    const segA = identifiedA.find(s => `${normalize(s.artist || "")}::${normalize(s.title || "")}` === key);
-    const segB = identifiedB.find(s => `${normalize(s.artist || "")}::${normalize(s.title || "")}` === key);
+    const segA = identifiedA.find(s => `${normalizeString(s.artist || "")}::${normalizeString(s.title || "")}` === key);
+    const segB = identifiedB.find(s => `${normalizeString(s.artist || "")}::${normalizeString(s.title || "")}` === key);
     if (segA && segB && segA.trackName && !addedNames.has(segA.trackName)) {
       addedNames.add(segA.trackName);
       sharedTracks.push({
@@ -85,8 +86,8 @@ analysisRouter.get("/analysis/compare", requireUser, async (req, res) => {
     mixA: { id: idA, filename: analysisA.filename, totalTracks: identifiedA.length },
     mixB: { id: idB, filename: analysisB.filename, totalTracks: identifiedB.length },
     sharedTracks,
-    uniqueToA: identifiedA.filter(s => !sharedAcridsSet.has(s.acrid!) && !sharedKeysSet.has(`${normalize(s.artist || "")}::${normalize(s.title || "")}`)).length,
-    uniqueToB: identifiedB.filter(s => !sharedAcridsSet.has(s.acrid!) && !sharedKeysSet.has(`${normalize(s.artist || "")}::${normalize(s.title || "")}`)).length,
+    uniqueToA: identifiedA.filter(s => !sharedAcridsSet.has(s.acrid!) && !sharedKeysSet.has(`${normalizeString(s.artist || "")}::${normalizeString(s.title || "")}`)).length,
+    uniqueToB: identifiedB.filter(s => !sharedAcridsSet.has(s.acrid!) && !sharedKeysSet.has(`${normalizeString(s.artist || "")}::${normalizeString(s.title || "")}`)).length,
   });
 });
 
@@ -598,9 +599,3 @@ analysisRouter.get("/analysis/:id/recommendations", async (req, res) => {
     totalIdentified: identified.length,
   });
 });
-
-function formatTime(sec: number): string {
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-}

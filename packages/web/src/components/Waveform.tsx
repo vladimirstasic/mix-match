@@ -1,5 +1,6 @@
 import { useState, useRef } from "react";
 import type { Segment } from "@mix-match/shared";
+import { formatTime } from "@mix-match/shared";
 
 interface Props {
   segments: Segment[];
@@ -8,11 +9,6 @@ interface Props {
   onSegmentClick?: (segmentId: string) => void;
 }
 
-function formatTime(sec: number): string {
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return `${String(m).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-}
 
 export function Waveform({ segments, totalDuration, waveformData, onSegmentClick }: Props) {
   const [hover, setHover] = useState<{ x: number; seconds: number; segment: Segment | null } | null>(null);

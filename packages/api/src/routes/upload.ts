@@ -46,6 +46,32 @@ async function cleanupExpiredChunks() {
   }
 }
 
+async function checkCredits(userId: string, res: import("express").Response): Promise<boolean> {
+  const user = await findUser(userId);
+  if (user) {
+    // Reset credits if period expired
+    if (user.creditsResetAt < new Date()) {
+      const resetCredits = user.plan === "free" ? 3 : user.plan === "pro" ? 30 : 999;
+      await db.update(users).set({
+        creditsRemaining: resetCredits,
+        creditsResetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      }).where(eq(users.clerkId, userId));
+    }
+
+    // Atomic decrement — returns empty if credits already 0
+    const result = await db.update(users)
+      .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
+      .where(and(eq(users.clerkId, userId), sql`${users.creditsRemaining} > 0`))
+      .returning({ creditsRemaining: users.creditsRemaining });
+
+    if (result.length === 0) {
+      res.status(403).json({ error: "No credits remaining" });
+      return false;
+    }
+  }
+  return true;
+}
+
 export const uploadRouter = Router();
 
 const execFileAsync = promisify(execFile);
@@ -66,29 +92,7 @@ uploadRouter.post("/upload", upload.single("file"), requireUser, async (req, res
       await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
     }
 
-    // Check credits
-    const user = await findUser(userId);
-    if (user) {
-      // Reset credits if period expired
-      if (user.creditsResetAt < new Date()) {
-        const resetCredits = user.plan === "free" ? 3 : user.plan === "pro" ? 30 : 999;
-        await db.update(users).set({
-          creditsRemaining: resetCredits,
-          creditsResetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        }).where(eq(users.clerkId, userId));
-      }
-
-      // Atomic decrement — returns empty if credits already 0
-      const result = await db.update(users)
-        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
-        .where(and(eq(users.clerkId, userId), sql`${users.creditsRemaining} > 0`))
-        .returning({ creditsRemaining: users.creditsRemaining });
-
-      if (result.length === 0) {
-        res.status(403).json({ error: "No credits remaining" });
-        return;
-      }
-    }
+    if (!(await checkCredits(userId, res))) return;
 
     // SHA256 file hash for full-file cache
     const fileBuffer = await fs.readFile(file.path);
@@ -148,29 +152,7 @@ uploadRouter.post("/upload-url", requireUser, async (req, res) => {
   // Ensure user exists in DB
   await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
 
-  // Check credits
-  const user = await findUser(userId);
-  if (user) {
-    // Reset credits if period expired
-    if (user.creditsResetAt < new Date()) {
-      const resetCredits = user.plan === "free" ? 3 : user.plan === "pro" ? 30 : 999;
-      await db.update(users).set({
-        creditsRemaining: resetCredits,
-        creditsResetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-      }).where(eq(users.clerkId, userId));
-    }
-
-    // Atomic decrement — returns empty if credits already 0
-    const result = await db.update(users)
-      .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
-      .where(and(eq(users.clerkId, userId), sql`${users.creditsRemaining} > 0`))
-      .returning({ creditsRemaining: users.creditsRemaining });
-
-    if (result.length === 0) {
-      res.status(403).json({ error: "No credits remaining" });
-      return;
-    }
-  }
+  if (!(await checkCredits(userId, res))) return;
 
   const outputPath = path.join(config.uploadDir, uuid() + ".mp3");
 
