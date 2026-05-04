@@ -66,6 +66,25 @@ uploadRouter.post("/upload", upload.single("file"), async (req, res) => {
       await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
     }
 
+    // Check credits
+    const [user] = await db.select().from(users).where(eq(users.clerkId, userId)).limit(1);
+    if (user) {
+      // Reset credits if period expired
+      if (user.creditsResetAt < new Date()) {
+        const resetCredits = user.plan === "free" ? 3 : user.plan === "pro" ? 30 : 999;
+        await db.update(users).set({
+          creditsRemaining: resetCredits,
+          creditsResetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+        }).where(eq(users.clerkId, userId));
+      } else if (user.creditsRemaining <= 0) {
+        res.status(403).json({ error: "No credits remaining. Credits reset on " + user.creditsResetAt.toLocaleDateString() });
+        return;
+      }
+
+      // Decrement credits
+      await db.update(users).set({ creditsRemaining: user.creditsRemaining - 1 }).where(eq(users.clerkId, userId));
+    }
+
     // SHA256 file hash for full-file cache
     const fileBuffer = await fs.readFile(file.path);
     const fileHash = crypto.createHash("sha256").update(fileBuffer).digest("hex");
@@ -124,6 +143,25 @@ uploadRouter.post("/upload-url", async (req, res) => {
 
   // Ensure user exists in DB
   await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
+
+  // Check credits
+  const [user] = await db.select().from(users).where(eq(users.clerkId, userId)).limit(1);
+  if (user) {
+    // Reset credits if period expired
+    if (user.creditsResetAt < new Date()) {
+      const resetCredits = user.plan === "free" ? 3 : user.plan === "pro" ? 30 : 999;
+      await db.update(users).set({
+        creditsRemaining: resetCredits,
+        creditsResetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      }).where(eq(users.clerkId, userId));
+    } else if (user.creditsRemaining <= 0) {
+      res.status(403).json({ error: "No credits remaining. Credits reset on " + user.creditsResetAt.toLocaleDateString() });
+      return;
+    }
+
+    // Decrement credits
+    await db.update(users).set({ creditsRemaining: user.creditsRemaining - 1 }).where(eq(users.clerkId, userId));
+  }
 
   const outputPath = path.join(config.uploadDir, uuid() + ".mp3");
 

@@ -13,7 +13,12 @@ userRouter.get("/user/profile", async (req, res) => {
   const [user] = await db.select().from(users).where(eq(users.clerkId, userId)).limit(1);
   if (!user) { res.json({ username: null }); return; }
 
-  res.json({ username: user.username, plan: user.plan });
+  res.json({
+    username: user.username,
+    plan: user.plan,
+    creditsRemaining: user.creditsRemaining,
+    creditsResetAt: user.creditsResetAt,
+  });
 });
 
 userRouter.get("/user/analyses", async (req, res) => {
