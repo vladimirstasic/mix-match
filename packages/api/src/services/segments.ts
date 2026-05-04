@@ -78,5 +78,21 @@ export function buildSegments(
     });
   }
 
-  return segments;
+  // Merge adjacent identified segments of the same track
+  const merged: SegmentData[] = [];
+  for (const seg of segments) {
+    const prev = merged[merged.length - 1];
+    if (
+      prev &&
+      prev.status === "identified" &&
+      seg.status === "identified" &&
+      prev.acrid && seg.acrid && prev.acrid === seg.acrid
+    ) {
+      prev.endSec = seg.endSec;
+    } else {
+      merged.push({ ...seg });
+    }
+  }
+
+  return merged;
 }
