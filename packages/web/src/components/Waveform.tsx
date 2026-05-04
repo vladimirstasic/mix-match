@@ -34,10 +34,19 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
   };
 
   const getBarColor = (segment: Segment | null, isHovered: boolean) => {
-    if (!segment) return isHovered ? "bg-muted-foreground/40" : "bg-muted-foreground/20";
-    if (segment.status === "identified") return isHovered ? "bg-green-400" : "bg-green-500/70";
+    if (!segment) return isHovered ? "bg-muted-foreground/40" : "bg-muted-foreground/15";
     if (segment.status === "retrying") return isHovered ? "bg-yellow-400" : "bg-yellow-500/70";
-    return isHovered ? "bg-muted-foreground/40" : "bg-muted-foreground/30";
+    if (segment.status === "unknown") return isHovered ? "bg-muted-foreground/40" : "bg-muted-foreground/25";
+    if (segment.status === "identified") {
+      const conf = segment.confidence;
+      if (conf != null) {
+        if (conf >= 80) return isHovered ? "bg-green-400" : "bg-green-500/70";
+        if (conf >= 50) return isHovered ? "bg-lime-400" : "bg-lime-500/70";
+        return isHovered ? "bg-orange-400" : "bg-orange-500/70";
+      }
+      return isHovered ? "bg-green-400" : "bg-green-500/70";
+    }
+    return isHovered ? "bg-muted-foreground/40" : "bg-muted-foreground/20";
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -70,7 +79,12 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
           <div className="bg-popover border border-border rounded-lg shadow-lg px-3 py-2 w-[160px] text-center">
             <p className="text-xs font-mono text-muted-foreground">{formatTime(hover.seconds)}</p>
             {hover.segment?.status === "identified" ? (
-              <p className="text-sm font-medium truncate mt-0.5">{hover.segment.trackName}</p>
+              <>
+                <p className="text-sm font-medium truncate mt-0.5">{hover.segment.trackName}</p>
+                {hover.segment.confidence != null && (
+                  <p className="text-xs text-muted-foreground mt-0.5">{hover.segment.confidence}% confidence</p>
+                )}
+              </>
             ) : (
               <p className="text-xs text-muted-foreground italic mt-0.5">Unknown</p>
             )}
@@ -92,7 +106,7 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
       {/* Bars */}
       <div
         ref={containerRef}
-        className="flex items-end gap-[1px] h-20 w-full cursor-crosshair"
+        className="flex items-end gap-[1px] h-20 w-full cursor-crosshair relative"
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setHover(null)}
         onClick={handleClick}
@@ -111,6 +125,51 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
             />
           );
         })}
+
+        {/* Energy curve overlay */}
+        {waveformData && waveformData.length > 10 && (
+          <svg className="absolute inset-0 pointer-events-none" viewBox={`0 0 ${barCount} 100`} preserveAspectRatio="none">
+            <path
+              d={(() => {
+                // Smooth the data with a moving average (window of 10)
+                const windowSize = Math.min(10, Math.floor(bars.length / 5));
+                const smoothed = bars.map((_, i) => {
+                  const start = Math.max(0, i - windowSize);
+                  const end = Math.min(bars.length, i + windowSize + 1);
+                  let sum = 0;
+                  for (let j = start; j < end; j++) sum += bars[j];
+                  return sum / (end - start);
+                });
+                const points = smoothed.map((v, i) => `${i},${100 - v * 95}`);
+                return `M${points.join(" L")}`;
+              })()}
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.5"
+              className="text-primary/30"
+            />
+          </svg>
+        )}
+      </div>
+
+      {/* Transition markers */}
+      <div className="absolute top-0 bottom-6 left-0 right-0 pointer-events-none">
+        {segments.filter(s => s.status === "identified").map((seg, i, arr) => {
+          if (i === 0) return null;
+          const prev = arr[i - 1];
+          if (!prev || prev.endSec === seg.startSec || Math.abs(prev.endSec - seg.startSec) < 5) {
+            const xPercent = (seg.startSec / totalDuration) * 100;
+            return (
+              <div
+                key={seg.id}
+                className="absolute top-0 bottom-0 w-px bg-white/30"
+                style={{ left: `${xPercent}%` }}
+                title={`Transition at ${formatTime(seg.startSec)}`}
+              />
+            );
+          }
+          return null;
+        })}
       </div>
 
       {/* Time axis */}
@@ -125,10 +184,16 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
       {/* Legend */}
       <div className="flex items-center gap-3 mt-1 justify-center">
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          <span className="w-2 h-2 rounded-sm bg-green-500/70" /> Identified
+          <span className="w-2 h-2 rounded-sm bg-green-500/70" /> High
         </span>
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          <span className="w-2 h-2 rounded-sm bg-muted-foreground/30" /> Unknown
+          <span className="w-2 h-2 rounded-sm bg-lime-500/70" /> Medium
+        </span>
+        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+          <span className="w-2 h-2 rounded-sm bg-orange-500/70" /> Low
+        </span>
+        <span className="flex items-center gap-1 text-xs text-muted-foreground">
+          <span className="w-2 h-2 rounded-sm bg-muted-foreground/25" /> Unknown
         </span>
       </div>
     </div>

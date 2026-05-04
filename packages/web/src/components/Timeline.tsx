@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useCallback, useRef, useState } from "react";
 import type { Segment, ExternalLinks } from "@mix-match/shared";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -101,6 +101,17 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
     return new Set(segments.filter(s => s.isBookmarked).map(s => s.id));
   });
 
+  const segmentRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  const scrollToSegment = useCallback((segmentId: string) => {
+    const el = segmentRefs.current.get(segmentId);
+    if (el) {
+      el.scrollIntoView({ behavior: "smooth", block: "center" });
+      el.classList.add("ring-2", "ring-primary");
+      setTimeout(() => el.classList.remove("ring-2", "ring-primary"), 2000);
+    }
+  }, []);
+
   const handleToggleBookmark = async (e: React.MouseEvent, segmentId: string) => {
     e.stopPropagation();
     const { isBookmarked } = await toggleBookmark(segmentId);
@@ -142,6 +153,13 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
     return true;
   });
 
+  // Detect duplicate tracks
+  const trackCounts = new Map<string, number>();
+  segments.filter(s => s.status === "identified" && s.acrid).forEach(s => {
+    trackCounts.set(s.acrid!, (trackCounts.get(s.acrid!) || 0) + 1);
+  });
+  const isDuplicate = (acrid: string | null) => acrid ? (trackCounts.get(acrid) || 0) > 1 : false;
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
@@ -177,7 +195,7 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
       </div>
 
       {totalDuration > 0 && (
-        <Waveform segments={segments} totalDuration={totalDuration} waveformData={waveformData} />
+        <Waveform segments={segments} totalDuration={totalDuration} waveformData={waveformData} onSegmentClick={scrollToSegment} />
       )}
 
       {segments.some(s => s.status === "identified") && (
@@ -197,7 +215,11 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
         {visibleSegments.map((seg) => (
           <React.Fragment key={seg.id}>
           <Card
-            className={`border-l-4 ${
+            ref={(el: HTMLDivElement | null) => {
+              if (el) segmentRefs.current.set(seg.id, el);
+              else segmentRefs.current.delete(seg.id);
+            }}
+            className={`border-l-4 transition-shadow ${
               seg.status === "identified"
                 ? bookmarkedIds.has(seg.id) ? "border-l-green-500 ring-1 ring-green-500/20 bg-green-500/5" : "border-l-green-500"
                 : seg.status === "retrying"
@@ -250,6 +272,11 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
                   ) : (
                     <>
                       <span className="font-medium">{seg.trackName}</span>
+                      {isDuplicate(seg.acrid) && (
+                        <span className="text-xs bg-yellow-500/10 text-yellow-500 rounded px-1.5 py-0.5 shrink-0">
+                          x{trackCounts.get(seg.acrid!)}
+                        </span>
+                      )}
                       {seg.bpm && (
                         <span className="text-xs text-muted-foreground bg-muted rounded px-1.5 py-0.5">
                           {seg.bpm} BPM
