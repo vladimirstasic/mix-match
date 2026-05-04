@@ -15,6 +15,7 @@ export function DjProfile() {
   const { username } = useParams<{ username: string }>();
   const [data, setData] = useState<DjProfileData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [following, setFollowing] = useState(false);
 
   useEffect(() => {
     if (!username) return;
@@ -24,6 +25,14 @@ export function DjProfile() {
       .catch(() => setData(null))
       .finally(() => setLoading(false));
   }, [username]);
+
+  const toggleFollow = async () => {
+    const res = await fetch(`${API_BASE}/dj/${username}/follow`, { method: "POST", credentials: "include" });
+    if (res.ok) {
+      const data = await res.json();
+      setFollowing(data.following);
+    }
+  };
 
   if (loading) return <div className="min-h-screen bg-background flex items-center justify-center"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>;
 
@@ -45,6 +54,9 @@ export function DjProfile() {
             </div>
           </div>
           <h1 className="text-3xl font-bold">@{data.username}</h1>
+          <Button variant={following ? "outline" : "default"} size="sm" onClick={toggleFollow} className="mt-2">
+            {following ? "Unfollow" : "Follow"}
+          </Button>
           <p className="text-sm text-muted-foreground mt-1">{data.mixes.length} public mix{data.mixes.length !== 1 ? "es" : ""}</p>
         </header>
 

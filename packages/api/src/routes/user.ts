@@ -1,8 +1,8 @@
 import { Router } from "express";
 import { getAuth } from "@clerk/express";
-import { eq, desc, and } from "drizzle-orm";
+import { eq, desc, and, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
-import { analyses, users, segments } from "../db/schema.js";
+import { analyses, users, segments, follows } from "../db/schema.js";
 
 export const userRouter = Router();
 
@@ -152,4 +152,79 @@ userRouter.post("/analysis/:id/reprocess", async (req, res) => {
   await db.delete(segments).where(eq(segments.analysisId, analysisId));
 
   res.json({ message: "Analysis reset. Please re-upload the file to reprocess." });
+});
+
+// POST /api/dj/:username/follow — toggle follow
+userRouter.post("/dj/:username/follow", async (req, res) => {
+  const { userId } = getAuth(req);
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
+
+  const username = req.params.username as string;
+  const existing = await db.select().from(follows)
+    .where(and(eq(follows.followerId, userId), eq(follows.followingUsername, username))).limit(1);
+
+  if (existing.length > 0) {
+    await db.delete(follows).where(eq(follows.id, existing[0].id));
+    res.json({ following: false });
+  } else {
+    await db.insert(follows).values({ followerId: userId, followingUsername: username });
+    res.json({ following: true });
+  }
+});
+
+// GET /api/user/feed — mixes from followed DJs
+userRouter.get("/user/feed", async (req, res) => {
+  const { userId } = getAuth(req);
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const myFollows = await db.select().from(follows).where(eq(follows.followerId, userId));
+  const usernames = myFollows.map(f => f.followingUsername);
+
+  if (usernames.length === 0) { res.json([]); return; }
+
+  // Get user IDs for followed usernames
+  const followedUsers = await db.select().from(users).where(
+    sql`${users.username} IN (${sql.join(usernames.map(u => sql`${u}`), sql`, `)})`
+  );
+
+  const userIds = followedUsers.map(u => u.clerkId);
+  if (userIds.length === 0) { res.json([]); return; }
+
+  const mixes = await db.select({
+    id: analyses.id,
+    filename: analyses.filename,
+    status: analyses.status,
+    createdAt: analyses.createdAt,
+    slug: analyses.slug,
+  }).from(analyses)
+    .where(and(
+      sql`${analyses.userId} IN (${sql.join(userIds.map(id => sql`${id}`), sql`, `)})`,
+      eq(analyses.isPublic, true)
+    ))
+    .orderBy(desc(analyses.createdAt))
+    .limit(20);
+
+  res.json(mixes);
+});
+
+// GET /api/user/analytics — view counts for user's mixes
+userRouter.get("/user/analytics", async (req, res) => {
+  const { userId } = getAuth(req);
+  if (!userId) { res.status(401).json({ error: "Unauthorized" }); return; }
+
+  const mixes = await db.select({
+    id: analyses.id,
+    filename: analyses.filename,
+    viewCount: analyses.viewCount,
+    createdAt: analyses.createdAt,
+  }).from(analyses)
+    .where(eq(analyses.userId, userId))
+    .orderBy(desc(analyses.viewCount))
+    .limit(20);
+
+  const totalViews = mixes.reduce((sum, m) => sum + (m.viewCount || 0), 0);
+
+  res.json({ totalViews, mixes });
 });

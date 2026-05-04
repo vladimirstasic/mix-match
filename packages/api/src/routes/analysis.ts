@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { getAuth } from "@clerk/express";
-import { eq, and } from "drizzle-orm";
+import { eq, and, sql } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { analyses, segments, users } from "../db/schema.js";
 import fs from "fs/promises";
@@ -571,6 +571,9 @@ analysisRouter.get("/t/:slug", async (req, res) => {
 
   const segs = await db.select().from(segments)
     .where(eq(segments.analysisId, analysis.id)).orderBy(segments.startSec);
+
+  // Increment view count
+  await db.update(analyses).set({ viewCount: sql`${analyses.viewCount} + 1` }).where(eq(analyses.id, analysis.id));
 
   res.json({
     filename: analysis.filename,
