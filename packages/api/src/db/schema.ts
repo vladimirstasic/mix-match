@@ -48,6 +48,7 @@ export const segments = pgTable("segments", {
   confidence: real("confidence"),
   bpm: integer("bpm"),
   genre: varchar("genre", { length: 100 }),
+  musicalKey: varchar("musical_key", { length: 10 }),
   externalLinks: jsonb("external_links"),
   isBookmarked: boolean("is_bookmarked").default(false),
   attempts: integer("attempts").notNull().default(1),

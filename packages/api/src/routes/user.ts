@@ -13,11 +13,18 @@ userRouter.get("/user/profile", async (req, res) => {
   const [user] = await db.select().from(users).where(eq(users.clerkId, userId)).limit(1);
   if (!user) { res.json({ username: null }); return; }
 
+  // Compute badges dynamically
+  const analysisCount = await db.select({ count: sql<number>`count(*)` }).from(analyses).where(eq(analyses.userId, userId));
+  const badges: string[] = [];
+  if (Number(analysisCount[0]?.count) >= 1) badges.push("first-mix");
+  if (Number(analysisCount[0]?.count) >= 10) badges.push("power-scanner");
+
   res.json({
     username: user.username,
     plan: user.plan,
     creditsRemaining: user.creditsRemaining,
     creditsResetAt: user.creditsResetAt,
+    badges,
   });
 });
 
@@ -90,7 +97,13 @@ userRouter.get("/dj/:username", async (req, res) => {
   .orderBy(desc(analyses.createdAt))
   .limit(20);
 
-  res.json({ username: user.username, mixes });
+  // Compute badges dynamically
+  const analysisCount = await db.select({ count: sql<number>`count(*)` }).from(analyses).where(eq(analyses.userId, user.clerkId));
+  const badges: string[] = [];
+  if (Number(analysisCount[0]?.count) >= 1) badges.push("first-mix");
+  if (Number(analysisCount[0]?.count) >= 10) badges.push("power-scanner");
+
+  res.json({ username: user.username, mixes, badges });
 });
 
 userRouter.patch("/analysis/:id/tags", async (req, res) => {

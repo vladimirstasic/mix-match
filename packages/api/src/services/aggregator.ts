@@ -61,6 +61,7 @@ export function aggregateMatches(raw: RawMatch[]): TrackMatch[] {
         acrid: rep.acrid,
         bpm: rep.bpm ?? null,
         genre: rep.genre ?? null,
+        musicalKey: rep.musicalKey ?? null,
         score: rep.score ?? null,
         externalLinks: rep.externalLinks,
       });
@@ -78,6 +79,7 @@ export function aggregateMatches(raw: RawMatch[]): TrackMatch[] {
     acrid: rep.acrid,
     bpm: rep.bpm ?? null,
     genre: rep.genre ?? null,
+    musicalKey: rep.musicalKey ?? null,
     score: rep.score ?? null,
     externalLinks: rep.externalLinks,
   });

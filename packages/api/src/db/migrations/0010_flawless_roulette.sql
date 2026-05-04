@@ -1,0 +1,1 @@
+ALTER TABLE "segments" ADD COLUMN "musical_key" varchar(10);

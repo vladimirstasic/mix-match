@@ -10,6 +10,8 @@ import { PublicTracklist } from "./components/PublicTracklist";
 import { DjProfile } from "./components/DjProfile";
 import { MixCompare } from "./components/MixCompare";
 import { ManualTracklist } from "./components/ManualTracklist";
+import { Feed } from "./components/Feed";
+import { Analytics } from "./components/Analytics";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { useToast, ToastContainer } from "./components/Toast";
@@ -23,6 +25,7 @@ function App() {
   const { toasts, addToast, removeToast } = useToast();
   const [showCompare, setShowCompare] = useState(false);
   const [showManual, setShowManual] = useState(false);
+  const [showFeed, setShowFeed] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
   const prevPhase = useRef(phase);
 
@@ -113,7 +116,7 @@ function App() {
                 </header>
 
                 <main>
-                  {phase === "idle" && !showCompare && !showManual && (
+                  {phase === "idle" && !showCompare && !showManual && !showFeed && (
                     <>
                       <Dashboard onSelectAnalysis={loadAnalysis} />
                       <div className="flex justify-center gap-2 mb-4">
@@ -123,12 +126,27 @@ function App() {
                         <Button variant="outline" size="sm" onClick={() => setShowManual(true)}>
                           Manual Tracklist
                         </Button>
+                        <Button variant="outline" size="sm" onClick={() => setShowFeed(true)}>
+                          Feed
+                        </Button>
                       </div>
                       <FileUpload onFileSelected={startAnalysis} onUrlSubmitted={startAnalysisFromUrl} />
                       <div className="mt-8">
                         <ProfileSettings />
                       </div>
+                      <div className="mt-4">
+                        <Analytics />
+                      </div>
                     </>
+                  )}
+
+                  {phase === "idle" && showFeed && (
+                    <div>
+                      <Button variant="ghost" size="sm" className="mb-4" onClick={() => setShowFeed(false)}>
+                        &larr; Back
+                      </Button>
+                      <Feed onSelectAnalysis={(id) => { setShowFeed(false); loadAnalysis(id); }} />
+                    </div>
                   )}
 
                   {phase === "idle" && showCompare && (

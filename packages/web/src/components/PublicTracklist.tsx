@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { useParams, Link } from "react-router-dom";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,7 @@ export function PublicTracklist() {
   const [data, setData] = useState<PublicData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [comments, setComments] = useState<Record<string, { text: string; createdAt: string }[]>>({});
 
   useEffect(() => {
     if (!slug) return;
@@ -44,6 +45,17 @@ export function PublicTracklist() {
       .catch(() => setError("Tracklist not found"))
       .finally(() => setLoading(false));
   }, [slug]);
+
+  useEffect(() => {
+    if (!data) return;
+    data.segments.forEach(seg => {
+      fetch(`${API_BASE}/segments/${seg.id}/comments`)
+        .then(r => r.ok ? r.json() : [])
+        .then((c: { text: string; createdAt: string }[]) => {
+          if (c.length > 0) setComments(prev => ({ ...prev, [seg.id]: c }));
+        });
+    });
+  }, [data]);
 
   if (loading) {
     return (
@@ -82,25 +94,34 @@ export function PublicTracklist() {
 
         <div className="space-y-2 mb-8">
           {data.segments.map((seg) => (
-            <Card key={seg.id} className="border-l-4 border-l-green-500">
-              <CardContent className="flex items-center gap-4 py-3">
-                <span className="font-mono text-sm text-muted-foreground whitespace-nowrap min-w-[120px]">
-                  {formatTime(seg.startSec)} — {formatTime(seg.endSec)}
-                </span>
-                <Check className="w-4 h-4 text-green-500 shrink-0" />
-                <span className="font-medium text-sm">{seg.trackName}</span>
-                {seg.externalLinks?.spotify && (
-                  <a
-                    href={seg.externalLinks.spotify}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="ml-auto text-xs text-green-500 bg-green-500/10 rounded px-1.5 py-0.5 hover:bg-green-500/20 shrink-0"
-                  >
-                    Spotify
-                  </a>
-                )}
-              </CardContent>
-            </Card>
+            <React.Fragment key={seg.id}>
+              <Card className="border-l-4 border-l-green-500">
+                <CardContent className="flex items-center gap-4 py-3">
+                  <span className="font-mono text-sm text-muted-foreground whitespace-nowrap min-w-[120px]">
+                    {formatTime(seg.startSec)} — {formatTime(seg.endSec)}
+                  </span>
+                  <Check className="w-4 h-4 text-green-500 shrink-0" />
+                  <span className="font-medium text-sm">{seg.trackName}</span>
+                  {seg.externalLinks?.spotify && (
+                    <a
+                      href={seg.externalLinks.spotify}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-auto text-xs text-green-500 bg-green-500/10 rounded px-1.5 py-0.5 hover:bg-green-500/20 shrink-0"
+                    >
+                      Spotify
+                    </a>
+                  )}
+                </CardContent>
+              </Card>
+              {comments[seg.id] && comments[seg.id].length > 0 && (
+                <div className="ml-[140px] space-y-1 -mt-1 mb-1">
+                  {comments[seg.id].map((c, i) => (
+                    <p key={i} className="text-xs text-muted-foreground">{c.text}</p>
+                  ))}
+                </div>
+              )}
+            </React.Fragment>
           ))}
         </div>
 
