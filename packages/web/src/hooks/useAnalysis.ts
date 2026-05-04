@@ -81,6 +81,15 @@ export function useAnalysis() {
                 currentTrack: (data.currentTrack as string) || s.currentTrack,
                 tracksFound: (data.tracksFound as number) || s.tracksFound,
               }));
+              // Fetch partial segments every 5 chunks
+              const processed = (data.chunksProcessed as number) || 0;
+              if (processed > 0 && processed % 5 === 0) {
+                getAnalysis(analysisId).then(full => {
+                  if (full.segments && full.segments.length > 0) {
+                    setState(s => ({ ...s, segments: full.segments }));
+                  }
+                }).catch(() => {});
+              }
             } else if (data.type === "completed") {
               const full = await getAnalysis(analysisId);
               setState((s) => ({
@@ -137,6 +146,15 @@ export function useAnalysis() {
               currentTrack: (data.currentTrack as string) || s.currentTrack,
               tracksFound: (data.tracksFound as number) || s.tracksFound,
             }));
+            // Fetch partial segments every 5 chunks
+            const processed = (data.chunksProcessed as number) || 0;
+            if (processed > 0 && processed % 5 === 0) {
+              getAnalysis(analysisId).then(full => {
+                if (full.segments && full.segments.length > 0) {
+                  setState(s => ({ ...s, segments: full.segments }));
+                }
+              }).catch(() => {});
+            }
           } else if (data.type === "completed") {
             const full = await getAnalysis(analysisId);
             setState((s) => ({

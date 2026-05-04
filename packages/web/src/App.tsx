@@ -9,6 +9,7 @@ import { LandingPage } from "./components/LandingPage";
 import { PublicTracklist } from "./components/PublicTracklist";
 import { DjProfile } from "./components/DjProfile";
 import { MixCompare } from "./components/MixCompare";
+import { ManualTracklist } from "./components/ManualTracklist";
 import { Button } from "@/components/ui/button";
 import { ThemeToggle } from "./components/ThemeToggle";
 import { useToast, ToastContainer } from "./components/Toast";
@@ -21,6 +22,7 @@ function App() {
     useAnalysis();
   const { toasts, addToast, removeToast } = useToast();
   const [showCompare, setShowCompare] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   const [credits, setCredits] = useState<number | null>(null);
   const prevPhase = useRef(phase);
 
@@ -111,12 +113,15 @@ function App() {
                 </header>
 
                 <main>
-                  {phase === "idle" && !showCompare && (
+                  {phase === "idle" && !showCompare && !showManual && (
                     <>
                       <Dashboard onSelectAnalysis={loadAnalysis} />
-                      <div className="flex justify-center mb-4">
+                      <div className="flex justify-center gap-2 mb-4">
                         <Button variant="outline" size="sm" onClick={() => setShowCompare(true)}>
                           Compare Mixes
+                        </Button>
+                        <Button variant="outline" size="sm" onClick={() => setShowManual(true)}>
+                          Manual Tracklist
                         </Button>
                       </div>
                       <FileUpload onFileSelected={startAnalysis} onUrlSubmitted={startAnalysisFromUrl} />
@@ -130,15 +135,39 @@ function App() {
                     <MixCompare onBack={() => setShowCompare(false)} />
                   )}
 
-                  {(phase === "uploading" || phase === "processing") && (
-                    <ProgressBar
-                      phase={phase}
-                      uploadProgress={uploadProgress}
-                      chunksProcessed={chunksProcessed}
-                      totalChunks={totalChunks}
-                      currentTrack={currentTrack}
-                      tracksFound={tracksFound}
+                  {phase === "idle" && showManual && (
+                    <ManualTracklist
+                      onCreated={(id) => { setShowManual(false); loadAnalysis(id); }}
+                      onBack={() => setShowManual(false)}
                     />
+                  )}
+
+                  {(phase === "uploading" || phase === "processing") && (
+                    <>
+                      <ProgressBar
+                        phase={phase}
+                        uploadProgress={uploadProgress}
+                        chunksProcessed={chunksProcessed}
+                        totalChunks={totalChunks}
+                        currentTrack={currentTrack}
+                        tracksFound={tracksFound}
+                      />
+                      {phase === "processing" && segments.length > 0 && (
+                        <div className="mt-6">
+                          <Timeline
+                            segments={segments}
+                            chunksAvailable={false}
+                            analysisId={analysisId || ""}
+                            waveformData={null}
+                            onRetrySegment={() => {}}
+                            onRetryAll={() => {}}
+                            onReset={() => {}}
+                            onEditSegment={() => {}}
+                            onShare={async () => null}
+                          />
+                        </div>
+                      )}
+                    </>
                   )}
 
                   {phase === "completed" && segments.length > 0 && (
