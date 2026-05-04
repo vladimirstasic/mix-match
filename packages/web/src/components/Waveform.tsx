@@ -74,13 +74,13 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
       {hover && (
         <div
           className="absolute bottom-full mb-2 pointer-events-none z-10"
-          style={{ left: Math.max(80, Math.min(hover.x, (containerRef?.current?.offsetWidth ?? 300) - 80)) - 80 }}
+          style={{ left: Math.max(140, Math.min(hover.x, (containerRef?.current?.offsetWidth ?? 400) - 140)) - 140 }}
         >
-          <div className="bg-popover border border-border rounded-lg shadow-lg px-3 py-2 w-[160px] text-center">
+          <div className="bg-popover border border-border rounded-lg shadow-lg px-3 py-2 w-[280px] text-center">
             <p className="text-xs font-mono text-muted-foreground">{formatTime(hover.seconds)}</p>
             {hover.segment?.status === "identified" ? (
               <>
-                <p className="text-sm font-medium truncate mt-0.5">{hover.segment.trackName}</p>
+                <p className="text-sm font-medium mt-0.5">{hover.segment.trackName}</p>
                 {hover.segment.confidence != null && (
                   <p className="text-xs text-muted-foreground mt-0.5">{hover.segment.confidence}% confidence</p>
                 )}
