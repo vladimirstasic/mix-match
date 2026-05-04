@@ -74,7 +74,7 @@ export function LandingPage() {
             </div>
           </div>
 
-          <h1 className="text-5xl font-bold tracking-tight mb-4">
+          <h1 className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">
             Identify every track in your mix
           </h1>
           <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">

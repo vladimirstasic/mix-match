@@ -129,7 +129,7 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
         <h2 className="text-xl font-semibold">
           Found {identified.length} track{identified.length !== 1 ? "s" : ""}
           {unknown.length > 0 && (
@@ -190,8 +190,8 @@ export function Timeline({ segments, chunksAvailable, analysisId, waveformData, 
                 : "border-l-muted-foreground/30"
             }`}
           >
-            <CardContent className="flex items-center gap-4 py-3">
-              <span className="font-mono text-sm text-muted-foreground whitespace-nowrap min-w-[120px]">
+            <CardContent className="flex items-center gap-3 py-3 flex-wrap sm:flex-nowrap">
+              <span className="font-mono text-xs sm:text-sm text-muted-foreground whitespace-nowrap min-w-[100px] sm:min-w-[120px]">
                 {formatTime(seg.startSec)} — {formatTime(seg.endSec)}
               </span>
 

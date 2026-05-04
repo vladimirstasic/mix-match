@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
-import { getUserAnalyses, type AnalysisSummary } from "../api/client";
-import { Clock, CheckCircle, Loader2, XCircle, ExternalLink } from "lucide-react";
+import { getUserAnalyses, deleteAnalysis, type AnalysisSummary } from "../api/client";
+import { Clock, CheckCircle, Loader2, XCircle, ExternalLink, Trash2 } from "lucide-react";
 
 interface Props {
   onSelectAnalysis: (id: string) => void;
@@ -15,7 +15,32 @@ export function Dashboard({ onSelectAnalysis }: Props) {
     getUserAnalyses().then(setAnalyses).finally(() => setLoading(false));
   }, []);
 
-  if (loading) return <div className="text-center text-muted-foreground py-4"><Loader2 className="w-5 h-5 animate-spin inline" /> Loading...</div>;
+  const handleDelete = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    if (!window.confirm("Delete this analysis?")) return;
+    await deleteAnalysis(id);
+    setAnalyses((prev) => prev.filter((a) => a.id !== id));
+  };
+
+  if (loading) {
+    return (
+      <div className="space-y-3 mb-8">
+        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Recent Analyses</h3>
+        {[1, 2, 3].map(i => (
+          <div key={i} className="rounded-lg border border-border p-4 animate-pulse">
+            <div className="flex items-center gap-3">
+              <div className="w-4 h-4 rounded-full bg-muted" />
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-muted rounded w-3/4" />
+                <div className="h-3 bg-muted rounded w-1/2" />
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   if (analyses.length === 0) return null;
 
   const statusIcon = (status: string) => {
@@ -40,6 +65,13 @@ export function Dashboard({ onSelectAnalysis }: Props) {
                 {new Date(a.createdAt).toLocaleDateString()} — {a.status}
               </p>
             </div>
+            <button
+              className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0"
+              onClick={(e) => handleDelete(e, a.id)}
+              title="Delete analysis"
+            >
+              <Trash2 className="w-4 h-4" />
+            </button>
             <ExternalLink className="w-4 h-4 text-muted-foreground shrink-0" />
           </CardContent>
         </Card>

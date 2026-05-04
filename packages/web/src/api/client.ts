@@ -117,6 +117,10 @@ export async function getUserAnalyses(): Promise<AnalysisSummary[]> {
   return res.json();
 }
 
+export async function deleteAnalysis(id: string): Promise<void> {
+  await fetch(`${API_BASE}/analysis/${id}`, { method: "DELETE" });
+}
+
 export interface CompareResult {
   mixA: { id: string; filename: string; totalTracks: number };
   mixB: { id: string; filename: string; totalTracks: number };

@@ -12,6 +12,14 @@ interface Props {
 }
 
 export function ProgressBar({ phase, uploadProgress, chunksProcessed, totalChunks, currentTrack, tracksFound }: Props) {
+  const getEta = () => {
+    if (phase !== "processing" || totalChunks <= 0) return null;
+    const remaining = totalChunks - chunksProcessed;
+    if (remaining <= 0) return "Finishing up...";
+    if (remaining < 60) return `~${remaining}s remaining`;
+    return `~${Math.ceil(remaining / 60)} min remaining`;
+  };
+
   const isIndeterminate = phase === "uploading" && uploadProgress === -1;
   const pct = phase === "uploading"
     ? (isIndeterminate ? 0 : uploadProgress)
@@ -28,6 +36,12 @@ export function ProgressBar({ phase, uploadProgress, chunksProcessed, totalChunk
             <Music className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
         </div>
+
+        {phase === "processing" && chunksProcessed === 0 && (
+          <p className="text-xs text-muted-foreground animate-pulse text-center">
+            Queued — processing will begin shortly
+          </p>
+        )}
 
         {isIndeterminate ? (
           <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
@@ -68,6 +82,12 @@ export function ProgressBar({ phase, uploadProgress, chunksProcessed, totalChunk
               {chunksProcessed > 0 && totalChunks > 0
                 ? `Scanning segment ${chunksProcessed} of ${totalChunks}`
                 : "Preparing audio..."}
+            </p>
+          )}
+
+          {phase === "processing" && getEta() && (
+            <p className="text-xs text-muted-foreground/60">
+              {getEta()}
             </p>
           )}
 

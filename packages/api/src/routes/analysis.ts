@@ -4,6 +4,7 @@ import { eq, and } from "drizzle-orm";
 import { db } from "../db/client.js";
 import { analyses, segments } from "../db/schema.js";
 import fs from "fs/promises";
+import path from "path";
 import { queueEvents, analysisQueue } from "../queue/index.js";
 
 export const analysisRouter = Router();
@@ -398,6 +399,27 @@ analysisRouter.patch("/analysis/:id", async (req, res) => {
 
   const [updated] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
   res.json(updated);
+});
+
+// DELETE /api/analysis/:id
+analysisRouter.delete("/analysis/:id", async (req, res) => {
+  const { userId } = getAuth(req);
+  const analysisId = req.params.id as string;
+
+  const [analysis] = await db.select().from(analyses).where(eq(analyses.id, analysisId)).limit(1);
+  if (!analysis) { res.status(404).json({ error: "Not found" }); return; }
+  if (analysis.userId && analysis.userId !== userId) { res.status(403).json({ error: "Not authorized" }); return; }
+
+  // Delete chunks directory if it exists
+  if (analysis.chunksDir) {
+    await fs.rm(analysis.chunksDir, { recursive: true, force: true }).catch(() => {});
+    await fs.rmdir(path.dirname(analysis.chunksDir)).catch(() => {});
+  }
+
+  // Cascade delete handles segments
+  await db.delete(analyses).where(eq(analyses.id, analysisId));
+
+  res.json({ ok: true });
 });
 
 // GET /api/t/:slug — public tracklist (no auth required)
