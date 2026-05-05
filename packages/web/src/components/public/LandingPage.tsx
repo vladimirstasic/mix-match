@@ -96,7 +96,7 @@ export function LandingPage() {
       </div>
 
       {/* Glass Nav */}
-      <nav className="fixed top-0 inset-x-0 z-50 backdrop-blur-2xl bg-background/60 border-b border-white/[0.06]">
+      <nav className="fixed top-0 inset-x-0 z-50 backdrop-blur-2xl bg-background/60 border-b border-border/50">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Disc3 className="w-5 h-5 text-primary" />
@@ -172,7 +172,7 @@ export function LandingPage() {
           <p className="text-center text-muted-foreground mb-8">Here's what a typical result looks like</p>
 
           <Card className="glow-purple overflow-hidden">
-            <div className="p-4 border-b border-white/[0.06] flex items-center gap-2">
+            <div className="p-4 border-b border-border/50 flex items-center gap-2">
               <div className="flex gap-1.5">
                 <div className="w-3 h-3 rounded-full bg-white/10" />
                 <div className="w-3 h-3 rounded-full bg-white/10" />
@@ -187,7 +187,7 @@ export function LandingPage() {
                   className={`flex items-center gap-3 py-2.5 px-3 rounded-xl border-l-3 ${
                     t.status === 'identified'
                       ? 'border-l-green-500 bg-green-500/[0.03]'
-                      : 'border-l-white/20 bg-white/[0.02]'
+                      : 'border-l-muted-foreground/20 bg-muted/30'
                   }`}
                 >
                   <span className="font-mono text-xs text-muted-foreground whitespace-nowrap">{t.time}</span>
@@ -269,7 +269,7 @@ export function LandingPage() {
                 </div>
                 <div className="space-y-2">
                   {['Deep House Session Vol. 3', 'Berlin Warehouse Set', 'Ambient Selections'].map(mix => (
-                    <div key={mix} className="flex items-center gap-2 p-2 rounded-lg bg-white/[0.03] border border-white/[0.06]">
+                    <div key={mix} className="flex items-center gap-2 p-2 rounded-lg bg-glass-bg border border-border/50">
                       <Disc3 className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm">{mix}</span>
                     </div>
@@ -341,7 +341,7 @@ export function LandingPage() {
       </section>
 
       {/* Footer */}
-      <footer className="border-t border-white/[0.06] py-8">
+      <footer className="border-t border-border/50 py-8">
         <div className="max-w-4xl mx-auto px-4 flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <Disc3 className="w-4 h-4" />

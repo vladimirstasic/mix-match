@@ -9,7 +9,7 @@ interface HeaderProps {
 
 export const Header = ({ credits, onLogoClick }: HeaderProps) => {
   return (
-    <header className="sticky top-0 z-50 w-full backdrop-blur-2xl bg-background/60 border-b border-white/[0.06]">
+    <header className="sticky top-0 z-50 w-full backdrop-blur-2xl bg-background/60 border-b border-border/50">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
         <button
           className="flex items-center gap-2 hover:opacity-80 transition-opacity"
@@ -21,7 +21,7 @@ export const Header = ({ credits, onLogoClick }: HeaderProps) => {
         <div className="flex items-center gap-3">
           <ThemeToggle />
           {credits !== null && (
-            <span className="text-xs text-muted-foreground px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.08]">
+            <span className="text-xs text-muted-foreground px-2 py-1 rounded-lg bg-muted/50 border border-border/50">
               {credits} credits
             </span>
           )}

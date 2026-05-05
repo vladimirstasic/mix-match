@@ -71,7 +71,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
             </p>
             <div className="grid grid-cols-2 gap-3">
               <button
-                className="flex flex-col items-center gap-3 p-5 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
+                className="flex flex-col items-center gap-3 p-5 rounded-xl border border-glass-border bg-muted/30 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
                 onClick={() => selectMode('fast')}
               >
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -81,7 +81,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
                 <span className="text-xs text-muted-foreground text-center">~20 seconds<br />Scans every 2 min</span>
               </button>
               <button
-                className="flex flex-col items-center gap-3 p-5 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
+                className="flex flex-col items-center gap-3 p-5 rounded-xl border border-glass-border bg-muted/30 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
                 onClick={() => selectMode('detailed')}
               >
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -100,7 +100,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-center gap-1 p-1 rounded-xl bg-white/[0.03] border border-white/[0.08] w-fit mx-auto">
+      <div className="flex items-center justify-center gap-1 p-1 rounded-xl bg-glass-bg border border-glass-border w-fit mx-auto">
         <Button variant={tab === 'file' ? 'secondary' : 'ghost'} size="sm" onClick={() => { setTab('file'); setError(null); }}>
           <Upload className="w-3.5 h-3.5 mr-1.5" />
           Upload File
@@ -116,7 +116,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
           className={`rounded-2xl border-2 border-dashed cursor-pointer transition-all duration-300 ${
             dragOver
               ? 'border-primary bg-primary/5 glow-purple'
-              : 'border-white/[0.1] hover:border-primary/40 hover:bg-white/[0.02]'
+              : 'border-border hover:border-primary/40 hover:bg-muted/30'
           } ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
           onDragOver={e => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
@@ -158,7 +158,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
               onChange={e => setUrlInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleUrlSubmit(); }}
               placeholder="https://youtube.com/watch?v=..."
-              className="w-full max-w-md px-4 py-2.5 rounded-xl border border-white/[0.1] bg-white/[0.03] backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all"
+              className="w-full max-w-md px-4 py-2.5 rounded-xl border border-border bg-glass-bg backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all"
             />
             <Button onClick={handleUrlSubmit} disabled={!urlInput.trim()}>Scan</Button>
             {error && <p className="text-sm text-destructive">{error}</p>}

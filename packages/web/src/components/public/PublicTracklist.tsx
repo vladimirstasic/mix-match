@@ -113,7 +113,7 @@ export function PublicTracklist() {
           ))}
         </div>
 
-        <div className="text-center border-t border-white/[0.06] pt-8">
+        <div className="text-center border-t border-border/50 pt-8">
           <p className="text-sm text-muted-foreground mb-4">Powered by MixMatch</p>
           <Link to="/">
             <Button variant="outline">Analyze your own mix</Button>

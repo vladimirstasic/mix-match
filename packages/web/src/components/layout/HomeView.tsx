@@ -38,7 +38,7 @@ export const HomeView = ({
         </Button>
       </div>
       {credits === 0 ? (
-        <div className="text-center py-12 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
+        <div className="text-center py-12 rounded-2xl border border-border/50 bg-muted/30">
           <p className="font-medium">No credits remaining</p>
           <p className="text-sm text-muted-foreground mt-1">Credits reset monthly. Upgrade for more.</p>
         </div>

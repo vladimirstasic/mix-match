@@ -46,7 +46,7 @@ export function ProgressBar({ phase, uploadProgress, chunksProcessed, totalChunk
         )}
 
         {isIndeterminate ? (
-          <div className="h-1.5 w-full rounded-full bg-white/[0.06] overflow-hidden">
+          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
             <div className="h-full w-1/3 rounded-full bg-gradient-to-r from-purple-600 to-violet-400 animate-[indeterminate_1.5s_ease-in-out_infinite]" />
             <style>{`
               @keyframes indeterminate {
@@ -57,7 +57,7 @@ export function ProgressBar({ phase, uploadProgress, chunksProcessed, totalChunk
             `}</style>
           </div>
         ) : (
-          <div className="h-1.5 w-full rounded-full bg-white/[0.06] overflow-hidden">
+          <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
             <div
               className="h-full rounded-full bg-gradient-to-r from-purple-600 to-violet-400 transition-all duration-500 shadow-[0_0_10px_rgba(139,92,246,0.5)]"
               style={{ width: `${pct}%` }}

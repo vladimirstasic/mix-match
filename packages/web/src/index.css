@@ -30,6 +30,9 @@
   --color-chart-3: var(--chart-3);
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
+  --color-glass-bg: var(--glass-bg);
+  --color-glass-border: var(--glass-border);
+  --color-glass-hover: var(--glass-hover);
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
@@ -37,7 +40,7 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
+  --background: oklch(0.985 0.002 285);
   --foreground: oklch(0.145 0 0);
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
@@ -45,17 +48,20 @@
   --popover-foreground: oklch(0.145 0 0);
   --primary: oklch(0.541 0.281 293.009);
   --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.965 0 0);
+  --secondary: oklch(0.955 0.005 285);
   --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.965 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.965 0 0);
+  --muted: oklch(0.955 0.005 285);
+  --muted-foreground: oklch(0.45 0 0);
+  --accent: oklch(0.955 0.005 285);
   --accent-foreground: oklch(0.205 0 0);
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
+  --border: oklch(0.88 0.005 285);
+  --input: oklch(0.88 0.005 285);
   --ring: oklch(0.541 0.281 293.009);
+  --glass-bg: oklch(1 0 0 / 0.7);
+  --glass-border: oklch(0 0 0 / 0.06);
+  --glass-hover: oklch(0 0 0 / 0.03);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -84,6 +90,9 @@
   --border: oklch(0.3 0.01 285 / 0.3);
   --input: oklch(0.2 0.01 285 / 0.5);
   --ring: oklch(0.627 0.265 303.9);
+  --glass-bg: oklch(1 0 0 / 0.03);
+  --glass-border: oklch(1 0 0 / 0.08);
+  --glass-hover: oklch(1 0 0 / 0.06);
   --chart-1: oklch(0.627 0.265 303.9);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
@@ -102,13 +111,10 @@
 
 @layer utilities {
   .glass {
-    @apply backdrop-blur-xl border border-white/[0.08] bg-white/[0.03];
+    @apply backdrop-blur-xl bg-glass-bg border border-glass-border;
   }
   .glass-strong {
-    @apply backdrop-blur-2xl border border-white/[0.12] bg-white/[0.06];
-  }
-  .glass-hover {
-    @apply hover:bg-white/[0.06] hover:border-white/[0.14] transition-all duration-300;
+    @apply backdrop-blur-2xl bg-glass-bg border border-glass-border;
   }
   .glow-purple {
     box-shadow: 0 0 30px oklch(0.627 0.265 303.9 / 0.15), 0 0 60px oklch(0.627 0.265 303.9 / 0.05);
@@ -117,8 +123,16 @@
     box-shadow: 0 0 20px oklch(0.627 0.265 303.9 / 0.3), 0 0 60px oklch(0.627 0.265 303.9 / 0.1);
   }
   .gradient-text {
-    @apply bg-clip-text text-transparent bg-gradient-to-r from-purple-400 via-violet-400 to-indigo-400;
+    @apply bg-clip-text text-transparent bg-gradient-to-r from-purple-500 via-violet-500 to-indigo-500;
   }
+}
+
+:is(.dark) .gradient-text {
+  @apply from-purple-400 via-violet-400 to-indigo-400;
+}
+
+:is(.dark) .glow-purple {
+  box-shadow: 0 0 30px oklch(0.627 0.265 303.9 / 0.2), 0 0 60px oklch(0.627 0.265 303.9 / 0.08);
 }
 
 @keyframes gradient-shift {

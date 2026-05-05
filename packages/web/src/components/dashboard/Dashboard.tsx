@@ -67,12 +67,12 @@ export function Dashboard({ onSelectAnalysis }: Props) {
       <div className="space-y-3 mb-8">
         <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Recent</h3>
         {[1, 2, 3].map(i => (
-          <div key={i} className="rounded-2xl border border-white/[0.06] p-4 animate-pulse bg-white/[0.02]">
+          <div key={i} className="rounded-2xl border border-border/50 p-4 animate-pulse bg-muted/30">
             <div className="flex items-center gap-3">
-              <div className="w-4 h-4 rounded-full bg-white/[0.06]" />
+              <div className="w-4 h-4 rounded-full bg-muted" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 bg-white/[0.06] rounded-lg w-3/4" />
-                <div className="h-3 bg-white/[0.04] rounded-lg w-1/2" />
+                <div className="h-4 bg-muted rounded-lg w-3/4" />
+                <div className="h-3 bg-muted/50 rounded-lg w-1/2" />
               </div>
             </div>
           </div>
@@ -109,7 +109,7 @@ export function Dashboard({ onSelectAnalysis }: Props) {
               className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg transition-all duration-200 ${
                 showFavoritesOnly
                   ? 'bg-yellow-500/15 text-yellow-400 border border-yellow-500/20'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.04]'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
               }`}
               onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
             >
@@ -121,7 +121,7 @@ export function Dashboard({ onSelectAnalysis }: Props) {
             <div className="flex items-center gap-1.5">
               <Filter className="w-3 h-3 text-muted-foreground" />
               <select
-                className="text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg px-2 py-1 text-foreground backdrop-blur-sm"
+                className="text-xs bg-glass-bg border border-glass-border rounded-lg px-2 py-1 text-foreground backdrop-blur-sm"
                 value={filterTag ?? ''}
                 onChange={e => setFilterTag(e.target.value || null)}
               >

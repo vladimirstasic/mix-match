@@ -71,7 +71,7 @@ function StreamingLinks({
                 e.stopPropagation();
                 onToggleEmbed(segmentId, key);
               }}
-              className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ${color} ${isExpanded ? 'ring-1 ring-current/30 bg-current/10' : 'bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08]'} transition-all cursor-pointer`}
+              className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ${color} ${isExpanded ? 'ring-1 ring-current/30 bg-current/10' : 'bg-muted/50 border border-glass-border hover:bg-accent'} transition-all cursor-pointer`}
             >
               {label}
             </button>
@@ -83,7 +83,7 @@ function StreamingLinks({
             href={links[key]}
             target="_blank"
             rel="noopener noreferrer"
-            className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ${color} bg-white/[0.04] border border-white/[0.08] hover:bg-white/[0.08] transition-all`}
+            className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ${color} bg-muted/50 border border-glass-border hover:bg-accent transition-all`}
           >
             {label}
           </a>
@@ -329,7 +329,7 @@ export function Timeline({
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             placeholder="Search tracks..."
-            className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-white/[0.1] bg-white/[0.03] backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all"
+            className="w-full pl-9 pr-3 py-2.5 rounded-xl border border-border bg-glass-bg backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all"
           />
         </div>
       )}
@@ -349,7 +349,7 @@ export function Timeline({
                     : 'border-l-green-400/70'
                   : seg.status === 'retrying'
                     ? 'border-l-primary'
-                    : 'border-l-white/10'
+                    : 'border-l-muted-foreground/10'
               }`}
             >
               <CardContent className="py-3 space-y-2">
@@ -361,7 +361,7 @@ export function Timeline({
                   {seg.status === 'identified' && editingId === seg.id && (
                     <div className="flex items-center gap-2 flex-1">
                       <input
-                        className="flex-1 bg-white/[0.03] border border-white/[0.1] rounded-lg outline-none text-sm font-medium px-2 py-1 focus:ring-2 focus:ring-primary/50"
+                        className="flex-1 bg-glass-bg border border-border rounded-lg outline-none text-sm font-medium px-2 py-1 focus:ring-2 focus:ring-primary/50"
                         value={editValue}
                         onChange={e => setEditValue(e.target.value)}
                         onKeyDown={e => {
@@ -395,17 +395,17 @@ export function Timeline({
                         </span>
                       )}
                       {seg.bpm && (
-                        <span className="text-[10px] text-muted-foreground bg-white/[0.04] border border-white/[0.08] rounded-md px-1.5 py-0.5 shrink-0">
+                        <span className="text-[10px] text-muted-foreground bg-muted/50 border border-glass-border rounded-md px-1.5 py-0.5 shrink-0">
                           {seg.bpm} BPM
                         </span>
                       )}
                       {seg.genre && (
-                        <span className="text-[10px] text-muted-foreground bg-white/[0.04] border border-white/[0.08] rounded-md px-1.5 py-0.5 shrink-0 hidden sm:inline">
+                        <span className="text-[10px] text-muted-foreground bg-muted/50 border border-glass-border rounded-md px-1.5 py-0.5 shrink-0 hidden sm:inline">
                           {seg.genre}
                         </span>
                       )}
                       {seg.musicalKey && (
-                        <span className="text-[10px] text-muted-foreground bg-white/[0.04] border border-white/[0.08] rounded-md px-1.5 py-0.5 shrink-0 hidden sm:inline">
+                        <span className="text-[10px] text-muted-foreground bg-muted/50 border border-glass-border rounded-md px-1.5 py-0.5 shrink-0 hidden sm:inline">
                           {seg.musicalKey}
                         </span>
                       )}
@@ -517,7 +517,7 @@ export function Timeline({
                       height="152"
                       allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                       loading="lazy"
-                      className="rounded-xl border border-white/[0.06]"
+                      className="rounded-xl border border-border/50"
                       style={{ border: 'none' }}
                     />
                   )}
@@ -528,7 +528,7 @@ export function Timeline({
                       height="130"
                       allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                       loading="lazy"
-                      className="rounded-xl border border-white/[0.06]"
+                      className="rounded-xl border border-border/50"
                       style={{ border: 'none' }}
                     />
                   )}
@@ -539,7 +539,7 @@ export function Timeline({
         ))}
       </div>
 
-      <div className="flex flex-wrap items-center gap-2 pt-5 border-t border-white/[0.06]">
+      <div className="flex flex-wrap items-center gap-2 pt-5 border-t border-border/50">
         <span className="text-xs text-muted-foreground uppercase tracking-wider">Export</span>
         {(['text', 'mixcloud', 'soundcloud', 'youtube', 'markdown'] as const).map(fmt => (
           <Button key={fmt} variant="outline" size="sm" onClick={() => openExport(fmt)}>
