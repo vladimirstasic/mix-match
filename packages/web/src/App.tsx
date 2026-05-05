@@ -6,11 +6,11 @@ import { useAnalysis } from './hooks/useAnalysis';
 
 import { DjProfile, LandingPage, PublicTracklist } from './components/public';
 
-import { BackWrapper, Header, HomeView, ThemeToggle, ToastContainer, useToast } from './components/layout';
+import { Header, HomeView, ThemeToggle, ToastContainer, useToast } from './components/layout';
 
 import { ProgressBar, Timeline } from './components/analysis';
 
-import { Feed, MixCompare } from './components/dashboard';
+import { MixCompare } from './components/dashboard';
 import { ManualTracklist } from './components/upload';
 
 import { Button } from '@/components/ui/button';
@@ -194,17 +194,10 @@ const MainApp = () => {
                   credits={credits}
                   onCompare={() => setView(VIEW.COMPARE)}
                   onManual={() => setView(VIEW.MANUAL)}
-                  onFeed={() => setView(VIEW.FEED)}
                   onSelectAnalysis={loadAnalysis}
                   onFileSelected={startAnalysis}
                   onUrlSubmitted={startAnalysisFromUrl}
                 />
-              )}
-
-              {isIdle && view === VIEW.FEED && (
-                <BackWrapper onBack={() => setView(VIEW.HOME)}>
-                  <Feed onSelectAnalysis={handleSelectAnalysis} />
-                </BackWrapper>
               )}
 
               {isIdle && view === VIEW.COMPARE && <MixCompare onBack={() => setView(VIEW.HOME)} />}
