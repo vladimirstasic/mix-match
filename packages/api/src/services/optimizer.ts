@@ -52,7 +52,7 @@ export async function processChunksOptimized(ctx: OptimizerContext): Promise<{
         matches.push(match);
       }
       trackMatch(match);
-      emitProgress(i + 1, match?.title);
+      emitProgress(i + 1, match ? `${match.artist} - ${match.title}` : undefined);
     } catch (err) {
       if (err instanceof RateLimitError) {
         console.log(`[optimizer] Rate limit hit at chunk ${i + 1}/${total}, saving partial results`);

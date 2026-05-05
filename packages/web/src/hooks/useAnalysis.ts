@@ -56,7 +56,7 @@ export function useAnalysis() {
           results: result.results as TrackMatch[],
           segments: result.segments || [],
           chunksAvailable: result.chunksAvailable || false,
-          waveformData: (result as any).waveformData || null,
+          waveformData: result.waveformData || null,
         }));
       } else if (result.status === 'failed') {
         setState(s => ({ ...s, phase: 'failed', error: result.error || 'Failed' }));
@@ -100,7 +100,7 @@ export function useAnalysis() {
               results: full.results as TrackMatch[],
               segments: full.segments,
               chunksAvailable: full.chunksAvailable,
-              waveformData: (full as any).waveformData || null,
+              waveformData: full.waveformData || null,
             }));
           } else if (data.type === 'failed') {
             setState(s => ({

@@ -67,7 +67,7 @@ export function ProgressBar({ phase, uploadProgress, chunksProcessed, totalChunk
           <p className="text-sm text-muted-foreground">
             {phase === 'uploading'
               ? isIndeterminate
-                ? 'Downloading audio...'
+                ? 'Processing media...'
                 : `Uploading... ${pct}%`
               : tracksFound > 0
                 ? `Analyzing songs... found ${tracksFound} so far (${pct}%)`

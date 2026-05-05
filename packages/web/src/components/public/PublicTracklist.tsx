@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, Loader2, Disc3, Music } from 'lucide-react';
+import { Check, Loader2, Disc3 } from 'lucide-react';
 import { formatTime } from '@mix-match/shared';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
@@ -64,10 +64,7 @@ export function PublicTracklist() {
       <div className="max-w-2xl mx-auto px-4 py-12">
         <header className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="relative">
-              <Disc3 className="w-12 h-12 text-primary" />
-              <Music className="w-5 h-5 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-            </div>
+            <Disc3 className="w-12 h-12 text-primary" />
           </div>
           <h1 className="text-2xl font-bold">{data.filename}</h1>
           <p className="text-sm text-muted-foreground mt-1">

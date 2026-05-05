@@ -122,7 +122,7 @@ export function Timeline({
   const [editValue, setEditValue] = useState('');
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
-  const [hideUnknown, setHideUnknown] = useState(false);
+  const [hideUnknown, setHideUnknown] = useState(true);
   const [expandedEmbed, setExpandedEmbed] = useState<{ segId: string; service: string } | null>(null);
   const [copied, setCopied] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');

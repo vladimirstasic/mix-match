@@ -1,7 +1,7 @@
 import { SignInButton } from '@clerk/clerk-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { Disc3, Music, Download, Share2, Headphones, Zap, Search, Globe } from 'lucide-react';
+import { Disc3, Download, Share2, Headphones, Zap, Search, Globe } from 'lucide-react';
 
 const FEATURES = [
   {
@@ -82,10 +82,7 @@ export function LandingPage() {
       <section className="relative overflow-hidden">
         <div className="max-w-4xl mx-auto px-4 py-24 text-center">
           <div className="flex justify-center mb-8">
-            <div className="relative">
-              <Disc3 className="w-20 h-20 text-primary animate-spin" style={{ animationDuration: '8s' }} />
-              <Music className="w-8 h-8 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-            </div>
+            <Disc3 className="w-20 h-20 text-primary animate-spin" style={{ animationDuration: '8s' }} />
           </div>
 
           <h1 className="text-3xl sm:text-5xl font-bold tracking-tight mb-4">Identify every track in your mix</h1>

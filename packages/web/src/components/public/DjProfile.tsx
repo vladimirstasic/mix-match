@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Disc3, Music, Loader2 } from 'lucide-react';
+import { Disc3, Loader2 } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
@@ -60,10 +60,7 @@ export function DjProfile() {
       <div className="max-w-2xl mx-auto px-4 py-12">
         <header className="text-center mb-8">
           <div className="flex justify-center mb-4">
-            <div className="relative">
-              <Disc3 className="w-16 h-16 text-primary" />
-              <Music className="w-6 h-6 text-primary absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
-            </div>
+            <Disc3 className="w-16 h-16 text-primary" />
           </div>
           <h1 className="text-3xl font-bold">@{data.username}</h1>
           {data.badges && data.badges.length > 0 && (
