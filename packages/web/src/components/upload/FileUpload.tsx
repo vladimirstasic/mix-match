@@ -3,7 +3,7 @@ import type { AnalysisMode } from '@mix-match/shared';
 import { MAX_FILE_SIZE, ALLOWED_MIMETYPES } from '@mix-match/shared';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Link, Zap, Search } from 'lucide-react';
+import { Link, Zap, Search, Upload } from 'lucide-react';
 
 interface Props {
   onFileSelected: (file: File, mode: AnalysisMode) => void;
@@ -60,30 +60,33 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
     if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
   };
 
-  // Mode selection modal
   if (pendingFile || pendingUrl) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => { setPendingFile(null); setPendingUrl(null); }}>
-        <Card className="w-full max-w-md mx-4" onClick={e => e.stopPropagation()}>
-          <CardContent className="pt-6 space-y-4">
+      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setPendingFile(null); setPendingUrl(null); }}>
+        <Card className="w-full max-w-md mx-4 glow-purple" onClick={e => e.stopPropagation()}>
+          <CardContent className="pt-6 space-y-5">
             <h3 className="text-lg font-semibold text-center">Choose scan mode</h3>
-            <p className="text-sm text-muted-foreground text-center">
+            <p className="text-sm text-muted-foreground text-center truncate px-4">
               {pendingFile ? pendingFile.name : pendingUrl}
             </p>
             <div className="grid grid-cols-2 gap-3">
               <button
-                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-colors"
+                className="flex flex-col items-center gap-3 p-5 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
                 onClick={() => selectMode('fast')}
               >
-                <Zap className="w-6 h-6 text-primary" />
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <Zap className="w-5 h-5 text-primary" />
+                </div>
                 <span className="font-medium">Fast</span>
                 <span className="text-xs text-muted-foreground text-center">~20 seconds<br />Scans every 2 min</span>
               </button>
               <button
-                className="flex flex-col items-center gap-2 p-4 rounded-lg border border-border hover:border-primary hover:bg-primary/5 transition-colors"
+                className="flex flex-col items-center gap-3 p-5 rounded-xl border border-white/[0.08] bg-white/[0.02] hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
                 onClick={() => selectMode('detailed')}
               >
-                <Search className="w-6 h-6 text-primary" />
+                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                  <Search className="w-5 h-5 text-primary" />
+                </div>
                 <span className="font-medium">Detailed</span>
                 <span className="text-xs text-muted-foreground text-center">~2 minutes<br />Scans every 30s</span>
               </button>
@@ -97,27 +100,30 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-center gap-2">
-        <Button variant={tab === 'file' ? 'default' : 'ghost'} size="sm" onClick={() => { setTab('file'); setError(null); }}>
+      <div className="flex items-center justify-center gap-1 p-1 rounded-xl bg-white/[0.03] border border-white/[0.08] w-fit mx-auto">
+        <Button variant={tab === 'file' ? 'secondary' : 'ghost'} size="sm" onClick={() => { setTab('file'); setError(null); }}>
+          <Upload className="w-3.5 h-3.5 mr-1.5" />
           Upload File
         </Button>
-        <Button variant={tab === 'url' ? 'default' : 'ghost'} size="sm" onClick={() => { setTab('url'); setError(null); }}>
-          <Link className="w-4 h-4 mr-1" />
+        <Button variant={tab === 'url' ? 'secondary' : 'ghost'} size="sm" onClick={() => { setTab('url'); setError(null); }}>
+          <Link className="w-3.5 h-3.5 mr-1.5" />
           Paste URL
         </Button>
       </div>
 
       {tab === 'file' ? (
-        <Card
-          className={`border-2 border-dashed cursor-pointer transition-colors ${
-            dragOver ? 'border-primary bg-primary/5' : 'border-muted-foreground/25 hover:border-primary/50'
+        <div
+          className={`rounded-2xl border-2 border-dashed cursor-pointer transition-all duration-300 ${
+            dragOver
+              ? 'border-primary bg-primary/5 glow-purple'
+              : 'border-white/[0.1] hover:border-primary/40 hover:bg-white/[0.02]'
           } ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
           onDragOver={e => { e.preventDefault(); setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={onDrop}
           onClick={() => inputRef.current?.click()}
         >
-          <CardContent className="flex flex-col items-center justify-center py-16 gap-4">
+          <div className="flex flex-col items-center justify-center py-16 gap-4">
             <input
               ref={inputRef}
               type="file"
@@ -125,21 +131,25 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
               onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
               hidden
             />
-            <div className="text-5xl">🎵</div>
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <Upload className="w-6 h-6 text-primary" />
+            </div>
             <div className="text-center">
-              <p className="text-lg font-medium">Drop your DJ mix here</p>
+              <p className="font-medium">Drop your DJ mix here</p>
               <p className="text-sm text-muted-foreground mt-1">or click to browse</p>
             </div>
             <p className="text-xs text-muted-foreground">MP3, WAV, FLAC, M4A — up to 300MB</p>
             {error && <p className="text-sm text-destructive">{error}</p>}
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : (
         <Card className={disabled ? 'opacity-50 pointer-events-none' : ''}>
           <CardContent className="flex flex-col items-center justify-center py-16 gap-4">
-            <div className="text-5xl"><Link className="w-12 h-12 text-muted-foreground" /></div>
+            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
+              <Link className="w-6 h-6 text-primary" />
+            </div>
             <div className="text-center">
-              <p className="text-lg font-medium">Paste a URL to scan</p>
+              <p className="font-medium">Paste a URL to scan</p>
               <p className="text-sm text-muted-foreground mt-1">YouTube, SoundCloud, Mixcloud or direct audio link</p>
             </div>
             <input
@@ -147,8 +157,8 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
               value={urlInput}
               onChange={e => setUrlInput(e.target.value)}
               onKeyDown={e => { if (e.key === 'Enter') handleUrlSubmit(); }}
-              placeholder="https://youtube.com/watch?v=... or soundcloud.com/..."
-              className="w-full max-w-md px-3 py-2 rounded-md border border-input bg-background text-sm focus:outline-none focus:ring-2 focus:ring-ring"
+              placeholder="https://youtube.com/watch?v=..."
+              className="w-full max-w-md px-4 py-2.5 rounded-xl border border-white/[0.1] bg-white/[0.03] backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all"
             />
             <Button onClick={handleUrlSubmit} disabled={!urlInput.trim()}>Scan</Button>
             {error && <p className="text-sm text-destructive">{error}</p>}

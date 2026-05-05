@@ -24,33 +24,31 @@ export const HomeView = ({
   onUrlSubmitted,
 }: HomeViewProps) => {
   return (
-    <>
+    <div className="space-y-6">
       <Dashboard onSelectAnalysis={onSelectAnalysis} />
-      <div className="flex justify-center gap-2 mb-4">
+      <div className="flex justify-center gap-2">
         <Button variant="outline" size="sm" onClick={onCompare}>
-          Compare Mixes
+          Compare
         </Button>
         <Button variant="outline" size="sm" onClick={onManual}>
-          Manual Tracklist
+          Manual
         </Button>
         <Button variant="outline" size="sm" onClick={onFeed}>
           Feed
         </Button>
       </div>
       {credits === 0 ? (
-        <div className="text-center py-8 text-muted-foreground">
+        <div className="text-center py-12 rounded-2xl border border-white/[0.06] bg-white/[0.02]">
           <p className="font-medium">No credits remaining</p>
-          <p className="text-sm mt-1">Credits reset monthly. Upgrade for more.</p>
+          <p className="text-sm text-muted-foreground mt-1">Credits reset monthly. Upgrade for more.</p>
         </div>
       ) : (
         <FileUpload onFileSelected={onFileSelected} onUrlSubmitted={onUrlSubmitted} />
       )}
-      <div className="mt-8">
+      <div className="pt-4">
         <ProfileSettings />
       </div>
-      <div className="mt-4">
-        <Analytics />
-      </div>
-    </>
+      <Analytics />
+    </div>
   );
 };

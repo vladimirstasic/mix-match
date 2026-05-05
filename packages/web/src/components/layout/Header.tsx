@@ -1,5 +1,6 @@
 import { UserButton } from '@clerk/clerk-react';
 import { ThemeToggle } from './ThemeToggle';
+import { Disc3 } from 'lucide-react';
 
 interface HeaderProps {
   credits: number | null;
@@ -8,19 +9,25 @@ interface HeaderProps {
 
 export const Header = ({ credits, onLogoClick }: HeaderProps) => {
   return (
-    <header className="text-center mb-12">
-      <div className="flex justify-end items-center gap-2 mb-4">
-        <ThemeToggle />
-        {credits !== null && <span className="text-xs text-muted-foreground">{credits} credits</span>}
-        <UserButton />
+    <header className="sticky top-0 z-50 w-full backdrop-blur-2xl bg-background/60 border-b border-white/[0.06]">
+      <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+        <button
+          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
+          onClick={onLogoClick}
+        >
+          <Disc3 className="w-5 h-5 text-primary" />
+          <span className="font-semibold tracking-tight">MixMatch</span>
+        </button>
+        <div className="flex items-center gap-3">
+          <ThemeToggle />
+          {credits !== null && (
+            <span className="text-xs text-muted-foreground px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.08]">
+              {credits} credits
+            </span>
+          )}
+          <UserButton />
+        </div>
       </div>
-      <h1
-        className="text-3xl font-bold tracking-tight cursor-pointer hover:text-primary transition-colors"
-        onClick={onLogoClick}
-      >
-        Mix Match
-      </h1>
-      <p className="text-muted-foreground mt-2">Upload a DJ mix and identify every track</p>
     </header>
   );
 };

@@ -65,14 +65,14 @@ export function Dashboard({ onSelectAnalysis }: Props) {
   if (loading) {
     return (
       <div className="space-y-3 mb-8">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Recent Analyses</h3>
+        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Recent</h3>
         {[1, 2, 3].map(i => (
-          <div key={i} className="rounded-lg border border-border p-4 animate-pulse">
+          <div key={i} className="rounded-2xl border border-white/[0.06] p-4 animate-pulse bg-white/[0.02]">
             <div className="flex items-center gap-3">
-              <div className="w-4 h-4 rounded-full bg-muted" />
+              <div className="w-4 h-4 rounded-full bg-white/[0.06]" />
               <div className="flex-1 space-y-2">
-                <div className="h-4 bg-muted rounded w-3/4" />
-                <div className="h-3 bg-muted rounded w-1/2" />
+                <div className="h-4 bg-white/[0.06] rounded-lg w-3/4" />
+                <div className="h-3 bg-white/[0.04] rounded-lg w-1/2" />
               </div>
             </div>
           </div>
@@ -88,10 +88,10 @@ export function Dashboard({ onSelectAnalysis }: Props) {
   const statusIcon = (status: string) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="w-4 h-4 text-green-400" />;
       case 'processing':
       case 'pending':
-        return <Loader2 className="w-4 h-4 text-yellow-500 animate-spin" />;
+        return <Loader2 className="w-4 h-4 text-primary animate-spin" />;
       case 'failed':
         return <XCircle className="w-4 h-4 text-destructive" />;
       default:
@@ -102,18 +102,18 @@ export function Dashboard({ onSelectAnalysis }: Props) {
   return (
     <div className="space-y-3 mb-8">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wider">Recent Analyses</h3>
-        <div className="flex items-center gap-3">
+        <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-widest">Recent</h3>
+        <div className="flex items-center gap-2">
           {hasFavorites && (
             <button
-              className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-1 rounded-md transition-colors ${
+              className={`inline-flex items-center gap-1.5 text-xs font-medium px-2.5 py-1 rounded-lg transition-all duration-200 ${
                 showFavoritesOnly
-                  ? 'bg-yellow-500/20 text-yellow-500'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+                  ? 'bg-yellow-500/15 text-yellow-400 border border-yellow-500/20'
+                  : 'text-muted-foreground hover:text-foreground hover:bg-white/[0.04]'
               }`}
               onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
             >
-              <Star className={`w-3 h-3 ${showFavoritesOnly ? 'fill-yellow-500' : ''}`} />
+              <Star className={`w-3 h-3 ${showFavoritesOnly ? 'fill-yellow-400' : ''}`} />
               Favorites
             </button>
           )}
@@ -121,7 +121,7 @@ export function Dashboard({ onSelectAnalysis }: Props) {
             <div className="flex items-center gap-1.5">
               <Filter className="w-3 h-3 text-muted-foreground" />
               <select
-                className="text-xs bg-transparent border border-border rounded px-2 py-1 text-foreground"
+                className="text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg px-2 py-1 text-foreground backdrop-blur-sm"
                 value={filterTag ?? ''}
                 onChange={e => setFilterTag(e.target.value || null)}
               >
@@ -139,39 +139,41 @@ export function Dashboard({ onSelectAnalysis }: Props) {
       {displayed.slice(0, 5).map(a => (
         <Card
           key={a.id}
-          className="cursor-pointer hover:border-primary/50 transition-colors"
+          className="cursor-pointer group"
           onClick={() => onSelectAnalysis(a.id)}
         >
-          <CardContent className="flex items-center gap-3 py-2.5">
+          <CardContent className="flex items-center gap-3 py-3 px-4">
             {statusIcon(a.status)}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{a.filename}</p>
               <p className="text-xs text-muted-foreground">
-                {new Date(a.createdAt).toLocaleDateString()} — {a.status}
+                {new Date(a.createdAt).toLocaleDateString()}
               </p>
             </div>
-            <button
-              className={`p-1 rounded transition-colors shrink-0 ${
-                a.isFavorite ? 'text-yellow-500 hover:text-yellow-400' : 'text-muted-foreground/40 hover:text-yellow-500'
-              }`}
-              onClick={e => handleToggleFavorite(e, a.id)}
-            >
-              <Star className={`w-4 h-4 ${a.isFavorite ? 'fill-yellow-500' : ''}`} />
-            </button>
-            <button
-              className={`p-1 rounded transition-colors shrink-0 ${
-                a.isPublic ? 'text-green-500 hover:text-green-400' : 'text-muted-foreground/40 hover:text-muted-foreground'
-              }`}
-              onClick={e => handleTogglePublic(e, a.id)}
-            >
-              {a.isPublic ? <Unlock className="w-4 h-4" /> : <Lock className="w-4 h-4" />}
-            </button>
-            <button
-              className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors shrink-0"
-              onClick={e => handleDelete(e, a.id)}
-            >
-              <Trash2 className="w-4 h-4" />
-            </button>
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+              <button
+                className={`p-1.5 rounded-lg transition-colors ${
+                  a.isFavorite ? 'text-yellow-400' : 'text-muted-foreground/40 hover:text-yellow-400'
+                }`}
+                onClick={e => handleToggleFavorite(e, a.id)}
+              >
+                <Star className={`w-3.5 h-3.5 ${a.isFavorite ? 'fill-yellow-400' : ''}`} />
+              </button>
+              <button
+                className={`p-1.5 rounded-lg transition-colors ${
+                  a.isPublic ? 'text-green-400' : 'text-muted-foreground/40 hover:text-muted-foreground'
+                }`}
+                onClick={e => handleTogglePublic(e, a.id)}
+              >
+                {a.isPublic ? <Unlock className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+              </button>
+              <button
+                className="p-1.5 rounded-lg text-muted-foreground/40 hover:text-destructive hover:bg-destructive/10 transition-colors"
+                onClick={e => handleDelete(e, a.id)}
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </CardContent>
         </Card>
       ))}

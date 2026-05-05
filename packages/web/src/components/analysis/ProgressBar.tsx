@@ -1,5 +1,4 @@
 import { Card, CardContent } from '@/components/ui/card';
-import { Progress } from '@/components/ui/progress';
 import { Disc3 } from 'lucide-react';
 
 interface Props {
@@ -31,10 +30,13 @@ export function ProgressBar({ phase, uploadProgress, chunksProcessed, totalChunk
         : 0;
 
   return (
-    <Card>
+    <Card className="glow-purple">
       <CardContent className="pt-6 space-y-6">
         <div className="flex justify-center">
-          <Disc3 className="w-16 h-16 text-primary animate-spin" style={{ animationDuration: '3s' }} />
+          <div className="relative">
+            <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl scale-150 animate-pulse" />
+            <Disc3 className="relative w-14 h-14 text-primary animate-spin" style={{ animationDuration: '3s' }} />
+          </div>
         </div>
 
         {phase === 'processing' && chunksProcessed === 0 && (
@@ -44,23 +46,23 @@ export function ProgressBar({ phase, uploadProgress, chunksProcessed, totalChunk
         )}
 
         {isIndeterminate ? (
-          <div className="h-2 w-full rounded-full bg-secondary overflow-hidden">
-            <div
-              className="h-full w-1/3 rounded-full bg-primary animate-pulse"
-              style={{
-                animation: 'indeterminate 1.5s ease-in-out infinite',
-              }}
-            />
+          <div className="h-1.5 w-full rounded-full bg-white/[0.06] overflow-hidden">
+            <div className="h-full w-1/3 rounded-full bg-gradient-to-r from-purple-600 to-violet-400 animate-[indeterminate_1.5s_ease-in-out_infinite]" />
             <style>{`
               @keyframes indeterminate {
-                0% { transform: translateX(-100%); width: 33%; }
-                50% { transform: translateX(150%); width: 33%; }
-                100% { transform: translateX(400%); width: 33%; }
+                0% { transform: translateX(-100%); }
+                50% { transform: translateX(200%); }
+                100% { transform: translateX(400%); }
               }
             `}</style>
           </div>
         ) : (
-          <Progress value={pct} className="h-2" />
+          <div className="h-1.5 w-full rounded-full bg-white/[0.06] overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-purple-600 to-violet-400 transition-all duration-500 shadow-[0_0_10px_rgba(139,92,246,0.5)]"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
         )}
 
         <div className="text-center space-y-1">
@@ -90,7 +92,11 @@ export function ProgressBar({ phase, uploadProgress, chunksProcessed, totalChunk
 
           {phase === 'processing' && getEta() && <p className="text-xs text-muted-foreground/60">{getEta()}</p>}
 
-          {currentTrack && <p className="text-sm text-primary font-medium mt-2">Detected: {currentTrack}</p>}
+          {currentTrack && (
+            <p className="text-sm text-primary font-medium mt-2 px-3 py-1.5 rounded-lg bg-primary/5 border border-primary/10 inline-block">
+              {currentTrack}
+            </p>
+          )}
         </div>
       </CardContent>
     </Card>

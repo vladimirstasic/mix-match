@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Disc3, Loader2 } from 'lucide-react';
+import { Disc3, Loader2, Music } from 'lucide-react';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
@@ -41,7 +41,10 @@ export function DjProfile() {
   if (loading)
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <div className="relative">
+          <div className="absolute inset-0 rounded-full bg-primary/20 blur-xl scale-150" />
+          <Loader2 className="relative w-8 h-8 animate-spin text-primary" />
+        </div>
       </div>
     );
 
@@ -56,48 +59,69 @@ export function DjProfile() {
     );
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
+      <div className="fixed inset-0 -z-10">
+        <div className="absolute top-[-20%] left-[20%] w-[400px] h-[400px] rounded-full bg-purple-600/8 blur-[100px]" />
+        <div className="absolute bottom-[-10%] right-[10%] w-[300px] h-[300px] rounded-full bg-violet-500/6 blur-[80px]" />
+      </div>
+
       <div className="max-w-2xl mx-auto px-4 py-12">
-        <header className="text-center mb-8">
-          <div className="flex justify-center mb-4">
-            <Disc3 className="w-16 h-16 text-primary" />
+        <header className="text-center mb-10">
+          <div className="flex justify-center mb-5">
+            <div className="relative">
+              <div className="absolute inset-0 rounded-full bg-primary/20 blur-2xl scale-150" />
+              <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center">
+                <Disc3 className="w-10 h-10 text-white" />
+              </div>
+            </div>
           </div>
-          <h1 className="text-3xl font-bold">@{data.username}</h1>
+          <h1 className="text-2xl font-bold">@{data.username}</h1>
           {data.badges && data.badges.length > 0 && (
-            <div className="flex justify-center gap-2 mt-2">
+            <div className="flex justify-center gap-2 mt-3">
               {data.badges.map(badge => (
-                <span key={badge} className="text-xs bg-primary/10 text-primary rounded-full px-2.5 py-0.5">
+                <span key={badge} className="text-xs bg-primary/10 text-primary rounded-full px-3 py-1 border border-primary/20">
                   {badge}
                 </span>
               ))}
             </div>
           )}
-          <Button variant={following ? 'outline' : 'default'} size="sm" onClick={toggleFollow} className="mt-2">
-            {following ? 'Unfollow' : 'Follow'}
-          </Button>
-          <p className="text-sm text-muted-foreground mt-1">
-            {data.mixes.length} public mix{data.mixes.length !== 1 ? 'es' : ''}
-          </p>
+          <div className="flex items-center justify-center gap-3 mt-4">
+            <Button variant={following ? 'outline' : 'default'} size="sm" onClick={toggleFollow}>
+              {following ? 'Following' : 'Follow'}
+            </Button>
+            <span className="text-sm text-muted-foreground">
+              {data.mixes.length} mix{data.mixes.length !== 1 ? 'es' : ''}
+            </span>
+          </div>
         </header>
 
         <div className="space-y-3">
           {data.mixes.map(mix => (
-            <Card key={mix.id} className="hover:border-primary/50 transition-colors">
-              <CardContent className="py-4">
-                <Link to={mix.slug ? `/t/${mix.slug}` : '#'} className="block">
-                  <p className="font-medium">{mix.filename}</p>
-                  <p className="text-xs text-muted-foreground mt-1">{new Date(mix.createdAt).toLocaleDateString()}</p>
+            <Card key={mix.id} className="group">
+              <CardContent className="py-4 px-5">
+                <Link to={mix.slug ? `/t/${mix.slug}` : '#'} className="flex items-center gap-3">
+                  <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/20 transition-colors">
+                    <Music className="w-4 h-4 text-primary" />
+                  </div>
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate">{mix.filename}</p>
+                    <p className="text-xs text-muted-foreground">{new Date(mix.createdAt).toLocaleDateString()}</p>
+                  </div>
                 </Link>
               </CardContent>
             </Card>
           ))}
-          {data.mixes.length === 0 && <p className="text-center text-muted-foreground">No public mixes yet</p>}
+          {data.mixes.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-muted-foreground">No public mixes yet</p>
+            </div>
+          )}
         </div>
 
-        <div className="text-center border-t pt-8 mt-8">
-          <p className="text-muted-foreground mb-4">Powered by MixMatch</p>
+        <div className="text-center border-t border-white/[0.06] pt-8 mt-12">
+          <p className="text-sm text-muted-foreground mb-4">Powered by MixMatch</p>
           <Link to="/">
-            <Button>Analyze your own mix</Button>
+            <Button variant="outline">Analyze your own mix</Button>
           </Link>
         </div>
       </div>
