@@ -24,7 +24,9 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
           const start = Math.floor((i / maxBars) * waveformData.length);
           const end = Math.floor(((i + 1) / maxBars) * waveformData.length);
           let max = 0;
-          for (let j = start; j < end; j++) { if (waveformData[j] > max) max = waveformData[j]; }
+          for (let j = start; j < end; j++) {
+            if (waveformData[j] > max) max = waveformData[j];
+          }
           return max;
         })
       : waveformData

@@ -30,15 +30,26 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
 
   const handleFile = useCallback((file: File) => {
     const err = validate(file);
-    if (err) { setError(err); return; }
+    if (err) {
+      setError(err);
+      return;
+    }
     setError(null);
     setPendingFile(file);
   }, []);
 
   const handleUrlSubmit = () => {
     const trimmed = urlInput.trim();
-    if (!trimmed) { setError('Please enter a URL'); return; }
-    try { new URL(trimmed); } catch { setError('Please enter a valid URL'); return; }
+    if (!trimmed) {
+      setError('Please enter a URL');
+      return;
+    }
+    try {
+      new URL(trimmed);
+    } catch {
+      setError('Please enter a valid URL');
+      return;
+    }
     setError(null);
     setPendingUrl(trimmed);
   };
@@ -62,8 +73,17 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
 
   if (pendingFile || pendingUrl) {
     return (
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setPendingFile(null); setPendingUrl(null); }}>
-        <Card className="w-full max-w-md mx-4 glow-purple !bg-background border-border" onClick={e => e.stopPropagation()}>
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+        onClick={() => {
+          setPendingFile(null);
+          setPendingUrl(null);
+        }}
+      >
+        <Card
+          className="w-full max-w-md mx-4 glow-purple !bg-background border-border"
+          onClick={e => e.stopPropagation()}
+        >
           <CardContent className="pt-6 space-y-5">
             <h3 className="text-lg font-semibold text-center">Choose scan mode</h3>
             <p className="text-sm text-muted-foreground text-center truncate px-4">
@@ -78,7 +98,11 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
                   <Zap className="w-5 h-5 text-primary" />
                 </div>
                 <span className="font-medium">Fast</span>
-                <span className="text-xs text-muted-foreground text-center">~20 seconds<br />Scans every 2 min</span>
+                <span className="text-xs text-muted-foreground text-center">
+                  ~20 seconds
+                  <br />
+                  Scans every 2 min
+                </span>
               </button>
               <button
                 className="flex flex-col items-center gap-3 p-5 rounded-xl border border-glass-border bg-transparent hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
@@ -88,7 +112,11 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
                   <Search className="w-5 h-5 text-primary" />
                 </div>
                 <span className="font-medium">Detailed</span>
-                <span className="text-xs text-muted-foreground text-center">~2 minutes<br />Scans every 30s</span>
+                <span className="text-xs text-muted-foreground text-center">
+                  ~2 minutes
+                  <br />
+                  Scans every 30s
+                </span>
               </button>
             </div>
             <p className="text-xs text-muted-foreground text-center">Click outside to cancel</p>
@@ -101,11 +129,25 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-center gap-1 p-1 rounded-xl bg-glass-bg border border-glass-border w-fit mx-auto">
-        <Button variant={tab === 'file' ? 'secondary' : 'ghost'} size="sm" onClick={() => { setTab('file'); setError(null); }}>
+        <Button
+          variant={tab === 'file' ? 'secondary' : 'ghost'}
+          size="sm"
+          onClick={() => {
+            setTab('file');
+            setError(null);
+          }}
+        >
           <Upload className="w-3.5 h-3.5 mr-1.5" />
           Upload File
         </Button>
-        <Button variant={tab === 'url' ? 'secondary' : 'ghost'} size="sm" onClick={() => { setTab('url'); setError(null); }}>
+        <Button
+          variant={tab === 'url' ? 'secondary' : 'ghost'}
+          size="sm"
+          onClick={() => {
+            setTab('url');
+            setError(null);
+          }}
+        >
           <Link className="w-3.5 h-3.5 mr-1.5" />
           Paste URL
         </Button>
@@ -118,7 +160,10 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
               ? 'border-primary bg-primary/5 glow-purple'
               : 'border-border hover:border-primary/40 hover:bg-muted/30'
           } ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
-          onDragOver={e => { e.preventDefault(); setDragOver(true); }}
+          onDragOver={e => {
+            e.preventDefault();
+            setDragOver(true);
+          }}
           onDragLeave={() => setDragOver(false)}
           onDrop={onDrop}
           onClick={() => inputRef.current?.click()}
@@ -156,11 +201,15 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
               type="url"
               value={urlInput}
               onChange={e => setUrlInput(e.target.value)}
-              onKeyDown={e => { if (e.key === 'Enter') handleUrlSubmit(); }}
+              onKeyDown={e => {
+                if (e.key === 'Enter') handleUrlSubmit();
+              }}
               placeholder="https://youtube.com/watch?v=..."
               className="w-full max-w-md px-4 py-2.5 rounded-xl border border-border bg-glass-bg backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all"
             />
-            <Button onClick={handleUrlSubmit} disabled={!urlInput.trim()}>Scan</Button>
+            <Button onClick={handleUrlSubmit} disabled={!urlInput.trim()}>
+              Scan
+            </Button>
             {error && <p className="text-sm text-destructive">{error}</p>}
           </CardContent>
         </Card>

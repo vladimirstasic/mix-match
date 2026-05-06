@@ -59,7 +59,7 @@ function StreamingLinks({
   const available = LINK_LABELS.filter(({ key }) => links[key]);
   if (available.length === 0) return null;
 
-  const embeddable = new Set(['spotify', 'deezer']);
+  const embeddable = new Set(['spotify', 'deezer', 'youtube']);
 
   return (
     <span className="inline-flex items-center gap-1">
@@ -101,10 +101,57 @@ function getSpotifyEmbedUrl(spotifyUrl: string): string | null {
   return `https://open.spotify.com/embed/track/${match[1]}?utm_source=generator&theme=0`;
 }
 
+function getYoutubeEmbedUrl(youtubeUrl: string): string | null {
+  const match = youtubeUrl.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  if (!match) return null;
+  return `https://www.youtube.com/embed/${match[1]}`;
+}
+
 function getDeezerEmbedUrl(deezerUrl: string): string | null {
   const match = deezerUrl.match(/track\/(\d+)/);
   if (!match) return null;
   return `https://widget.deezer.com/widget/dark/track/${match[1]}`;
+}
+
+function getSourceEmbedUrl(url: string): { src: string; height: number } | null {
+  // YouTube
+  const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]+)/);
+  if (ytMatch) return { src: `https://www.youtube.com/embed/${ytMatch[1]}`, height: 200 };
+
+  // SoundCloud — use widget with encoded URL
+  if (url.includes('soundcloud.com/')) {
+    return {
+      src: `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&color=%237c3aed&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&show_teaser=false&visual=false`,
+      height: 166,
+    };
+  }
+
+  // Mixcloud
+  if (url.includes('mixcloud.com/')) {
+    return {
+      src: `https://player-widget.mixcloud.com/widget/iframe/?feed=${encodeURIComponent(url)}&hide_cover=1&light=0`,
+      height: 120,
+    };
+  }
+
+  return null;
+}
+
+function SourceEmbed({ url }: { url: string }) {
+  const embed = getSourceEmbedUrl(url);
+  if (!embed) return null;
+
+  return (
+    <iframe
+      src={embed.src}
+      width="100%"
+      height={embed.height}
+      allow="autoplay; clipboard-write; encrypted-media"
+      loading="lazy"
+      className="rounded-xl border border-border/50"
+      style={{ border: 'none' }}
+    />
+  );
 }
 
 export function Timeline({
@@ -268,27 +315,28 @@ export function Timeline({
   return (
     <div className="space-y-6">
       {filename && (
-        sourceUrl ? (
-          <a
-            href={sourceUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-2xl font-bold truncate block hover:text-primary transition-colors"
-          >
-            {filename}
-          </a>
-        ) : (
-          <h1 className="text-2xl font-bold truncate">{filename}</h1>
-        )
+        <div className="space-y-3">
+          {sourceUrl ? (
+            <a
+              href={sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-2xl font-bold truncate block hover:text-primary transition-colors"
+            >
+              {filename}
+            </a>
+          ) : (
+            <h1 className="text-2xl font-bold truncate">{filename}</h1>
+          )}
+          {sourceUrl && <SourceEmbed url={sourceUrl} />}
+        </div>
       )}
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">
           <span className="gradient-text">{identified.length}</span> track{identified.length !== 1 ? 's' : ''} found
           {unknown.length > 0 && (
-            <span className="text-muted-foreground font-normal text-sm ml-2">
-              ({unknown.length} unidentified)
-            </span>
+            <span className="text-muted-foreground font-normal text-sm ml-2">({unknown.length} unidentified)</span>
           )}
         </h2>
         <div className="flex gap-2">
@@ -393,7 +441,14 @@ export function Timeline({
                         }}
                         autoFocus
                       />
-                      <Button variant="ghost" size="sm" onClick={() => { onEditSegment(seg.id, editValue); setEditingId(null); }}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          onEditSegment(seg.id, editValue);
+                          setEditingId(null);
+                        }}
+                      >
                         Save
                       </Button>
                       <Button variant="ghost" size="sm" onClick={() => setEditingId(null)}>
@@ -453,7 +508,10 @@ export function Timeline({
                         variant="ghost"
                         size="sm"
                         className="h-6 w-6 p-0"
-                        onClick={() => { setEditingId(seg.id); setEditValue(seg.trackName ?? ''); }}
+                        onClick={() => {
+                          setEditingId(seg.id);
+                          setEditValue(seg.trackName ?? '');
+                        }}
                       >
                         <Pencil className="w-3 h-3" />
                       </Button>
@@ -471,7 +529,11 @@ export function Timeline({
                           setTimeout(() => setCopied(null), 2000);
                         }}
                       >
-                        {copied === `share-${seg.id}` ? <Check className="w-3 h-3 text-green-400" /> : <Link2 className="w-3 h-3" />}
+                        {copied === `share-${seg.id}` ? (
+                          <Check className="w-3 h-3 text-green-400" />
+                        ) : (
+                          <Link2 className="w-3 h-3" />
+                        )}
                       </Button>
                       <button
                         className={`p-1 rounded-lg transition-colors ${bookmarkedIds.has(seg.id) ? 'text-blue-400' : 'text-muted-foreground/40 hover:text-blue-400'}`}
@@ -483,7 +545,10 @@ export function Timeline({
                         variant="ghost"
                         size="sm"
                         className="h-6 w-6 p-0 text-green-400"
-                        onClick={e => { e.stopPropagation(); voteSegment(seg.id, 1); }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          voteSegment(seg.id, 1);
+                        }}
                       >
                         <ThumbsUp className="w-3 h-3" />
                       </Button>
@@ -491,7 +556,10 @@ export function Timeline({
                         variant="ghost"
                         size="sm"
                         className="h-6 w-6 p-0 text-red-400"
-                        onClick={e => { e.stopPropagation(); voteSegment(seg.id, -1); }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          voteSegment(seg.id, -1);
+                        }}
                       >
                         <ThumbsDown className="w-3 h-3" />
                       </Button>
@@ -540,6 +608,17 @@ export function Timeline({
                       style={{ border: 'none' }}
                     />
                   )}
+                  {expandedEmbed.service === 'youtube' && seg.externalLinks.youtube && (
+                    <iframe
+                      src={getYoutubeEmbedUrl(seg.externalLinks.youtube) || ''}
+                      width="100%"
+                      height="200"
+                      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                      loading="lazy"
+                      className="rounded-xl border border-border/50"
+                      style={{ border: 'none' }}
+                    />
+                  )}
                   {expandedEmbed.service === 'deezer' && seg.externalLinks.deezer && (
                     <iframe
                       src={getDeezerEmbedUrl(seg.externalLinks.deezer) || ''}
@@ -562,7 +641,15 @@ export function Timeline({
         <span className="text-xs text-muted-foreground uppercase tracking-wider">Export</span>
         {(['text', 'mixcloud', 'soundcloud', 'youtube', 'markdown'] as const).map(fmt => (
           <Button key={fmt} variant="outline" size="sm" onClick={() => openExport(fmt)}>
-            {fmt === 'text' ? 'Text' : fmt === 'mixcloud' ? 'Mixcloud' : fmt === 'soundcloud' ? 'SoundCloud' : fmt === 'youtube' ? 'YouTube' : 'Markdown'}
+            {fmt === 'text'
+              ? 'Text'
+              : fmt === 'mixcloud'
+                ? 'Mixcloud'
+                : fmt === 'soundcloud'
+                  ? 'SoundCloud'
+                  : fmt === 'youtube'
+                    ? 'YouTube'
+                    : 'Markdown'}
           </Button>
         ))}
         <Button variant="outline" size="sm" onClick={exportAsImage}>

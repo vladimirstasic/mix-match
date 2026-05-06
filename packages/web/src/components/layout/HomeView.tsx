@@ -32,11 +32,13 @@ export const HomeView = ({
       {/* Tab Bar */}
       <div className="flex items-center justify-center">
         <div className="flex items-center gap-1 p-1 rounded-xl bg-glass-bg border border-glass-border">
-          {([
-            { id: 'home', label: 'Home', icon: Home },
-            { id: 'feed', label: 'Feed', icon: Rss },
-            { id: 'profile', label: 'Profile', icon: User },
-          ] as const).map(({ id, label, icon: Icon }) => (
+          {(
+            [
+              { id: 'home', label: 'Home', icon: Home },
+              { id: 'feed', label: 'Feed', icon: Rss },
+              { id: 'profile', label: 'Profile', icon: User },
+            ] as const
+          ).map(({ id, label, icon: Icon }) => (
             <button
               key={id}
               className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
@@ -80,9 +82,7 @@ export const HomeView = ({
         </div>
       )}
 
-      {tab === 'feed' && (
-        <Feed onSelectAnalysis={onSelectAnalysis} />
-      )}
+      {tab === 'feed' && <Feed onSelectAnalysis={onSelectAnalysis} />}
 
       {tab === 'profile' && (
         <div className="space-y-6">

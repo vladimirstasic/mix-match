@@ -11,10 +11,7 @@ export const Header = ({ credits, onLogoClick }: HeaderProps) => {
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur-2xl bg-background/60 border-b border-border/50 mb-6">
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
-        <button
-          className="flex items-center gap-2 hover:opacity-80 transition-opacity"
-          onClick={onLogoClick}
-        >
+        <button className="flex items-center gap-2 hover:opacity-80 transition-opacity" onClick={onLogoClick}>
           <Disc3 className="w-5 h-5 text-primary" />
           <span className="font-semibold tracking-tight">MixMatch</span>
         </button>

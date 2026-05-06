@@ -180,6 +180,7 @@ export function useAnalysis() {
   );
 
   const loadAnalysis = useCallback(async (id: string) => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
     try {
       const full = await getAnalysis(id);
       localStorage.setItem('mixmatch_active_analysis', id);

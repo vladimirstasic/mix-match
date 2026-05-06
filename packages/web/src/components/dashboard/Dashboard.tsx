@@ -138,18 +138,12 @@ export function Dashboard({ onSelectAnalysis }: Props) {
         </div>
       </div>
       {(showAll ? displayed : displayed.slice(0, 10)).map(a => (
-        <Card
-          key={a.id}
-          className="cursor-pointer group"
-          onClick={() => onSelectAnalysis(a.id)}
-        >
+        <Card key={a.id} className="cursor-pointer group" onClick={() => onSelectAnalysis(a.id)}>
           <CardContent className="flex items-center gap-3 py-3 px-4">
             {statusIcon(a.status)}
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium truncate">{a.filename}</p>
-              <p className="text-xs text-muted-foreground">
-                {new Date(a.createdAt).toLocaleDateString()}
-              </p>
+              <p className="text-xs text-muted-foreground">{new Date(a.createdAt).toLocaleDateString()}</p>
             </div>
             <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
               <button

@@ -79,7 +79,10 @@ export function DjProfile() {
           {data.badges && data.badges.length > 0 && (
             <div className="flex justify-center gap-2 mt-3">
               {data.badges.map(badge => (
-                <span key={badge} className="text-xs bg-primary/10 text-primary rounded-full px-3 py-1 border border-primary/20">
+                <span
+                  key={badge}
+                  className="text-xs bg-primary/10 text-primary rounded-full px-3 py-1 border border-primary/20"
+                >
                   {badge}
                 </span>
               ))}

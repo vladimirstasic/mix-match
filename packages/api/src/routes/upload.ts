@@ -175,7 +175,17 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
     const filename = title.trim() || 'Unknown title';
 
     // Download audio as mp3
-    await execFileAsync('yt-dlp', [...ytArgs, '-x', '--audio-format', 'mp3', '--max-filesize', '300m', '-o', outputPath, url]);
+    await execFileAsync('yt-dlp', [
+      ...ytArgs,
+      '-x',
+      '--audio-format',
+      'mp3',
+      '--max-filesize',
+      '300m',
+      '-o',
+      outputPath,
+      url,
+    ]);
 
     // SHA256 file hash for full-file cache (streaming to avoid loading entire file into memory)
     const fileHash = await new Promise<string>((resolve, reject) => {

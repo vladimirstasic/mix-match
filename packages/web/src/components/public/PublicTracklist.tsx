@@ -81,7 +81,8 @@ export function PublicTracklist() {
           </div>
           <h1 className="text-2xl font-bold gradient-text">{data.filename}</h1>
           <p className="text-sm text-muted-foreground mt-2">
-            {new Date(data.createdAt).toLocaleDateString()} &middot; {identifiedCount} track{identifiedCount !== 1 ? 's' : ''} identified
+            {new Date(data.createdAt).toLocaleDateString()} &middot; {identifiedCount} track
+            {identifiedCount !== 1 ? 's' : ''} identified
           </p>
         </header>
 

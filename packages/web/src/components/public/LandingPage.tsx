@@ -91,8 +91,14 @@ export function LandingPage() {
       {/* Animated background blobs */}
       <div className="fixed inset-0 -z-10">
         <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-purple-600/10 blur-[120px] animate-gradient-shift" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-violet-500/8 blur-[100px] animate-gradient-shift" style={{ animationDelay: '-5s' }} />
-        <div className="absolute top-[40%] right-[20%] w-[300px] h-[300px] rounded-full bg-indigo-500/6 blur-[80px] animate-gradient-shift" style={{ animationDelay: '-10s' }} />
+        <div
+          className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-violet-500/8 blur-[100px] animate-gradient-shift"
+          style={{ animationDelay: '-5s' }}
+        />
+        <div
+          className="absolute top-[40%] right-[20%] w-[300px] h-[300px] rounded-full bg-indigo-500/6 blur-[80px] animate-gradient-shift"
+          style={{ animationDelay: '-10s' }}
+        />
       </div>
 
       {/* Glass Nav */}
@@ -104,7 +110,9 @@ export function LandingPage() {
           </div>
           <div className="flex items-center gap-3">
             <SignInButton mode="modal">
-              <Button variant="ghost" size="sm">Sign In</Button>
+              <Button variant="ghost" size="sm">
+                Sign In
+              </Button>
             </SignInButton>
             <SignInButton mode="modal">
               <Button size="sm">Get Started</Button>
@@ -127,7 +135,8 @@ export function LandingPage() {
             Identify every track in your mix
           </h1>
           <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-            Upload a DJ mix or paste a YouTube/SoundCloud link — get a complete timestamped tracklist with streaming links and one-click export.
+            Upload a DJ mix or paste a YouTube/SoundCloud link — get a complete timestamped tracklist with streaming
+            links and one-click export.
           </p>
 
           <SignInButton mode="modal">
@@ -147,9 +156,21 @@ export function LandingPage() {
           <h2 className="text-2xl sm:text-3xl font-bold text-center mb-12">How it works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {[
-              { step: '01', title: 'Upload or Paste URL', desc: 'Drag a file or paste a YouTube/SoundCloud/Mixcloud link' },
-              { step: '02', title: 'Choose Scan Mode', desc: 'Fast (~20s) for a quick overview, Detailed (~2min) for accuracy' },
-              { step: '03', title: 'Get Your Tracklist', desc: 'Timestamps, streaming links, export options — all instant' },
+              {
+                step: '01',
+                title: 'Upload or Paste URL',
+                desc: 'Drag a file or paste a YouTube/SoundCloud/Mixcloud link',
+              },
+              {
+                step: '02',
+                title: 'Choose Scan Mode',
+                desc: 'Fast (~20s) for a quick overview, Detailed (~2min) for accuracy',
+              },
+              {
+                step: '03',
+                title: 'Get Your Tracklist',
+                desc: 'Timestamps, streaming links, export options — all instant',
+              },
             ].map(item => (
               <Card key={item.step} className="text-center p-6">
                 <CardContent className="p-0 space-y-3">
@@ -191,7 +212,9 @@ export function LandingPage() {
                   }`}
                 >
                   <span className="font-mono text-xs text-muted-foreground whitespace-nowrap">{t.time}</span>
-                  <span className={`text-sm ${t.status === 'unknown' ? 'text-muted-foreground italic' : 'font-medium'}`}>
+                  <span
+                    className={`text-sm ${t.status === 'unknown' ? 'text-muted-foreground italic' : 'font-medium'}`}
+                  >
                     {t.track}
                   </span>
                   {t.status === 'identified' && (
@@ -269,7 +292,10 @@ export function LandingPage() {
                 </div>
                 <div className="space-y-2">
                   {['Deep House Session Vol. 3', 'Berlin Warehouse Set', 'Ambient Selections'].map(mix => (
-                    <div key={mix} className="flex items-center gap-2 p-2 rounded-lg bg-glass-bg border border-border/50">
+                    <div
+                      key={mix}
+                      className="flex items-center gap-2 p-2 rounded-lg bg-glass-bg border border-border/50"
+                    >
                       <Disc3 className="w-4 h-4 text-muted-foreground" />
                       <span className="text-sm">{mix}</span>
                     </div>
@@ -288,10 +314,7 @@ export function LandingPage() {
           <p className="text-center text-muted-foreground mb-12">Start free, upgrade when you need more</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {PRICING.map(plan => (
-              <Card
-                key={plan.name}
-                className={plan.highlighted ? 'border-primary/40 glow-purple relative' : ''}
-              >
+              <Card key={plan.name} className={plan.highlighted ? 'border-primary/40 glow-purple relative' : ''}>
                 {plan.highlighted && (
                   <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-medium bg-gradient-to-r from-purple-600 to-violet-500 text-white px-3 py-1 rounded-full">
                     Most Popular
@@ -326,12 +349,8 @@ export function LandingPage() {
       {/* Final CTA */}
       <section className="py-20">
         <div className="max-w-2xl mx-auto px-4 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 gradient-text">
-            Your mix. Every track. Identified.
-          </h2>
-          <p className="text-muted-foreground mb-8">
-            Join DJs who never post an incomplete tracklist.
-          </p>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4 gradient-text">Your mix. Every track. Identified.</h2>
+          <p className="text-muted-foreground mb-8">Join DJs who never post an incomplete tracklist.</p>
           <SignInButton mode="modal">
             <Button size="lg" className="text-base px-10 py-6 h-auto">
               Get Started Free
