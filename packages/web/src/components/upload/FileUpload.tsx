@@ -63,7 +63,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
   if (pendingFile || pendingUrl) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => { setPendingFile(null); setPendingUrl(null); }}>
-        <Card className="w-full max-w-md mx-4 glow-purple" onClick={e => e.stopPropagation()}>
+        <Card className="w-full max-w-md mx-4 glow-purple !bg-background border-border" onClick={e => e.stopPropagation()}>
           <CardContent className="pt-6 space-y-5">
             <h3 className="text-lg font-semibold text-center">Choose scan mode</h3>
             <p className="text-sm text-muted-foreground text-center truncate px-4">
