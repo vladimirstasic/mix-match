@@ -2,4 +2,4 @@
 aptPkgs = ["ffmpeg", "python3-pip"]
 
 [phases.install]
-cmds = ["npm ci", "pip install yt-dlp"]
+cmds = ["npm install --legacy-peer-deps", "pip install yt-dlp"]
