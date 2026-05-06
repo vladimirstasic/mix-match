@@ -18,6 +18,7 @@ COPY packages/web/package.json ./packages/web/
 RUN npm install --legacy-peer-deps --prefer-offline=false --no-audit --no-fund --maxsockets=3 2>&1 || true
 RUN ls node_modules/.package-lock.json && echo "Install OK"
 
+COPY tsconfig.base.json ./
 COPY packages/shared ./packages/shared
 COPY packages/api ./packages/api
 
