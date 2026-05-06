@@ -1,5 +1,5 @@
-[build]
-cmds = ["cd ../..", "npm install --legacy-peer-deps", "npm run build -w packages/shared", "npm run build -w packages/api"]
+[phases.setup]
+aptPkgs = ["ffmpeg", "python3-pip"]
 
-[deploy]
-cmd = "node packages/api/dist/index.js"
+[phases.install]
+cmds = ["cd ../..", "npm install --legacy-peer-deps", "npm run build -w packages/shared", "npm run build -w packages/api", "cd packages/api", "pip install yt-dlp"]
