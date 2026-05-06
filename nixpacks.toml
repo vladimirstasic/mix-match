@@ -1,0 +1,5 @@
+[build]
+cmds = ["npm install --legacy-peer-deps", "npm run build -w packages/shared", "npm run build -w packages/api"]
+
+[start]
+cmd = "node packages/api/dist/index.js"
