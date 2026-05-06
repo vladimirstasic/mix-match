@@ -113,7 +113,7 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
       {/* Bars */}
       <div
         ref={containerRef}
-        className="flex items-end gap-[1px] h-20 w-full cursor-crosshair relative"
+        className="flex items-end gap-[1px] h-20 w-full cursor-crosshair relative overflow-hidden"
         onMouseMove={handleMouseMove}
         onMouseLeave={() => setHover(null)}
         onClick={handleClick}
