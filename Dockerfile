@@ -15,10 +15,12 @@ COPY packages/api/package.json ./packages/api/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/web/package.json ./packages/web/
 
-RUN npm install --legacy-peer-deps
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+RUN npm install -w packages/shared -w packages/api --legacy-peer-deps --ignore-scripts
 
-COPY . .
+COPY packages/shared ./packages/shared
+COPY packages/api ./packages/api
 
-RUN npm run build -w packages/shared && npm run build -w packages/api
+RUN cd packages/shared && npx tsc && cd ../api && npx tsc
 
 CMD ["node", "packages/api/dist/index.js"]
