@@ -16,9 +16,23 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
   if (totalDuration <= 0) return null;
 
   // Use real waveform data if available, otherwise generate pseudo-random
-  const barCount = waveformData ? waveformData.length : Math.min(300, Math.floor(totalDuration / 1.5));
-  const bars = waveformData
-    ? waveformData.map(v => 0.05 + v * 0.95) // min height 5%
+  // Downsample to max 300 bars to prevent flex overflow on long mixes
+  const maxBars = 300;
+  const rawData = waveformData
+    ? waveformData.length > maxBars
+      ? Array.from({ length: maxBars }, (_, i) => {
+          const start = Math.floor((i / maxBars) * waveformData.length);
+          const end = Math.floor(((i + 1) / maxBars) * waveformData.length);
+          let max = 0;
+          for (let j = start; j < end; j++) { if (waveformData[j] > max) max = waveformData[j]; }
+          return max;
+        })
+      : waveformData
+    : null;
+
+  const barCount = rawData ? rawData.length : Math.min(maxBars, Math.floor(totalDuration / 1.5));
+  const bars = rawData
+    ? rawData.map(v => 0.05 + v * 0.95)
     : Array.from({ length: barCount }, (_, i) => {
         const seed = Math.sin(i * 12.9898 + 78.233) * 43758.5453;
         return 0.3 + (seed - Math.floor(seed)) * 0.7;
