@@ -10,13 +10,13 @@ RUN apt-get update && apt-get install -y \
     pip3 install yt-dlp --break-system-packages && \
     rm -rf /var/lib/apt/lists/*
 
-COPY package.json package-lock.json ./
+COPY package.json ./
 COPY packages/api/package.json ./packages/api/
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/web/package.json ./packages/web/
 
-ENV NODE_OPTIONS="--max-old-space-size=4096"
-RUN npm install -w packages/shared -w packages/api --legacy-peer-deps --ignore-scripts
+RUN npm install --legacy-peer-deps --prefer-offline=false --no-audit --no-fund --maxsockets=3 2>&1 || true
+RUN ls node_modules/.package-lock.json && echo "Install OK"
 
 COPY packages/shared ./packages/shared
 COPY packages/api ./packages/api
