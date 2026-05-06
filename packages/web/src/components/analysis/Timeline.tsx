@@ -268,19 +268,18 @@ export function Timeline({
   return (
     <div className="space-y-6">
       {filename && (
-        <div className="space-y-1">
+        sourceUrl ? (
+          <a
+            href={sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-lg font-semibold truncate block hover:text-primary transition-colors"
+          >
+            {filename}
+          </a>
+        ) : (
           <h1 className="text-lg font-semibold truncate">{filename}</h1>
-          {sourceUrl && (
-            <a
-              href={sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs text-muted-foreground hover:text-primary truncate block max-w-md transition-colors"
-            >
-              {sourceUrl}
-            </a>
-          )}
-        </div>
+        )
       )}
 
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">

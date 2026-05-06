@@ -18,6 +18,7 @@ export function Dashboard({ onSelectAnalysis }: Props) {
   const [loading, setLoading] = useState(true);
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [filterTag, setFilterTag] = useState<string | null>(null);
+  const [showAll, setShowAll] = useState(false);
 
   useEffect(() => {
     getUserAnalyses()
@@ -136,7 +137,7 @@ export function Dashboard({ onSelectAnalysis }: Props) {
           )}
         </div>
       </div>
-      {displayed.map(a => (
+      {(showAll ? displayed : displayed.slice(0, 10)).map(a => (
         <Card
           key={a.id}
           className="cursor-pointer group"
@@ -177,6 +178,14 @@ export function Dashboard({ onSelectAnalysis }: Props) {
           </CardContent>
         </Card>
       ))}
+      {!showAll && displayed.length > 10 && (
+        <button
+          className="w-full text-center text-sm text-muted-foreground hover:text-foreground py-2 rounded-xl hover:bg-accent transition-colors"
+          onClick={() => setShowAll(true)}
+        >
+          Show all ({displayed.length} total)
+        </button>
+      )}
     </div>
   );
 }
