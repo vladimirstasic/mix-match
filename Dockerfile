@@ -1,5 +1,10 @@
 FROM node:22.22.2
 
+WORKDIR /app
+
+# Upgrade npm to fix peer dependency bug
+RUN npm install -g npm@11.13.0
+
 # Install system dependencies required by the API
 RUN apt-get update && apt-get install -y \
     ffmpeg \
@@ -8,8 +13,6 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends && \
     pip3 install yt-dlp --break-system-packages && \
     rm -rf /var/lib/apt/lists/*
-
-WORKDIR /app
 
 # Copy monorepo root manifests
 COPY package.json package-lock.json ./
