@@ -29,9 +29,9 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
   };
 
   const getBarColor = (segment: Segment | null, isHovered: boolean) => {
-    if (!segment) return isHovered ? 'bg-muted-foreground/40' : 'bg-muted-foreground/15';
+    if (!segment) return isHovered ? 'bg-muted-foreground/50' : 'bg-muted-foreground/30';
     if (segment.status === 'retrying') return isHovered ? 'bg-yellow-400' : 'bg-yellow-500/70';
-    if (segment.status === 'unknown') return isHovered ? 'bg-muted-foreground/40' : 'bg-muted-foreground/25';
+    if (segment.status === 'unknown') return isHovered ? 'bg-muted-foreground/50' : 'bg-muted-foreground/30';
     if (segment.status === 'identified') {
       const conf = segment.confidence;
       if (conf != null) {
@@ -41,7 +41,7 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
       }
       return isHovered ? 'bg-green-400' : 'bg-green-500/70';
     }
-    return isHovered ? 'bg-muted-foreground/40' : 'bg-muted-foreground/20';
+    return isHovered ? 'bg-muted-foreground/50' : 'bg-muted-foreground/30';
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -161,7 +161,7 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
               return (
                 <div
                   key={seg.id}
-                  className="absolute top-0 bottom-0 w-px bg-white/30"
+                  className="absolute top-0 bottom-0 w-px bg-foreground/20"
                   style={{ left: `${xPercent}%` }}
                   title={`Transition at ${formatTime(seg.startSec)}`}
                 />
