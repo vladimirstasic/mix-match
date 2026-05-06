@@ -165,16 +165,17 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
   const outputPath = path.join(config.uploadDir, uuid() + '.mp3');
 
   try {
-    // Get video title
     const cookieArgs = process.env.YTDLP_COOKIE_BROWSER
       ? ['--cookies-from-browser', process.env.YTDLP_COOKIE_BROWSER]
       : [];
+    const ytArgs = ['--proxy', '', ...cookieArgs, '--extractor-args', 'youtube:player_client=mediaconnect'];
 
-    const { stdout: title } = await execFileAsync('yt-dlp', ['--proxy', '', ...cookieArgs, '--print', 'title', url]);
+    // Get video title
+    const { stdout: title } = await execFileAsync('yt-dlp', [...ytArgs, '--print', 'title', url]);
     const filename = title.trim() || 'Unknown title';
 
     // Download audio as mp3
-    await execFileAsync('yt-dlp', ['--proxy', '', ...cookieArgs, '-x', '--audio-format', 'mp3', '--max-filesize', '300m', '-o', outputPath, url]);
+    await execFileAsync('yt-dlp', [...ytArgs, '-x', '--audio-format', 'mp3', '--max-filesize', '300m', '-o', outputPath, url]);
 
     // SHA256 file hash for full-file cache (streaming to avoid loading entire file into memory)
     const fileHash = await new Promise<string>((resolve, reject) => {
