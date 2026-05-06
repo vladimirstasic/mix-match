@@ -192,6 +192,7 @@ export function useAnalysis() {
           sourceUrl: full.sourceUrl || null,
           segments: full.segments || [],
           chunksAvailable: full.chunksAvailable || false,
+          waveformData: full.waveformData || null,
         }));
       } else if (full.status === 'failed') {
         setState(s => ({ ...s, phase: 'failed', analysisId: id, error: full.error || 'Failed' }));
@@ -235,8 +236,11 @@ export function useAnalysis() {
             ...s,
             phase: 'completed',
             analysisId: savedId,
+            filename: data.filename,
+            sourceUrl: data.sourceUrl || null,
             segments: data.segments,
             chunksAvailable: data.chunksAvailable,
+            waveformData: data.waveformData || null,
           }));
         } else if (data.status === 'processing' || data.status === 'pending') {
           setState(s => ({ ...s, phase: 'processing', analysisId: savedId }));

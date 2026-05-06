@@ -71,7 +71,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
             </p>
             <div className="grid grid-cols-2 gap-3">
               <button
-                className="flex flex-col items-center gap-3 p-5 rounded-xl border border-glass-border bg-muted/30 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
+                className="flex flex-col items-center gap-3 p-5 rounded-xl border border-glass-border bg-transparent hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
                 onClick={() => selectMode('fast')}
               >
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
@@ -81,7 +81,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
                 <span className="text-xs text-muted-foreground text-center">~20 seconds<br />Scans every 2 min</span>
               </button>
               <button
-                className="flex flex-col items-center gap-3 p-5 rounded-xl border border-glass-border bg-muted/30 hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
+                className="flex flex-col items-center gap-3 p-5 rounded-xl border border-glass-border bg-transparent hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
                 onClick={() => selectMode('detailed')}
               >
                 <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">

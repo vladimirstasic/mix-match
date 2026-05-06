@@ -136,7 +136,7 @@ export function Dashboard({ onSelectAnalysis }: Props) {
           )}
         </div>
       </div>
-      {displayed.slice(0, 5).map(a => (
+      {displayed.map(a => (
         <Card
           key={a.id}
           className="cursor-pointer group"
