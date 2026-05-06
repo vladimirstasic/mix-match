@@ -1,0 +1,6 @@
+[build]
+install = "npm install --legacy-peer-deps"
+build = "npm run build -w packages/shared && npm run build -w packages/api"
+
+[deploy]
+start = "node packages/api/dist/index.js"
