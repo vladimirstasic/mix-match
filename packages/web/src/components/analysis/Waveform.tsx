@@ -29,19 +29,19 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
   };
 
   const getBarColor = (segment: Segment | null, isHovered: boolean) => {
-    if (!segment) return isHovered ? 'bg-muted-foreground/50' : 'bg-muted-foreground/30';
-    if (segment.status === 'retrying') return isHovered ? 'bg-yellow-400' : 'bg-yellow-500/70';
-    if (segment.status === 'unknown') return isHovered ? 'bg-muted-foreground/50' : 'bg-muted-foreground/30';
+    if (!segment) return isHovered ? 'bg-muted-foreground/60' : 'bg-muted-foreground/40';
+    if (segment.status === 'retrying') return isHovered ? 'bg-yellow-400' : 'bg-yellow-500/80';
+    if (segment.status === 'unknown') return isHovered ? 'bg-muted-foreground/60' : 'bg-muted-foreground/40';
     if (segment.status === 'identified') {
       const conf = segment.confidence;
       if (conf != null) {
-        if (conf >= 80) return isHovered ? 'bg-green-400' : 'bg-green-500/70';
-        if (conf >= 50) return isHovered ? 'bg-lime-400' : 'bg-lime-500/70';
-        return isHovered ? 'bg-orange-400' : 'bg-orange-500/70';
+        if (conf >= 80) return isHovered ? 'bg-green-400' : 'bg-green-500/80';
+        if (conf >= 50) return isHovered ? 'bg-lime-400' : 'bg-lime-500/80';
+        return isHovered ? 'bg-orange-400' : 'bg-orange-500/80';
       }
-      return isHovered ? 'bg-green-400' : 'bg-green-500/70';
+      return isHovered ? 'bg-green-400' : 'bg-green-500/80';
     }
-    return isHovered ? 'bg-muted-foreground/50' : 'bg-muted-foreground/30';
+    return isHovered ? 'bg-muted-foreground/60' : 'bg-muted-foreground/40';
   };
 
   const handleMouseMove = (e: React.MouseEvent) => {
@@ -181,16 +181,16 @@ export function Waveform({ segments, totalDuration, waveformData, onSegmentClick
       {/* Legend */}
       <div className="flex items-center gap-3 mt-1 justify-center">
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          <span className="w-2 h-2 rounded-sm bg-green-500/70" /> High
+          <span className="w-2 h-2 rounded-sm bg-green-500/80" /> High
         </span>
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          <span className="w-2 h-2 rounded-sm bg-lime-500/70" /> Medium
+          <span className="w-2 h-2 rounded-sm bg-lime-500/80" /> Medium
         </span>
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          <span className="w-2 h-2 rounded-sm bg-orange-500/70" /> Low
+          <span className="w-2 h-2 rounded-sm bg-orange-500/80" /> Low
         </span>
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          <span className="w-2 h-2 rounded-sm bg-muted-foreground/25" /> Unknown
+          <span className="w-2 h-2 rounded-sm bg-muted-foreground/40" /> Unknown
         </span>
       </div>
     </div>

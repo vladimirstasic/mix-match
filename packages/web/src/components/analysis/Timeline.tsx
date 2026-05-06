@@ -273,12 +273,12 @@ export function Timeline({
             href={sourceUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="text-lg font-semibold truncate block hover:text-primary transition-colors"
+            className="text-2xl font-bold truncate block hover:text-primary transition-colors"
           >
             {filename}
           </a>
         ) : (
-          <h1 className="text-lg font-semibold truncate">{filename}</h1>
+          <h1 className="text-2xl font-bold truncate">{filename}</h1>
         )
       )}
 
