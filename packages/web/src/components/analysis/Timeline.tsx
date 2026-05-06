@@ -27,6 +27,8 @@ interface Props {
   segments: Segment[];
   chunksAvailable: boolean;
   analysisId: string;
+  filename?: string | null;
+  sourceUrl?: string | null;
   waveformData?: number[] | null;
   onRetrySegment: (segmentId: string) => void;
   onRetryAll: () => void;
@@ -109,6 +111,8 @@ export function Timeline({
   segments,
   chunksAvailable,
   analysisId,
+  filename,
+  sourceUrl,
   waveformData,
   onRetrySegment,
   onRetryAll,
@@ -263,6 +267,22 @@ export function Timeline({
 
   return (
     <div className="space-y-6">
+      {filename && (
+        <div className="space-y-1">
+          <h1 className="text-lg font-semibold truncate">{filename}</h1>
+          {sourceUrl && (
+            <a
+              href={sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-muted-foreground hover:text-primary truncate block max-w-md transition-colors"
+            >
+              {sourceUrl}
+            </a>
+          )}
+        </div>
+      )}
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
         <h2 className="text-xl font-semibold">
           <span className="gradient-text">{identified.length}</span> track{identified.length !== 1 ? 's' : ''} found

@@ -85,6 +85,13 @@
       "when": 1777921523111,
       "tag": "0011_absurd_arclight",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "7",
+      "when": 1778058717988,
+      "tag": "0012_fresh_mister_fear",
+      "breakpoints": true
     }
   ]
 }

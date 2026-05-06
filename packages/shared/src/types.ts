@@ -38,6 +38,7 @@ export interface AnalysisResult {
   id: string;
   filename: string;
   fileSize: number;
+  sourceUrl?: string | null;
   status: AnalysisStatus;
   totalChunks: number | null;
   processedChunks: number;

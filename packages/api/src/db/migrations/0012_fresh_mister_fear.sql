@@ -1,0 +1,1 @@
+ALTER TABLE "analyses" ADD COLUMN "source_url" varchar(2048);

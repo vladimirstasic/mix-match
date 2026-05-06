@@ -33,6 +33,8 @@ const MainApp = () => {
   const {
     phase,
     analysisId,
+    filename,
+    sourceUrl,
     uploadProgress,
     chunksProcessed,
     totalChunks,
@@ -240,6 +242,8 @@ const MainApp = () => {
                   segments={segments}
                   chunksAvailable={chunksAvailable}
                   analysisId={analysisId!}
+                  filename={filename}
+                  sourceUrl={sourceUrl}
                   waveformData={waveformData}
                   onRetrySegment={retrySegment}
                   onRetryAll={retryAll}

@@ -16,6 +16,8 @@ type Phase = 'idle' | 'uploading' | 'processing' | 'completed' | 'failed';
 interface AnalysisState {
   phase: Phase;
   analysisId: string | null;
+  filename: string | null;
+  sourceUrl: string | null;
   uploadProgress: number;
   chunksProcessed: number;
   totalChunks: number;
@@ -32,6 +34,8 @@ export function useAnalysis() {
   const [state, setState] = useState<AnalysisState>({
     phase: 'idle',
     analysisId: null,
+    filename: null,
+    sourceUrl: null,
     uploadProgress: 0,
     chunksProcessed: 0,
     totalChunks: 0,
@@ -53,6 +57,8 @@ export function useAnalysis() {
         setState(s => ({
           ...s,
           phase: 'completed',
+          filename: result.filename,
+          sourceUrl: result.sourceUrl || null,
           results: result.results as TrackMatch[],
           segments: result.segments || [],
           chunksAvailable: result.chunksAvailable || false,
@@ -97,6 +103,8 @@ export function useAnalysis() {
             setState(s => ({
               ...s,
               phase: 'completed',
+              filename: full.filename,
+              sourceUrl: full.sourceUrl || null,
               results: full.results as TrackMatch[],
               segments: full.segments,
               chunksAvailable: full.chunksAvailable,
@@ -180,6 +188,8 @@ export function useAnalysis() {
           ...s,
           phase: 'completed',
           analysisId: id,
+          filename: full.filename,
+          sourceUrl: full.sourceUrl || null,
           segments: full.segments || [],
           chunksAvailable: full.chunksAvailable || false,
         }));
@@ -199,6 +209,8 @@ export function useAnalysis() {
     setState({
       phase: 'idle',
       analysisId: null,
+      filename: null,
+      sourceUrl: null,
       uploadProgress: 0,
       chunksProcessed: 0,
       totalChunks: 0,

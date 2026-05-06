@@ -4,6 +4,7 @@ export interface AnalysisResponse extends AnalysisResult {
   segments: Segment[];
   chunksAvailable: boolean;
   waveformData: number[] | null;
+  sourceUrl?: string | null;
 }
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';

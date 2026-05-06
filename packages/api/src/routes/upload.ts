@@ -199,6 +199,7 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
         filename,
         fileSize: stat.size,
         fileHash,
+        sourceUrl: url,
         status: 'pending',
         userId,
       })

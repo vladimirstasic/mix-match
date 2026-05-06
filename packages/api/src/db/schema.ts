@@ -17,6 +17,7 @@ export const analyses = pgTable(
     filename: varchar('filename', { length: 255 }).notNull(),
     fileSize: integer('file_size').notNull(),
     fileHash: varchar('file_hash', { length: 64 }),
+    sourceUrl: varchar('source_url', { length: 2048 }),
     status: varchar('status', { length: 20 }).notNull().default('pending'),
     totalChunks: integer('total_chunks'),
     processedChunks: integer('processed_chunks').default(0),
