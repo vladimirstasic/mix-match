@@ -81,7 +81,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
         }}
       >
         <Card
-          className="w-full max-w-md mx-4 glow-purple !bg-background border-border"
+          className="w-full max-w-md mx-4 !bg-background border-border shadow-xl"
           onClick={e => e.stopPropagation()}
         >
           <CardContent className="pt-6 space-y-5">

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   getUserAnalyses,
   deleteAnalysis,
@@ -19,6 +20,7 @@ export function Dashboard({ onSelectAnalysis }: Props) {
   const [showFavoritesOnly, setShowFavoritesOnly] = useState(false);
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
 
   useEffect(() => {
     getUserAnalyses()
@@ -43,9 +45,14 @@ export function Dashboard({ onSelectAnalysis }: Props) {
 
   const handleDelete = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
-    if (!window.confirm('Delete this analysis?')) return;
-    await deleteAnalysis(id);
-    setAnalyses(prev => prev.filter(a => a.id !== id));
+    setConfirmDelete(id);
+  };
+
+  const confirmDeleteAction = async () => {
+    if (!confirmDelete) return;
+    await deleteAnalysis(confirmDelete);
+    setAnalyses(prev => prev.filter(a => a.id !== confirmDelete));
+    setConfirmDelete(null);
   };
 
   const handleToggleFavorite = async (e: React.MouseEvent, id: string) => {
@@ -179,6 +186,25 @@ export function Dashboard({ onSelectAnalysis }: Props) {
         >
           Show all ({displayed.length} total)
         </button>
+      )}
+
+      {confirmDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setConfirmDelete(null)}>
+          <Card className="w-full max-w-sm mx-4 !bg-background border-border shadow-xl" onClick={e => e.stopPropagation()}>
+            <CardContent className="pt-6 space-y-4 text-center">
+              <h3 className="text-lg font-semibold">Delete analysis?</h3>
+              <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
+              <div className="flex gap-3 justify-center">
+                <Button variant="outline" size="sm" onClick={() => setConfirmDelete(null)}>
+                  Cancel
+                </Button>
+                <Button variant="destructive" size="sm" onClick={confirmDeleteAction}>
+                  Delete
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );
