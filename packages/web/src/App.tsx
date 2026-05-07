@@ -29,7 +29,7 @@ const App = () => (
 );
 
 const MainApp = () => {
-  const { getToken } = useAuth();
+  const { getToken, isSignedIn } = useAuth();
   setAuthTokenProvider(() => getToken());
 
   const analysis = useAnalysis();
@@ -128,12 +128,13 @@ const MainApp = () => {
    * Fetch user credits
    */
   useEffect(() => {
+    if (!isSignedIn) return;
     getUserProfile().then(data => {
       if (data?.creditsRemaining != null) {
         setCredits(data.creditsRemaining);
       }
     });
-  }, []);
+  }, [isSignedIn]);
 
   /**
    * Analysis phase side effects
