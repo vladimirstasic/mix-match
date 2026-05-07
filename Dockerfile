@@ -24,4 +24,6 @@ COPY packages/api ./packages/api
 
 RUN cd packages/shared && npx tsc && cd ../api && npx tsc
 
-CMD ["sh", "-c", "cd packages/api && npx drizzle-kit migrate && cd /app && node packages/api/dist/index.js"]
+COPY packages/api/src/db/migrations ./packages/api/dist/db/migrations
+
+CMD ["node", "packages/api/dist/index.js"]
