@@ -1,8 +1,9 @@
 import { Route, Routes } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { SignedIn, SignedOut } from '@clerk/clerk-react';
+import { SignedIn, SignedOut, useAuth } from '@clerk/clerk-react';
 
 import { useAnalysis } from './hooks/useAnalysis';
+import { setAuthTokenProvider } from './api/client';
 
 import { DjProfile, LandingPage, PublicTracklist } from './components/public';
 
@@ -28,6 +29,11 @@ const App = () => (
 );
 
 const MainApp = () => {
+  const { getToken } = useAuth();
+  useEffect(() => {
+    setAuthTokenProvider(() => getToken());
+  }, [getToken]);
+
   const analysis = useAnalysis();
 
   const {
