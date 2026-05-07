@@ -16,16 +16,9 @@ export function setAuthTokenProvider(fn: () => Promise<string | null>) {
 }
 
 async function authHeaders(): Promise<Record<string, string>> {
-  if (!getTokenFn) {
-    console.log('[MixMatch] No token provider set');
-    return {};
-  }
+  if (!getTokenFn) return {};
   const token = await getTokenFn();
-  if (!token) {
-    console.log('[MixMatch] getToken() returned null');
-    return {};
-  }
-  console.log('[MixMatch] Token OK, sending Bearer header');
+  if (!token) return {};
   return { Authorization: `Bearer ${token}` };
 }
 
