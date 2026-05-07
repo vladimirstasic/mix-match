@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { getAuth } from '@clerk/express';
+
 import { eq, and, sql } from 'drizzle-orm';
 import { requireUser, getUserId } from '../middleware/auth.js';
 import { normalizeString } from '../services/aggregator.js';
@@ -209,7 +209,7 @@ analysisRouter.get('/analysis/:id', async (req, res) => {
     return;
   }
 
-  const { userId } = getAuth(req);
+  const userId = req.userId;
   if (analysis.userId && analysis.userId !== userId) {
     res.status(403).json({ error: 'Not authorized' });
     return;
@@ -301,7 +301,7 @@ analysisRouter.get('/analysis/:id/progress', async (req, res) => {
 
 // PATCH /api/analysis/:id/segments/:segId — manual track edit
 analysisRouter.patch('/analysis/:id/segments/:segId', async (req, res) => {
-  const { userId } = getAuth(req);
+  const userId = req.userId;
   const analysisId = req.params.id as string;
   const segId = req.params.segId as string;
   const { trackName, artist, title } = req.body;
@@ -355,7 +355,7 @@ analysisRouter.patch('/analysis/:id/segments/:segId', async (req, res) => {
 
 // PATCH /api/analysis/:id — update metadata (is_public, slug)
 analysisRouter.patch('/analysis/:id', requireUser, async (req, res) => {
-  const { userId } = getAuth(req);
+  const userId = req.userId;
   const analysisId = req.params.id as string;
   const { isPublic, slug } = req.body;
 
@@ -385,7 +385,7 @@ analysisRouter.patch('/analysis/:id', requireUser, async (req, res) => {
 
 // DELETE /api/analysis/:id
 analysisRouter.delete('/analysis/:id', requireUser, async (req, res) => {
-  const { userId } = getAuth(req);
+  const userId = req.userId;
   const analysisId = req.params.id as string;
 
   const analysis = await findAnalysis(analysisId);
