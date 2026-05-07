@@ -32,11 +32,31 @@ app.use('/api', communityRouter);
 
 app.use(errorHandler);
 
+import { eq, and, lt, inArray } from 'drizzle-orm';
+import { analyses } from './db/schema.js';
+
+async function cleanupStaleAnalyses() {
+  const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
+  await db
+    .update(analyses)
+    .set({ status: 'failed', error: 'Processing timed out' })
+    .where(
+      and(
+        inArray(analyses.status, ['pending', 'processing']),
+        lt(analyses.updatedAt!, thirtyMinAgo),
+      ),
+    );
+}
+
 async function start() {
   const migrationsPath = path.join(process.cwd(), 'packages/api/dist/db/migrations');
   console.log('Running migrations from:', migrationsPath);
   await migrate(db, { migrationsFolder: migrationsPath });
   console.log('Migrations done.');
+
+  await cleanupStaleAnalyses();
+
+  setInterval(cleanupStaleAnalyses, 5 * 60 * 1000);
 
   app.listen(config.port, () => {
     console.log(`API server running on port ${config.port}`);
