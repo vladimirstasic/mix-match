@@ -13,32 +13,19 @@ import { userRouter } from './routes/user.js';
 import { spotifyRouter } from './routes/spotify.js';
 import { communityRouter } from './routes/community.js';
 
-const AUTHORIZED_PARTIES = [
-  'https://dist-omega-lemon-8esrrbeklw.vercel.app',
-  'http://localhost:5173',
-];
-
 const app = express();
 
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
-app.use(clerkMiddleware({
-  secretKey: config.clerkSecretKey,
-  publishableKey: config.clerkPublishableKey,
-  authorizedParties: AUTHORIZED_PARTIES,
-}));
+app.use(clerkMiddleware());
 
-const routes = [
-  uploadRouter,
-  analysisRouter,
-  exportRouter,
-  retryRouter,
-  userRouter,
-  spotifyRouter,
-  communityRouter,
-];
-
-routes.forEach(router => app.use('/api', router));
+app.use('/api', uploadRouter);
+app.use('/api', analysisRouter);
+app.use('/api', exportRouter);
+app.use('/api', retryRouter);
+app.use('/api', userRouter);
+app.use('/api', spotifyRouter);
+app.use('/api', communityRouter);
 
 app.use(errorHandler);
 
