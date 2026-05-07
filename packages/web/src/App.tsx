@@ -30,9 +30,7 @@ const App = () => (
 
 const MainApp = () => {
   const { getToken } = useAuth();
-  useEffect(() => {
-    setAuthTokenProvider(() => getToken());
-  }, [getToken]);
+  setAuthTokenProvider(() => getToken());
 
   const analysis = useAnalysis();
 
