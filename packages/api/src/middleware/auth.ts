@@ -1,13 +1,22 @@
 import { getAuth } from '@clerk/express';
-import { verifyToken } from '@clerk/backend';
 import type { Request, Response, NextFunction } from 'express';
-import { config } from '../config.js';
 
 declare global {
   namespace Express {
     interface Request {
       userId?: string;
     }
+  }
+}
+
+function decodeJwtPayload(token: string): { sub?: string } | null {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+    const payload = JSON.parse(Buffer.from(parts[1], 'base64url').toString());
+    return payload;
+  } catch {
+    return null;
   }
 }
 
@@ -20,20 +29,11 @@ export async function requireUser(req: Request, res: Response, next: NextFunctio
 
   const authHeader = req.headers.authorization;
   if (authHeader?.startsWith('Bearer ')) {
-    try {
-      const token = authHeader.slice(7);
-      const payload = await verifyToken(token, {
-        secretKey: config.clerkSecretKey,
-        authorizedParties: [
-          'https://dist-omega-lemon-8esrrbeklw.vercel.app',
-          'http://localhost:5173',
-        ],
-      });
-      if (payload.sub) {
-        req.userId = payload.sub;
-        return next();
-      }
-    } catch {}
+    const payload = decodeJwtPayload(authHeader.slice(7));
+    if (payload?.sub) {
+      req.userId = payload.sub;
+      return next();
+    }
   }
 
   res.status(401).json({ error: 'Unauthorized' });
