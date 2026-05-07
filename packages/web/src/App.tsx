@@ -190,8 +190,8 @@ const MainApp = () => {
       </SignedOut>
 
       <SignedIn>
-        <div className="min-h-screen bg-background text-foreground">
-          <div className="mx-auto max-w-4xl px-4 py-12">
+        <div className="min-h-screen bg-background text-foreground text-[16px]">
+          <div className="mx-auto max-w-5xl px-6 py-8">
             <Header credits={credits} onLogoClick={goHome} />
 
             <main>
