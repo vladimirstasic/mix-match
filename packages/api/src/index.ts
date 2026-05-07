@@ -1,7 +1,6 @@
 import express from 'express';
 import cors from 'cors';
 import path from 'path';
-import { fileURLToPath } from 'url';
 import { clerkMiddleware } from '@clerk/express';
 import { migrate } from 'drizzle-orm/node-postgres/migrator';
 
@@ -16,8 +15,6 @@ import { retryRouter } from './routes/retry.js';
 import { userRouter } from './routes/user.js';
 import { spotifyRouter } from './routes/spotify.js';
 import { communityRouter } from './routes/community.js';
-
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 
@@ -36,8 +33,9 @@ app.use('/api', communityRouter);
 app.use(errorHandler);
 
 async function start() {
-  console.log('Running migrations...');
-  await migrate(db, { migrationsFolder: path.join(__dirname, 'db/migrations') });
+  const migrationsPath = path.join(process.cwd(), 'packages/api/dist/db/migrations');
+  console.log('Running migrations from:', migrationsPath);
+  await migrate(db, { migrationsFolder: migrationsPath });
   console.log('Migrations done.');
 
   app.listen(config.port, () => {
