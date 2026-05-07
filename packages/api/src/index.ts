@@ -22,7 +22,10 @@ app.use(
   }),
 );
 app.use(express.json());
-app.use(clerkMiddleware());
+app.use(clerkMiddleware({
+  secretKey: config.clerkSecretKey,
+  publishableKey: config.clerkPublishableKey,
+}));
 app.use('/api', uploadRouter);
 app.use('/api', analysisRouter);
 app.use('/api', exportRouter);
