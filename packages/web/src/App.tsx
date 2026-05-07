@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SignedIn, SignedOut, useAuth } from '@clerk/clerk-react';
 
 import { useAnalysis } from './hooks/useAnalysis';
-import { setAuthTokenProvider } from './api/client';
+import { setAuthTokenProvider, getUserProfile } from './api/client';
 
 import { DjProfile, LandingPage, PublicTracklist } from './components/public';
 
@@ -16,7 +16,7 @@ import { ManualTracklist } from './components/upload';
 
 import { Button } from '@/components/ui/button';
 
-import { API_BASE, PHASE, SEGMENT_STATUS, VIEW } from './constants';
+import { PHASE, SEGMENT_STATUS, VIEW } from './constants';
 
 type ViewMode = (typeof VIEW)[keyof typeof VIEW];
 
@@ -128,25 +128,11 @@ const MainApp = () => {
    * Fetch user credits
    */
   useEffect(() => {
-    const fetchCredits = async () => {
-      try {
-        const response = await fetch(`${API_BASE}/user/profile`, {
-          credentials: 'include',
-        });
-
-        if (!response.ok) return;
-
-        const data = await response.json();
-
-        if (data?.creditsRemaining != null) {
-          setCredits(data.creditsRemaining);
-        }
-      } catch {
-        // silent fail
+    getUserProfile().then(data => {
+      if (data?.creditsRemaining != null) {
+        setCredits(data.creditsRemaining);
       }
-    };
-
-    fetchCredits();
+    });
   }, []);
 
   /**
