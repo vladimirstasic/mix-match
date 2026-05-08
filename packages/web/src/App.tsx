@@ -199,6 +199,19 @@ const MainApp = () => {
                 <ManualTracklist onCreated={handleSelectAnalysis} onBack={() => setView(VIEW.HOME)} />
               )}
 
+              {phase === PHASE.LOADING && (
+                <div className="space-y-4 animate-pulse">
+                  <div className="h-8 bg-muted rounded-lg w-2/3" />
+                  <div className="h-4 bg-muted/50 rounded w-1/3" />
+                  <div className="h-20 bg-muted/30 rounded-2xl" />
+                  <div className="space-y-2">
+                    {[1, 2, 3, 4].map(i => (
+                      <div key={i} className="h-16 bg-muted/30 rounded-xl" />
+                    ))}
+                  </div>
+                </div>
+              )}
+
               {isProcessing && (
                 <>
                   <ProgressBar

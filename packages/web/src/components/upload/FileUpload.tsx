@@ -51,6 +51,10 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
       setError('Please enter a valid URL');
       return;
     }
+    if (/youtube\.com|youtu\.be/i.test(trimmed)) {
+      setError('YouTube is not supported yet. Use SoundCloud, Mixcloud, or upload a file.');
+      return;
+    }
     setError(null);
     setPendingUrl(trimmed);
   };

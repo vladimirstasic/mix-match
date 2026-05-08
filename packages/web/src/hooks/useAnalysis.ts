@@ -11,7 +11,7 @@ import {
   updateAnalysis,
 } from '../api/client';
 
-type Phase = 'idle' | 'uploading' | 'processing' | 'completed' | 'failed';
+type Phase = 'idle' | 'loading' | 'uploading' | 'processing' | 'completed' | 'failed';
 
 interface AnalysisState {
   phase: Phase;
@@ -181,6 +181,7 @@ export function useAnalysis() {
 
   const loadAnalysis = useCallback(async (id: string) => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
+    setState(s => ({ ...s, phase: 'loading', analysisId: id }));
     try {
       const full = await getAnalysis(id);
       localStorage.setItem('mixmatch_active_analysis', id);

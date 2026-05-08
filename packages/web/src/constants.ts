@@ -15,6 +15,7 @@ export const VIEW = {
 // These are already in @mix-match/shared types, but useful as runtime constants
 export const PHASE = {
   IDLE: 'idle',
+  LOADING: 'loading',
   UPLOADING: 'uploading',
   PROCESSING: 'processing',
   COMPLETED: 'completed',
