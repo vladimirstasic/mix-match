@@ -15,7 +15,6 @@ interface Props {
 export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) {
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [warning, setWarning] = useState<string | null>(null);
   const [tab, setTab] = useState<'file' | 'url'>('file');
   const [urlInput, setUrlInput] = useState('');
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -40,12 +39,6 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
     setPendingFile(file);
   }, []);
 
-  const isSingleTrackUrl = (url: string): boolean => {
-    if (/soundcloud\.com\/[^/]+\/[^/]+$/i.test(url) && !/\/sets\//i.test(url)) return true;
-    if (/mixcloud\.com\/[^/]+\/[^/]+\/?$/i.test(url) && !/\/playlists\//i.test(url)) return false;
-    return false;
-  };
-
   const handleUrlSubmit = () => {
     const trimmed = urlInput.trim();
     if (!trimmed) {
@@ -63,13 +56,6 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
       return;
     }
     setError(null);
-    if (isSingleTrackUrl(trimmed) && !warning) {
-      setWarning(
-        'This looks like a single track, not a mix. MixMatch works best with DJ mixes, radio shows, or podcasts (30+ min).',
-      );
-      return;
-    }
-    setWarning(null);
     setPendingUrl(trimmed);
   };
 
@@ -219,10 +205,9 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
               className="w-full max-w-md px-4 py-2.5 rounded-xl border border-border bg-glass-bg backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all"
             />
             <Button onClick={handleUrlSubmit} disabled={!urlInput.trim()}>
-              {warning ? 'Continue anyway' : 'Scan'}
+              Scan
             </Button>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            {warning && <p className="text-sm text-yellow-600 dark:text-yellow-400">{warning}</p>}
           </CardContent>
         </Card>
       )}
