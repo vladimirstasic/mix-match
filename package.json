@@ -10,6 +10,7 @@
     "fresh": "npm run db:migrate -w packages/api && docker exec mix-match-redis-1 redis-cli FLUSHALL && npm run build -w packages/shared && npm run dev",
     "dev": "concurrently \"npm run dev:api\" \"npm run dev:web\"",
     "build": "npm run build -w packages/shared && npm run build -w packages/api && npm run build -w packages/web",
+    "publish:web": "VITE_API_URL=https://mix-match-production.up.railway.app/api npm run build -w packages/shared && VITE_API_URL=https://mix-match-production.up.railway.app/api npm run build -w packages/web && mkdir -p packages/web/dist/.vercel && echo '{\"projectId\":\"prj_Y1Vtcr7mDdMwW0DSrycxwP8CNsst\",\"orgId\":\"team_vuiGIsRwkz4yC7DwVUvhmkKM\"}' > packages/web/dist/.vercel/project.json && cd packages/web/dist && vercel --prod --yes",
     "lint": "biome check .",
     "format": "biome format --write ."
   },

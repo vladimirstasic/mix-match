@@ -33,19 +33,29 @@ app.use('/api', communityRouter);
 app.use(errorHandler);
 
 import { eq, and, lt, inArray } from 'drizzle-orm';
-import { analyses } from './db/schema.js';
+import { analyses, segments as segmentsTable } from './db/schema.js';
 
 async function cleanupStaleAnalyses() {
   const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
-  await db
-    .update(analyses)
-    .set({ status: 'failed', error: 'Processing timed out' })
+
+  const stale = await db
+    .select({ id: analyses.id })
+    .from(analyses)
     .where(
       and(
         inArray(analyses.status, ['pending', 'processing']),
         lt(analyses.updatedAt!, thirtyMinAgo),
       ),
     );
+
+  for (const { id } of stale) {
+    await db.delete(segmentsTable).where(eq(segmentsTable.analysisId, id));
+    await db.delete(analyses).where(eq(analyses.id, id));
+  }
+
+  if (stale.length > 0) {
+    console.log(`Cleaned up ${stale.length} stale analyses`);
+  }
 }
 
 async function start() {
