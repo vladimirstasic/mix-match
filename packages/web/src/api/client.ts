@@ -90,7 +90,9 @@ export function subscribeProgress(
   const es = new EventSource(`${API_BASE}/analysis/${id}/progress`);
 
   es.onmessage = e => {
-    try { onEvent(JSON.parse(e.data)); } catch {}
+    try {
+      onEvent(JSON.parse(e.data));
+    } catch {}
   };
 
   es.onerror = () => {
@@ -113,7 +115,10 @@ export async function retryAllUnknown(analysisId: string): Promise<{ jobId: stri
   return res.json();
 }
 
-export async function updateAnalysis(analysisId: string, data: { isPublic?: boolean; slug?: string }): Promise<unknown> {
+export async function updateAnalysis(
+  analysisId: string,
+  data: { isPublic?: boolean; slug?: string },
+): Promise<unknown> {
   const res = await apiFetch(`/analysis/${analysisId}`, { method: 'PATCH', body: JSON.stringify(data) });
   if (!res.ok) throw new Error('Update failed');
   return res.json();
@@ -199,7 +204,10 @@ export async function voteSegment(segmentId: string, value: 1 | -1): Promise<{ s
 }
 
 export async function editSegment(analysisId: string, segmentId: string, trackName: string): Promise<Segment> {
-  const res = await apiFetch(`/analysis/${analysisId}/segments/${segmentId}`, { method: 'PATCH', body: JSON.stringify({ trackName }) });
+  const res = await apiFetch(`/analysis/${analysisId}/segments/${segmentId}`, {
+    method: 'PATCH',
+    body: JSON.stringify({ trackName }),
+  });
   if (!res.ok) throw new Error('Edit failed');
   return res.json();
 }

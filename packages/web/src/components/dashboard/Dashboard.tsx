@@ -192,8 +192,14 @@ export function Dashboard({ onSelectAnalysis }: Props) {
       )}
 
       {confirmDelete && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm" onClick={() => setConfirmDelete(null)}>
-          <Card className="w-full max-w-sm mx-4 !bg-background border-border shadow-xl" onClick={e => e.stopPropagation()}>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
+          onClick={() => setConfirmDelete(null)}
+        >
+          <Card
+            className="w-full max-w-sm mx-4 !bg-background border-border shadow-xl"
+            onClick={e => e.stopPropagation()}
+          >
             <CardContent className="pt-6 space-y-4 text-center">
               <h3 className="text-lg font-semibold">Delete analysis?</h3>
               <p className="text-sm text-muted-foreground">This action cannot be undone.</p>

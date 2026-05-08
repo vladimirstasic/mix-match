@@ -41,12 +41,7 @@ async function cleanupStaleAnalyses() {
   const stale = await db
     .select({ id: analyses.id })
     .from(analyses)
-    .where(
-      and(
-        inArray(analyses.status, ['pending', 'processing']),
-        lt(analyses.updatedAt!, thirtyMinAgo),
-      ),
-    );
+    .where(and(inArray(analyses.status, ['pending', 'processing']), lt(analyses.updatedAt!, thirtyMinAgo)));
 
   for (const { id } of stale) {
     await db.delete(segmentsTable).where(eq(segmentsTable.analysisId, id));
