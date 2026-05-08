@@ -140,7 +140,7 @@ analysisRouter.post('/analysis/manual', requireUser, async (req, res) => {
 });
 
 // GET /api/analysis/:id/summary — generate mix summary
-analysisRouter.get('/analysis/:id/summary', async (req, res) => {
+analysisRouter.get('/analysis/:id/summary', requireUser, async (req, res) => {
   const analysisId = req.params.id as string;
   const analysis = await findAnalysis(analysisId);
   if (!analysis) {
@@ -201,7 +201,7 @@ analysisRouter.get('/analysis/:id/summary', async (req, res) => {
 });
 
 // GET /api/analysis/:id — poll result
-analysisRouter.get('/analysis/:id', async (req, res) => {
+analysisRouter.get('/analysis/:id', requireUser, async (req, res) => {
   const analysis = await findAnalysis(req.params.id);
 
   if (!analysis) {
