@@ -32,6 +32,9 @@ app.use('/api', communityRouter);
 
 app.use(errorHandler);
 
+import './workers/analysis.worker.js';
+import './workers/retry.worker.js';
+
 import { eq, and, lt, inArray } from 'drizzle-orm';
 import { analyses, segments as segmentsTable } from './db/schema.js';
 
