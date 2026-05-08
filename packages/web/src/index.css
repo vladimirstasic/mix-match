@@ -114,6 +114,9 @@
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
+    height: 100%;
+  }
+  #root {
     min-height: 100%;
   }
 }

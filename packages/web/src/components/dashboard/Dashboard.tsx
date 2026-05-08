@@ -21,6 +21,7 @@ export function Dashboard({ onSelectAnalysis }: Props) {
   const [filterTag, setFilterTag] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     getUserAnalyses()
@@ -50,8 +51,10 @@ export function Dashboard({ onSelectAnalysis }: Props) {
 
   const confirmDeleteAction = async () => {
     if (!confirmDelete) return;
+    setDeleting(true);
     await deleteAnalysis(confirmDelete);
     setAnalyses(prev => prev.filter(a => a.id !== confirmDelete));
+    setDeleting(false);
     setConfirmDelete(null);
   };
 
@@ -195,11 +198,11 @@ export function Dashboard({ onSelectAnalysis }: Props) {
               <h3 className="text-lg font-semibold">Delete analysis?</h3>
               <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
               <div className="flex gap-3 justify-center">
-                <Button variant="outline" size="sm" onClick={() => setConfirmDelete(null)}>
+                <Button variant="outline" size="sm" onClick={() => setConfirmDelete(null)} disabled={deleting}>
                   Cancel
                 </Button>
-                <Button variant="destructive" size="sm" onClick={confirmDeleteAction}>
-                  Delete
+                <Button variant="destructive" size="sm" onClick={confirmDeleteAction} disabled={deleting}>
+                  {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Delete'}
                 </Button>
               </div>
             </CardContent>
