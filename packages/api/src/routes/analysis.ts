@@ -202,7 +202,7 @@ analysisRouter.get('/analysis/:id/summary', requireUser, async (req, res) => {
 
 // GET /api/analysis/:id — poll result
 analysisRouter.get('/analysis/:id', requireUser, async (req, res) => {
-  const analysis = await findAnalysis(req.params.id);
+  const analysis = await findAnalysis(req.params.id as string);
 
   if (!analysis) {
     res.status(404).json({ error: 'Analysis not found' });
@@ -215,7 +215,7 @@ analysisRouter.get('/analysis/:id', requireUser, async (req, res) => {
     return;
   }
 
-  const segs = await getAnalysisSegments(req.params.id);
+  const segs = await getAnalysisSegments(req.params.id as string);
 
   let chunksAvailable = false;
   if (analysis.chunksDir) {
@@ -236,7 +236,7 @@ analysisRouter.get('/analysis/:id', requireUser, async (req, res) => {
 
 // GET /api/analysis/:id/progress — SSE stream
 analysisRouter.get('/analysis/:id/progress', async (req, res) => {
-  const analysis = await findAnalysis(req.params.id);
+  const analysis = await findAnalysis(req.params.id as string);
 
   if (!analysis) {
     res.status(404).json({ error: 'Analysis not found' });
@@ -270,7 +270,7 @@ analysisRouter.get('/analysis/:id/progress', async (req, res) => {
   const onCompleted = async ({ jobId }: { jobId: string }) => {
     const job = await analysisQueue.getJob(jobId);
     if (job?.data.analysisId === req.params.id) {
-      const updated = await findAnalysis(req.params.id);
+      const updated = await findAnalysis(req.params.id as string);
       send({ type: 'completed', results: updated!.results });
       cleanup();
       res.end();
