@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import {
   getUserAnalyses,
   deleteAnalysis,
@@ -191,30 +192,20 @@ export function Dashboard({ onSelectAnalysis }: Props) {
         </button>
       )}
 
-      {confirmDelete && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          onClick={() => setConfirmDelete(null)}
-        >
-          <Card
-            className="w-full max-w-sm mx-4 !bg-background border-border shadow-xl"
-            onClick={e => e.stopPropagation()}
-          >
-            <CardContent className="pt-6 space-y-4 text-center">
-              <h3 className="text-lg font-semibold">Delete analysis?</h3>
-              <p className="text-sm text-muted-foreground">This action cannot be undone.</p>
-              <div className="flex gap-3 justify-center">
-                <Button variant="outline" size="sm" onClick={() => setConfirmDelete(null)} disabled={deleting}>
-                  Cancel
-                </Button>
-                <Button variant="destructive" size="sm" onClick={confirmDeleteAction} disabled={deleting}>
-                  {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Delete'}
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
+      <Dialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
+        <DialogContent hideClose className="max-w-sm">
+          <DialogTitle>Delete analysis?</DialogTitle>
+          <DialogDescription>This action cannot be undone.</DialogDescription>
+          <div className="flex gap-3 justify-center mt-2">
+            <Button variant="outline" size="sm" onClick={() => setConfirmDelete(null)} disabled={deleting}>
+              Cancel
+            </Button>
+            <Button variant="destructive" size="sm" onClick={confirmDeleteAction} disabled={deleting}>
+              {deleting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : 'Delete'}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

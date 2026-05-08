@@ -110,14 +110,9 @@
   }
   html {
     font-size: 19px;
-    height: 100%;
   }
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    height: 100%;
-  }
-  #root {
-    min-height: 100%;
   }
 }
 

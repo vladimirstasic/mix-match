@@ -3,6 +3,7 @@ import type { AnalysisMode } from '@mix-match/shared';
 import { MAX_FILE_SIZE, ALLOWED_MIMETYPES } from '@mix-match/shared';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Link, Zap, Search, Upload } from 'lucide-react';
 
 interface Props {
@@ -73,56 +74,48 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
 
   if (pendingFile || pendingUrl) {
     return (
-      <div
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm overflow-hidden"
-        onClick={() => {
+      <Dialog
+        open
+        onOpenChange={() => {
           setPendingFile(null);
           setPendingUrl(null);
         }}
       >
-        <Card
-          className="w-full max-w-md mx-4 !bg-background border-border shadow-xl"
-          onClick={e => e.stopPropagation()}
-        >
-          <CardContent className="pt-6 space-y-5">
-            <h3 className="text-lg font-semibold text-center">Choose scan mode</h3>
-            <p className="text-sm text-muted-foreground text-center truncate px-4">
-              {pendingFile ? pendingFile.name : pendingUrl}
-            </p>
-            <div className="grid grid-cols-2 gap-3">
-              <button
-                className="flex flex-col items-center gap-3 p-5 rounded-xl border border-glass-border bg-transparent hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
-                onClick={() => selectMode('fast')}
-              >
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <Zap className="w-5 h-5 text-primary" />
-                </div>
-                <span className="font-medium">Fast</span>
-                <span className="text-xs text-muted-foreground text-center">
-                  ~20 seconds
-                  <br />
-                  Scans every 2 min
-                </span>
-              </button>
-              <button
-                className="flex flex-col items-center gap-3 p-5 rounded-xl border border-glass-border bg-transparent hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
-                onClick={() => selectMode('detailed')}
-              >
-                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                  <Search className="w-5 h-5 text-primary" />
-                </div>
-                <span className="font-medium">Detailed</span>
-                <span className="text-xs text-muted-foreground text-center">
-                  ~2 minutes
-                  <br />
-                  Scans every 30s
-                </span>
-              </button>
-            </div>
-            <p className="text-xs text-muted-foreground text-center">Click outside to cancel</p>
-          </CardContent>
-        </Card>
-      </div>
+        <DialogContent hideClose className="max-w-md">
+          <DialogTitle>Choose scan mode</DialogTitle>
+          <DialogDescription className="truncate px-4">{pendingFile ? pendingFile.name : pendingUrl}</DialogDescription>
+          <div className="grid grid-cols-2 gap-3 mt-2">
+            <button
+              className="flex flex-col items-center gap-3 p-5 rounded-xl border border-glass-border bg-transparent hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
+              onClick={() => selectMode('fast')}
+            >
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <Zap className="w-5 h-5 text-primary" />
+              </div>
+              <span className="font-medium">Fast</span>
+              <span className="text-xs text-muted-foreground text-center">
+                ~20 seconds
+                <br />
+                Scans every 2 min
+              </span>
+            </button>
+            <button
+              className="flex flex-col items-center gap-3 p-5 rounded-xl border border-glass-border bg-transparent hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
+              onClick={() => selectMode('detailed')}
+            >
+              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                <Search className="w-5 h-5 text-primary" />
+              </div>
+              <span className="font-medium">Detailed</span>
+              <span className="text-xs text-muted-foreground text-center">
+                ~2 minutes
+                <br />
+                Scans every 30s
+              </span>
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     );
   }
 
