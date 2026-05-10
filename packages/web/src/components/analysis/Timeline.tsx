@@ -678,6 +678,21 @@ export function Timeline({
             {copied === 'spotify' ? 'Copied!' : 'Spotify Links'}
           </Button>
         )}
+        {segments.some(
+          s => s.status === 'identified' && s.externalLinks && (s.externalLinks as Record<string, string>).spotify,
+        ) && (
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-green-400 border-green-500/20 hover:bg-green-500/10"
+            onClick={() => {
+              const apiBase = import.meta.env.VITE_API_URL || '/api';
+              window.location.href = `${apiBase}/spotify/auth?analysisId=${analysisId}`;
+            }}
+          >
+            Spotify Playlist
+          </Button>
+        )}
         <Button
           variant="outline"
           size="sm"
