@@ -31,9 +31,11 @@ interface AnalysisState {
 }
 
 export function useAnalysis() {
+  const savedId = localStorage.getItem('mixmatch_active_analysis');
+
   const [state, setState] = useState<AnalysisState>({
-    phase: 'idle',
-    analysisId: null,
+    phase: savedId ? 'loading' : 'idle',
+    analysisId: savedId,
     filename: null,
     sourceUrl: null,
     uploadProgress: 0,
@@ -229,7 +231,7 @@ export function useAnalysis() {
 
   useEffect(() => {
     const savedId = localStorage.getItem('mixmatch_active_analysis');
-    if (!savedId || state.phase !== 'idle') return;
+    if (!savedId || (state.phase !== 'idle' && state.phase !== 'loading')) return;
 
     getAnalysis(savedId)
       .then(data => {
