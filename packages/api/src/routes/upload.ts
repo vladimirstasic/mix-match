@@ -166,7 +166,7 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
 
   try {
     const proxyArg = process.env.YTDLP_PROXY ? ['--proxy', process.env.YTDLP_PROXY] : ['--proxy', ''];
-    const ytArgs = [...proxyArg];
+    const ytArgs = [...proxyArg, '--force-ipv4'];
 
     // Get video title
     const { stdout: title } = await execFileAsync('yt-dlp', [...ytArgs, '--print', 'title', url]);
