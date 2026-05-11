@@ -1,17 +1,34 @@
 import { Router } from 'express';
+import crypto from 'crypto';
 import { config } from '../config.js';
 import { findAnalysis, getAnalysisSegments } from '../db/helpers.js';
+import { redis } from '../queue/index.js';
+import { requireUser } from '../middleware/auth.js';
 
 export const spotifyRouter = Router();
 
 const SPOTIFY_REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI || 'http://127.0.0.1:3001/api/spotify/callback';
 const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:5173';
 
-// GET /api/spotify/auth?analysisId=xxx — redirect to Spotify login
+// POST /api/spotify/prepare — store playlist selection before OAuth
+spotifyRouter.post('/spotify/prepare', requireUser, async (req, res) => {
+  const { analysisId, playlistName, selectedUris } = req.body;
+  if (!analysisId || !selectedUris || !Array.isArray(selectedUris)) {
+    res.status(400).json({ error: 'Missing analysisId or selectedUris' });
+    return;
+  }
+
+  const token = crypto.randomUUID();
+  await redis.set(`spotify:prepare:${token}`, JSON.stringify({ analysisId, playlistName, selectedUris }), 'EX', 600);
+
+  res.json({ token });
+});
+
+// GET /api/spotify/auth?token=xxx — redirect to Spotify login
 spotifyRouter.get('/spotify/auth', (req, res) => {
-  const analysisId = req.query.analysisId as string;
-  if (!analysisId) {
-    res.status(400).json({ error: 'Missing analysisId' });
+  const token = req.query.token as string;
+  if (!token) {
+    res.status(400).json({ error: 'Missing token' });
     return;
   }
 
@@ -21,7 +38,7 @@ spotifyRouter.get('/spotify/auth', (req, res) => {
     client_id: config.spotify.clientId,
     scope: scopes,
     redirect_uri: SPOTIFY_REDIRECT_URI,
-    state: analysisId,
+    state: token,
   });
 
   res.redirect(`https://accounts.spotify.com/authorize?${params.toString()}`);
@@ -30,15 +47,24 @@ spotifyRouter.get('/spotify/auth', (req, res) => {
 // GET /api/spotify/callback — Spotify returns auth code
 spotifyRouter.get('/spotify/callback', async (req, res) => {
   const code = req.query.code as string;
-  const analysisId = req.query.state as string;
+  const token = req.query.state as string;
   const error = req.query.error as string;
 
-  if (error || !code) {
+  if (error || !code || !token) {
     res.redirect(`${FRONTEND_URL}?spotify=error`);
     return;
   }
 
   try {
+    // Read stored selection
+    const stored = await redis.get(`spotify:prepare:${token}`);
+    if (!stored) {
+      res.redirect(`${FRONTEND_URL}?spotify=error&reason=expired`);
+      return;
+    }
+    await redis.del(`spotify:prepare:${token}`);
+    const { playlistName, selectedUris } = JSON.parse(stored);
+
     // Exchange code for access token
     const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
       method: 'POST',
@@ -54,7 +80,6 @@ spotifyRouter.get('/spotify/callback', async (req, res) => {
     });
 
     if (!tokenRes.ok) {
-      console.error('[spotify] Token exchange failed:', await tokenRes.text());
       res.redirect(`${FRONTEND_URL}?spotify=error`);
       return;
     }
@@ -68,37 +93,7 @@ spotifyRouter.get('/spotify/callback', async (req, res) => {
     });
     const profile = await profileRes.json();
 
-    // Get analysis and segments
-    const analysis = await findAnalysis(analysisId);
-    if (!analysis) {
-      res.redirect(`${FRONTEND_URL}?spotify=error`);
-      return;
-    }
-
-    const segs = await getAnalysisSegments(analysisId);
-
-    // Collect Spotify URIs
-    const trackUris: string[] = [];
-    for (const seg of segs) {
-      if (seg.status === 'identified' && seg.externalLinks) {
-        const links = seg.externalLinks as Record<string, string>;
-        if (links.spotify) {
-          const match = links.spotify.match(/track\/([a-zA-Z0-9]+)/);
-          if (match) {
-            const uri = `spotify:track:${match[1]}`;
-            if (!trackUris.includes(uri)) trackUris.push(uri);
-          }
-        }
-      }
-    }
-
-    if (trackUris.length === 0) {
-      res.redirect(`${FRONTEND_URL}?spotify=error&reason=no_tracks`);
-      return;
-    }
-
     // Create playlist
-    const playlistName = analysis.filename ? `${analysis.filename} — MixMatch` : 'MixMatch Tracklist';
     const createRes = await fetch(`https://api.spotify.com/v1/users/${profile.id}/playlists`, {
       method: 'POST',
       headers: {
@@ -106,23 +101,22 @@ spotifyRouter.get('/spotify/callback', async (req, res) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        name: playlistName,
-        description: `Tracklist identified by MixMatch — ${trackUris.length} tracks`,
+        name: playlistName || 'MixMatch Tracklist',
+        description: `Tracklist identified by MixMatch — ${selectedUris.length} tracks`,
         public: true,
       }),
     });
 
     if (!createRes.ok) {
-      console.error('[spotify] Create playlist failed:', await createRes.text());
       res.redirect(`${FRONTEND_URL}?spotify=error`);
       return;
     }
 
     const playlist = await createRes.json();
 
-    // Add tracks (Spotify allows max 100 per request)
-    for (let i = 0; i < trackUris.length; i += 100) {
-      const batch = trackUris.slice(i, i + 100);
+    // Add tracks (max 100 per request)
+    for (let i = 0; i < selectedUris.length; i += 100) {
+      const batch = selectedUris.slice(i, i + 100);
       await fetch(`https://api.spotify.com/v1/playlists/${playlist.id}/tracks`, {
         method: 'POST',
         headers: {
@@ -132,8 +126,6 @@ spotifyRouter.get('/spotify/callback', async (req, res) => {
         body: JSON.stringify({ uris: batch }),
       });
     }
-
-    console.log(`[spotify] Playlist created: ${playlist.external_urls.spotify} (${trackUris.length} tracks)`);
 
     const playlistUrl = encodeURIComponent(playlist.external_urls.spotify);
     res.redirect(`${FRONTEND_URL}?spotify=success&playlist=${playlistUrl}`);

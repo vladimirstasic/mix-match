@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { Waveform } from './Waveform';
 import { Recommendations } from './Recommendations';
+import { SpotifyPlaylistModal } from './SpotifyPlaylistModal';
 import { toggleBookmark, voteSegment } from '../../api/client';
 
 interface Props {
@@ -180,6 +181,7 @@ export function Timeline({
     return new Set(segments.filter(s => s.isBookmarked).map(s => s.id));
   });
   const [summary, setSummary] = useState<{ summary: string; stats: any; artists: string[] } | null>(null);
+  const [showSpotifyModal, setShowSpotifyModal] = useState(false);
 
   useEffect(() => {
     fetch(`/api/analysis/${analysisId}/summary`)
@@ -685,10 +687,7 @@ export function Timeline({
             variant="outline"
             size="sm"
             className="text-green-400 border-green-500/20 hover:bg-green-500/10"
-            onClick={() => {
-              const apiBase = import.meta.env.VITE_API_URL || '/api';
-              window.location.href = `${apiBase}/spotify/auth?analysisId=${analysisId}`;
-            }}
+            onClick={() => setShowSpotifyModal(true)}
           >
             Spotify Playlist
           </Button>
@@ -725,6 +724,14 @@ export function Timeline({
       {exportModal && (
         <ExportModal title={exportModal.title} content={exportModal.content} onClose={() => setExportModal(null)} />
       )}
+
+      <SpotifyPlaylistModal
+        open={showSpotifyModal}
+        onClose={() => setShowSpotifyModal(false)}
+        segments={segments}
+        analysisId={analysisId}
+        filename={filename}
+      />
     </div>
   );
 }
