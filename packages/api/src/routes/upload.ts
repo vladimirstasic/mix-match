@@ -166,24 +166,28 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
 
   try {
     const ytArgs = ['--force-ipv4', '--js-runtimes', 'node', '--remote-components', 'ejs:github'];
-    const ytEnv = { ...process.env } as Record<string, string>;
     if (process.env.YTDLP_PROXY) {
-      ytEnv.HTTP_PROXY = process.env.YTDLP_PROXY;
-      ytEnv.HTTPS_PROXY = process.env.YTDLP_PROXY;
+      ytArgs.push('--proxy', process.env.YTDLP_PROXY);
     } else {
       ytArgs.push('--proxy', '');
     }
 
     // Get video title
-    const { stdout: title } = await execFileAsync('yt-dlp', [...ytArgs, '--print', 'title', url], { env: ytEnv });
+    const { stdout: title } = await execFileAsync('yt-dlp', [...ytArgs, '--print', 'title', url]);
     const filename = title.trim() || 'Unknown title';
 
     // Download audio as mp3
-    await execFileAsync(
-      'yt-dlp',
-      [...ytArgs, '-x', '--audio-format', 'mp3', '--max-filesize', '300m', '-o', outputPath, url],
-      { env: ytEnv },
-    );
+    await execFileAsync('yt-dlp', [
+      ...ytArgs,
+      '-x',
+      '--audio-format',
+      'mp3',
+      '--max-filesize',
+      '300m',
+      '-o',
+      outputPath,
+      url,
+    ]);
 
     // SHA256 file hash for full-file cache (streaming to avoid loading entire file into memory)
     const fileHash = await new Promise<string>((resolve, reject) => {
