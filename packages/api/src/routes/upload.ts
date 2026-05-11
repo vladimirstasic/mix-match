@@ -165,10 +165,8 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
   const outputPath = path.join(config.uploadDir, uuid() + '.mp3');
 
   try {
-    const cookieArgs = process.env.YTDLP_COOKIE_BROWSER
-      ? ['--cookies-from-browser', process.env.YTDLP_COOKIE_BROWSER]
-      : [];
-    const ytArgs = ['--proxy', '', ...cookieArgs, '--extractor-args', 'youtube:player_client=mediaconnect'];
+    const proxyArg = process.env.YTDLP_PROXY ? ['--proxy', process.env.YTDLP_PROXY] : ['--proxy', ''];
+    const ytArgs = [...proxyArg];
 
     // Get video title
     const { stdout: title } = await execFileAsync('yt-dlp', [...ytArgs, '--print', 'title', url]);

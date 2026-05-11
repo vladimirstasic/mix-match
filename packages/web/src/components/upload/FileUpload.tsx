@@ -51,10 +51,6 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
       setError('Please enter a valid URL');
       return;
     }
-    if (/youtube\.com|youtu\.be/i.test(trimmed)) {
-      setError('YouTube is not supported yet. Use SoundCloud, Mixcloud, or upload a file.');
-      return;
-    }
     setError(null);
     setPendingUrl(trimmed);
   };
@@ -145,7 +141,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
             </div>
             <div className="text-center">
               <p className="font-medium">Paste a URL to scan</p>
-              <p className="text-sm text-muted-foreground mt-1">SoundCloud, Mixcloud, or direct audio link</p>
+              <p className="text-sm text-muted-foreground mt-1">YouTube, SoundCloud, Mixcloud, or direct audio link</p>
             </div>
             <input
               type="url"
@@ -154,7 +150,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
               onKeyDown={e => {
                 if (e.key === 'Enter') handleUrlSubmit();
               }}
-              placeholder="https://soundcloud.com/... or mixcloud.com/..."
+              placeholder="https://youtube.com/watch?v=... or soundcloud.com/..."
               className="w-full max-w-md px-4 py-2.5 rounded-xl border border-border bg-glass-bg backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all"
             />
             <Button onClick={handleUrlSubmit} disabled={!urlInput.trim()}>
