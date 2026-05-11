@@ -173,6 +173,10 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
       'ejs:github',
       '--extractor-args',
       'youtube:player_client=web',
+      '--socket-timeout',
+      '120',
+      '--retries',
+      '5',
     ];
     if (process.env.YTDLP_PROXY) {
       ytArgs.push('--proxy', process.env.YTDLP_PROXY);
