@@ -72,30 +72,33 @@ export function SpotifyPlaylistModal({ open, onClose, segments, analysisId, file
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="max-w-lg max-h-[80vh] flex flex-col">
+      <DialogContent className="max-w-lg max-h-[80vh] flex flex-col gap-4">
         <DialogTitle>Create Spotify Playlist</DialogTitle>
+
         <input
           type="text"
           value={playlistName}
           onChange={e => setPlaylistName(e.target.value)}
-          className="w-full px-3 py-2 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+          className="w-full px-3 py-2.5 rounded-xl border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
         />
-        <div className="flex items-center justify-between text-xs text-muted-foreground">
+
+        <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
           <span>
             {selected.size} of {tracks.length} tracks selected
           </span>
-          <div className="flex gap-2">
-            <button className="hover:text-foreground" onClick={selectAll}>
+          <div className="flex gap-3">
+            <button className="hover:text-foreground transition-colors" onClick={selectAll}>
               Select all
             </button>
-            <button className="hover:text-foreground" onClick={deselectAll}>
+            <button className="hover:text-foreground transition-colors" onClick={deselectAll}>
               Deselect all
             </button>
           </div>
         </div>
-        <div className="flex-1 overflow-y-auto space-y-1 min-h-0">
+
+        <div className="flex-1 overflow-y-auto min-h-0 rounded-xl border border-border divide-y divide-border/50">
           {tracks.map(t => (
-            <label key={t.id} className="flex items-center gap-2 px-2 py-1.5 rounded-lg hover:bg-accent cursor-pointer">
+            <label key={t.id} className="flex items-center gap-3 px-3 py-2.5 hover:bg-accent cursor-pointer">
               <input type="checkbox" checked={selected.has(t.id)} onChange={() => toggle(t.id)} className="rounded" />
               <span className={`text-sm truncate ${t.isDuplicate ? 'text-muted-foreground line-through' : ''}`}>
                 {t.name}
@@ -104,7 +107,8 @@ export function SpotifyPlaylistModal({ open, onClose, segments, analysisId, file
             </label>
           ))}
         </div>
-        <div className="flex gap-3 justify-end pt-2">
+
+        <div className="flex gap-3 justify-end">
           <Button variant="outline" size="sm" onClick={onClose} disabled={creating}>
             Cancel
           </Button>
