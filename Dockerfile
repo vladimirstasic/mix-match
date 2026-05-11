@@ -7,7 +7,7 @@ RUN apt-get update && apt-get install -y \
     python3-pip \
     python3 \
     --no-install-recommends && \
-    pip3 install yt-dlp --break-system-packages && \
+    pip3 install yt-dlp --upgrade --break-system-packages && \
     rm -rf /var/lib/apt/lists/*
 
 COPY package.json ./

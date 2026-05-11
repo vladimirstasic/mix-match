@@ -165,7 +165,15 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
   const outputPath = path.join(config.uploadDir, uuid() + '.mp3');
 
   try {
-    const ytArgs = ['--force-ipv4', '--js-runtimes', 'node', '--remote-components', 'ejs:github'];
+    const ytArgs = [
+      '--force-ipv4',
+      '--js-runtimes',
+      'node',
+      '--remote-components',
+      'ejs:github',
+      '--extractor-args',
+      'youtube:player_client=web',
+    ];
     if (process.env.YTDLP_PROXY) {
       ytArgs.push('--proxy', process.env.YTDLP_PROXY);
     } else {
