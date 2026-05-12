@@ -174,9 +174,9 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
       '--extractor-args',
       'youtube:player_client=web',
       '--socket-timeout',
-      '120',
+      '30',
       '--retries',
-      '3',
+      '2',
     ];
     if (process.env.YTDLP_PROXY) {
       baseYtArgs.push('--proxy', process.env.YTDLP_PROXY);
@@ -184,26 +184,23 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
       baseYtArgs.push('--proxy', '');
     }
 
-    const maxAttempts = process.env.YTDLP_PROXY ? 5 : 1;
+    const maxAttempts = process.env.YTDLP_PROXY ? 3 : 1;
+    const attemptTimeout = 90_000;
     let filename = 'Unknown title';
     let lastError: Error | null = null;
 
     for (let attempt = 1; attempt <= maxAttempts; attempt++) {
       try {
-        const { stdout: title } = await execFileAsync('yt-dlp', [...baseYtArgs, '--print', 'title', url]);
+        const { stdout: title } = await execFileAsync('yt-dlp', [...baseYtArgs, '--print', 'title', url], {
+          timeout: attemptTimeout,
+        });
         filename = title.trim() || 'Unknown title';
 
-        await execFileAsync('yt-dlp', [
-          ...baseYtArgs,
-          '-x',
-          '--audio-format',
-          'mp3',
-          '--max-filesize',
-          '300m',
-          '-o',
-          outputPath,
-          url,
-        ]);
+        await execFileAsync(
+          'yt-dlp',
+          [...baseYtArgs, '-x', '--audio-format', 'mp3', '--max-filesize', '300m', '-o', outputPath, url],
+          { timeout: 5 * 60_000 },
+        );
 
         lastError = null;
         break;
