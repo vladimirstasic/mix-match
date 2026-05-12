@@ -165,7 +165,7 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
   const outputPath = path.join(config.uploadDir, uuid() + '.mp3');
 
   try {
-    const ytArgs = [
+    const baseYtArgs = [
       '--force-ipv4',
       '--js-runtimes',
       'node',
@@ -176,30 +176,47 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
       '--socket-timeout',
       '120',
       '--retries',
-      '5',
+      '3',
     ];
     if (process.env.YTDLP_PROXY) {
-      ytArgs.push('--proxy', process.env.YTDLP_PROXY);
+      baseYtArgs.push('--proxy', process.env.YTDLP_PROXY);
     } else {
-      ytArgs.push('--proxy', '');
+      baseYtArgs.push('--proxy', '');
     }
 
-    // Get video title
-    const { stdout: title } = await execFileAsync('yt-dlp', [...ytArgs, '--print', 'title', url]);
-    const filename = title.trim() || 'Unknown title';
+    const maxAttempts = process.env.YTDLP_PROXY ? 5 : 1;
+    let filename = 'Unknown title';
+    let lastError: Error | null = null;
 
-    // Download audio as mp3
-    await execFileAsync('yt-dlp', [
-      ...ytArgs,
-      '-x',
-      '--audio-format',
-      'mp3',
-      '--max-filesize',
-      '300m',
-      '-o',
-      outputPath,
-      url,
-    ]);
+    for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+      try {
+        const { stdout: title } = await execFileAsync('yt-dlp', [...baseYtArgs, '--print', 'title', url]);
+        filename = title.trim() || 'Unknown title';
+
+        await execFileAsync('yt-dlp', [
+          ...baseYtArgs,
+          '-x',
+          '--audio-format',
+          'mp3',
+          '--max-filesize',
+          '300m',
+          '-o',
+          outputPath,
+          url,
+        ]);
+
+        lastError = null;
+        break;
+      } catch (err: any) {
+        lastError = err;
+        console.log(`[yt-dlp] Attempt ${attempt}/${maxAttempts} failed: ${err.message?.slice(0, 100)}`);
+        if (attempt < maxAttempts) {
+          await new Promise(r => setTimeout(r, attempt * 5000));
+        }
+      }
+    }
+
+    if (lastError) throw lastError;
 
     // SHA256 file hash for full-file cache (streaming to avoid loading entire file into memory)
     const fileHash = await new Promise<string>((resolve, reject) => {
