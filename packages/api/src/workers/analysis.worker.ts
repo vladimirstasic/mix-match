@@ -2,6 +2,11 @@ import { Worker, Job } from 'bullmq';
 import { eq } from 'drizzle-orm';
 import fs from 'fs/promises';
 import path from 'path';
+import { execFile } from 'child_process';
+import { promisify } from 'util';
+import crypto from 'crypto';
+import { createReadStream } from 'fs';
+import { v4 as uuid } from 'uuid';
 import {
   REDIS_FILE_CACHE_TTL,
   CHUNK_DURATION_SEC,
@@ -24,17 +29,102 @@ import { processChunksOptimized } from '../services/optimizer.js';
 import { aggregateMatches } from '../services/aggregator.js';
 import { buildSegments } from '../services/segments.js';
 
+const execFileAsync = promisify(execFile);
+
 interface AnalysisJobData {
   analysisId: string;
-  filePath: string;
-  fileHash: string;
+  filePath?: string;
+  fileHash?: string;
+  url?: string;
   mode?: 'fast' | 'detailed';
+}
+
+async function downloadUrl(
+  analysisId: string,
+  url: string,
+): Promise<{ filePath: string; fileHash: string; filename: string }> {
+  const baseYtArgs = [
+    '--force-ipv4',
+    '--js-runtimes',
+    'node',
+    '--remote-components',
+    'ejs:github',
+    '--extractor-args',
+    'youtube:player_client=web',
+    '--socket-timeout',
+    '30',
+    '--retries',
+    '2',
+  ];
+  if (process.env.YTDLP_PROXY) {
+    baseYtArgs.push('--proxy', process.env.YTDLP_PROXY);
+  } else {
+    baseYtArgs.push('--proxy', '');
+  }
+
+  const outputPath = path.join(config.uploadDir, uuid() + '.mp3');
+  const maxAttempts = process.env.YTDLP_PROXY ? 3 : 1;
+  let filename = 'Unknown title';
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const { stdout: title } = await execFileAsync('yt-dlp', [...baseYtArgs, '--print', 'title', url], {
+        timeout: 90_000,
+      });
+      filename = title.trim() || 'Unknown title';
+
+      await execFileAsync(
+        'yt-dlp',
+        [...baseYtArgs, '-x', '--audio-format', 'mp3', '--max-filesize', '300m', '-o', outputPath, url],
+        { timeout: 5 * 60_000 },
+      );
+
+      lastError = null;
+      break;
+    } catch (err: any) {
+      lastError = err;
+      console.log(`[yt-dlp] Attempt ${attempt}/${maxAttempts} failed: ${err.message?.slice(0, 100)}`);
+      if (attempt < maxAttempts) {
+        await new Promise(r => setTimeout(r, attempt * 5000));
+      }
+    }
+  }
+
+  if (lastError) throw lastError;
+
+  const fileHash = await new Promise<string>((resolve, reject) => {
+    const hash = crypto.createHash('sha256');
+    const stream = createReadStream(outputPath);
+    stream.on('data', chunk => hash.update(chunk));
+    stream.on('end', () => resolve(hash.digest('hex')));
+    stream.on('error', reject);
+  });
+
+  const stat = await fs.stat(outputPath);
+  await db
+    .update(analyses)
+    .set({ filename, fileSize: stat.size, fileHash, updatedAt: new Date() })
+    .where(eq(analyses.id, analysisId));
+
+  return { filePath: outputPath, fileHash, filename };
 }
 
 const worker = new Worker<AnalysisJobData>(
   'analysis',
   async (job: Job<AnalysisJobData>) => {
-    const { analysisId, filePath, fileHash, mode } = job.data;
+    let { analysisId, filePath, fileHash, mode } = job.data;
+
+    if (job.name === 'download-and-analyze' && job.data.url) {
+      const result = await downloadUrl(analysisId, job.data.url);
+      filePath = result.filePath;
+      fileHash = result.fileHash;
+    }
+
+    if (!filePath || !fileHash) {
+      throw new Error('Missing filePath or fileHash');
+    }
+
     const stepSec = mode === 'detailed' ? DETAILED_STEP_SEC : FAST_STEP_SEC;
     const workDir = path.join(config.uploadDir, analysisId);
     const wavPath = path.join(workDir, 'normalized.wav');
