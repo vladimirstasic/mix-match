@@ -142,7 +142,15 @@ export async function getUserAnalyses(): Promise<AnalysisSummary[]> {
   return res.json();
 }
 
-export async function getUserProfile(): Promise<{ creditsRemaining: number } | null> {
+export async function getUserProfile(): Promise<{
+  username: string | null;
+  plan: string;
+  creditsRemaining: number;
+  creditsResetAt: string | null;
+  isFoundingMember: boolean;
+  betaMode: boolean;
+  badges: string[];
+} | null> {
   const res = await apiFetch('/user/profile');
   if (!res.ok) return null;
   return res.json();

@@ -43,55 +43,24 @@ async function downloadUrl(
   analysisId: string,
   url: string,
 ): Promise<{ filePath: string; fileHash: string; filename: string }> {
-  const baseYtArgs = [
-    '--force-ipv4',
-    '--js-runtimes',
-    'node',
-    '--remote-components',
-    'ejs:github',
-    '--extractor-args',
-    'youtube:player_client=web',
-    '--socket-timeout',
-    '30',
-    '--retries',
-    '2',
-  ];
-  if (process.env.YTDLP_PROXY) {
+  const isYouTube = /(?:youtube\.com|youtu\.be)/i.test(url);
+  const baseYtArgs = ['--force-ipv4', '--socket-timeout', '30', '--retries', '2'];
+  if (isYouTube && process.env.YTDLP_PROXY) {
     baseYtArgs.push('--proxy', process.env.YTDLP_PROXY);
-  } else {
-    baseYtArgs.push('--proxy', '');
   }
 
   const outputPath = path.join(config.uploadDir, uuid() + '.mp3');
-  const maxAttempts = process.env.YTDLP_PROXY ? 3 : 1;
-  let filename = 'Unknown title';
-  let lastError: Error | null = null;
 
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      const { stdout: title } = await execFileAsync('yt-dlp', [...baseYtArgs, '--print', 'title', url], {
-        timeout: 90_000,
-      });
-      filename = title.trim() || 'Unknown title';
+  const { stdout: title } = await execFileAsync('yt-dlp', [...baseYtArgs, '--print', 'title', url], {
+    timeout: 90_000,
+  });
+  const filename = title.trim() || 'Unknown title';
 
-      await execFileAsync(
-        'yt-dlp',
-        [...baseYtArgs, '-x', '--audio-format', 'mp3', '--max-filesize', '300m', '-o', outputPath, url],
-        { timeout: 5 * 60_000 },
-      );
-
-      lastError = null;
-      break;
-    } catch (err: any) {
-      lastError = err;
-      console.log(`[yt-dlp] Attempt ${attempt}/${maxAttempts} failed: ${err.message?.slice(0, 100)}`);
-      if (attempt < maxAttempts) {
-        await new Promise(r => setTimeout(r, attempt * 5000));
-      }
-    }
-  }
-
-  if (lastError) throw lastError;
+  await execFileAsync(
+    'yt-dlp',
+    [...baseYtArgs, '-x', '--audio-format', 'mp3', '--max-filesize', '300m', '-o', outputPath, url],
+    { timeout: 5 * 60_000 },
+  );
 
   const fileHash = await new Promise<string>((resolve, reject) => {
     const hash = crypto.createHash('sha256');

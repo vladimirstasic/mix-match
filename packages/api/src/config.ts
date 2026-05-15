@@ -30,4 +30,13 @@ export const config = {
     clientId: process.env.SPOTIFY_CLIENT_ID || '',
     clientSecret: process.env.SPOTIFY_CLIENT_SECRET || '',
   },
+  polar: {
+    accessToken: process.env.POLAR_ACCESS_TOKEN || '',
+    webhookSecret: process.env.POLAR_WEBHOOK_SECRET || '',
+    productIdPro: process.env.POLAR_PRODUCT_PRO || '',
+    productIdStudio: process.env.POLAR_PRODUCT_STUDIO || '',
+    environment: (process.env.POLAR_ENV || 'sandbox') as 'sandbox' | 'production',
+  },
+  frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
+  betaMode: process.env.BETA_MODE === 'true',
 };

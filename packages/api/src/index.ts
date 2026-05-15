@@ -15,10 +15,14 @@ import { retryRouter } from './routes/retry.js';
 import { userRouter } from './routes/user.js';
 import { spotifyRouter } from './routes/spotify.js';
 import { communityRouter } from './routes/community.js';
+import { billingRouter, billingWebhookHandler } from './routes/billing.js';
 
 const app = express();
 
 app.use(cors({ origin: true, credentials: true }));
+
+app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), billingWebhookHandler);
+
 app.use(express.json());
 app.use(clerkMiddleware());
 
@@ -29,6 +33,7 @@ app.use('/api', retryRouter);
 app.use('/api', userRouter);
 app.use('/api', spotifyRouter);
 app.use('/api', communityRouter);
+app.use('/api', billingRouter);
 
 app.use(errorHandler);
 

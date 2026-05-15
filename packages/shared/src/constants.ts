@@ -39,11 +39,63 @@ export const PLANS = {
   STUDIO: 'studio',
 } as const;
 
-export const PLAN_CREDITS = {
-  [PLANS.FREE]: 3,
-  [PLANS.PRO]: 30,
-  [PLANS.STUDIO]: 999,
-} as const;
+export type Plan = (typeof PLANS)[keyof typeof PLANS];
+
+export interface PlanLimits {
+  scans: number;
+  maxFileBytes: number;
+  maxDurationSec: number;
+  modes: readonly ('fast' | 'detailed')[];
+  youtube: boolean;
+  spotifyExport: boolean;
+  priorityQueue: boolean;
+}
+
+export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
+  [PLANS.FREE]: {
+    scans: 3,
+    maxFileBytes: 100 * 1024 * 1024,
+    maxDurationSec: 5400,
+    modes: ['fast'],
+    youtube: false,
+    spotifyExport: false,
+    priorityQueue: false,
+  },
+  [PLANS.PRO]: {
+    scans: 15,
+    maxFileBytes: 250 * 1024 * 1024,
+    maxDurationSec: Number.POSITIVE_INFINITY,
+    modes: ['fast', 'detailed'],
+    youtube: true,
+    spotifyExport: true,
+    priorityQueue: false,
+  },
+  [PLANS.STUDIO]: {
+    scans: 50,
+    maxFileBytes: 500 * 1024 * 1024,
+    maxDurationSec: Number.POSITIVE_INFINITY,
+    modes: ['fast', 'detailed'],
+    youtube: true,
+    spotifyExport: true,
+    priorityQueue: true,
+  },
+};
+
+export const PLAN_PRICES: Record<Plan, number> = {
+  [PLANS.FREE]: 0,
+  [PLANS.PRO]: 6,
+  [PLANS.STUDIO]: 12,
+};
+
+export const PLAN_FULL_PRICES: Record<Plan, number> = {
+  [PLANS.FREE]: 0,
+  [PLANS.PRO]: 9,
+  [PLANS.STUDIO]: 19,
+};
+
+export const FOUNDING_MEMBER_SEATS = 100;
+
+export const BETA_END_NOTICE_DAYS = 7;
 
 // Analysis modes — step between chunks (chunk is always 10s, ACRCloud uses first 10s)
 export const FAST_STEP_SEC = 120; // 2 min — ~38 calls for 75min mix

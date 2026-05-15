@@ -7,7 +7,7 @@ import { createReadStream } from 'fs';
 import { v4 as uuid } from 'uuid';
 import { eq, lt, and, sql } from 'drizzle-orm';
 import { requireUser, getUserId } from '../middleware/auth.js';
-import { MAX_FILE_SIZE, ALLOWED_MIMETYPES, PLANS, PLAN_CREDITS, ANALYSIS_MODES } from '@mix-match/shared';
+import { MAX_FILE_SIZE, ALLOWED_MIMETYPES, PLANS, PLAN_LIMITS, ANALYSIS_MODES } from '@mix-match/shared';
 import { db } from '../db/client.js';
 import { analyses, users } from '../db/schema.js';
 import { findUser } from '../db/helpers.js';
@@ -43,31 +43,71 @@ async function cleanupExpiredChunks() {
   }
 }
 
-async function checkCredits(userId: string, res: import('express').Response): Promise<boolean> {
+interface PlanCheckInput {
+  fileSize?: number;
+  mode?: string;
+  isYouTube?: boolean;
+}
+
+async function checkPlanLimits(
+  userId: string,
+  res: import('express').Response,
+  input: PlanCheckInput,
+): Promise<boolean> {
+  if (config.betaMode) return true;
+
   const user = await findUser(userId);
-  if (user) {
-    if (user.creditsResetAt < new Date()) {
-      const resetCredits = PLAN_CREDITS[user.plan as keyof typeof PLAN_CREDITS] ?? PLAN_CREDITS[PLANS.FREE];
-      await db
-        .update(users)
-        .set({
-          creditsRemaining: resetCredits,
-          creditsResetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-        })
-        .where(eq(users.clerkId, userId));
-    }
+  const planKey = (user?.plan ?? PLANS.FREE) as keyof typeof PLAN_LIMITS;
+  const limits = PLAN_LIMITS[planKey] ?? PLAN_LIMITS[PLANS.FREE];
 
-    const result = await db
-      .update(users)
-      .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
-      .where(and(eq(users.clerkId, userId), sql`${users.creditsRemaining} > 0`))
-      .returning({ creditsRemaining: users.creditsRemaining });
-
-    if (result.length === 0) {
-      res.status(403).json({ error: 'No credits remaining' });
-      return false;
-    }
+  if (input.fileSize !== undefined && input.fileSize > limits.maxFileBytes) {
+    const maxMb = Math.round(limits.maxFileBytes / 1024 / 1024);
+    res.status(403).json({
+      error: `File exceeds your plan limit of ${maxMb}MB. Upgrade for larger uploads.`,
+      code: 'PLAN_FILE_SIZE',
+    });
+    return false;
   }
+
+  if (input.mode && !limits.modes.includes(input.mode as 'fast' | 'detailed')) {
+    res.status(403).json({
+      error: `Detailed mode requires Pro plan or higher.`,
+      code: 'PLAN_MODE',
+    });
+    return false;
+  }
+
+  if (input.isYouTube && !limits.youtube) {
+    res.status(403).json({
+      error: `YouTube links require Pro plan or higher. Use SoundCloud, Mixcloud, or upload a file instead.`,
+      code: 'PLAN_YOUTUBE',
+    });
+    return false;
+  }
+
+  if (!user) return true;
+
+  if (user.creditsResetAt < new Date()) {
+    await db
+      .update(users)
+      .set({
+        creditsRemaining: limits.scans,
+        creditsResetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+      })
+      .where(eq(users.clerkId, userId));
+  }
+
+  const result = await db
+    .update(users)
+    .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
+    .where(and(eq(users.clerkId, userId), sql`${users.creditsRemaining} > 0`))
+    .returning({ creditsRemaining: users.creditsRemaining });
+
+  if (result.length === 0) {
+    res.status(403).json({ error: 'No scans remaining this month.', code: 'PLAN_SCANS' });
+    return false;
+  }
+
   return true;
 }
 
@@ -88,7 +128,12 @@ uploadRouter.post('/upload', upload.single('file'), requireUser, async (req, res
       await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
     }
 
-    if (!(await checkCredits(userId, res))) return;
+    const mode = req.body?.mode === ANALYSIS_MODES.DETAILED ? ANALYSIS_MODES.DETAILED : ANALYSIS_MODES.FAST;
+
+    if (!(await checkPlanLimits(userId, res, { fileSize: file.size, mode }))) {
+      await fs.unlink(file.path).catch(() => {});
+      return;
+    }
 
     const fileHash = await new Promise<string>((resolve, reject) => {
       const hash = crypto.createHash('sha256');
@@ -97,8 +142,6 @@ uploadRouter.post('/upload', upload.single('file'), requireUser, async (req, res
       stream.on('end', () => resolve(hash.digest('hex')));
       stream.on('error', reject);
     });
-
-    const mode = req.body?.mode === ANALYSIS_MODES.DETAILED ? ANALYSIS_MODES.DETAILED : ANALYSIS_MODES.FAST;
 
     const cachedAnalysisId = await redis.get(`acr:file:${fileHash}`);
     if (cachedAnalysisId) {
@@ -143,11 +186,21 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
     return;
   }
 
+  if (/(?:youtube\.com|youtu\.be)/i.test(url)) {
+    res.status(400).json({
+      error: 'YouTube is not supported yet. Try SoundCloud, Mixcloud, or upload an MP3 directly.',
+      code: 'YOUTUBE_NOT_SUPPORTED',
+    });
+    return;
+  }
+
   cleanupExpiredChunks().catch(err => console.error('[cleanup]', err));
 
   await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
 
-  if (!(await checkCredits(userId, res))) return;
+  const isYouTube = /(?:youtube\.com|youtu\.be)/i.test(url);
+
+  if (!(await checkPlanLimits(userId, res, { mode, isYouTube }))) return;
 
   const [analysis] = await db
     .insert(analyses)

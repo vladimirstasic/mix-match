@@ -6,7 +6,8 @@ export const users = pgTable('users', {
   plan: varchar('plan', { length: 20 }).notNull().default('free'),
   creditsRemaining: integer('credits_remaining').notNull().default(3),
   creditsResetAt: timestamp('credits_reset_at').notNull().defaultNow(),
-  stripeCustomerId: varchar('stripe_customer_id', { length: 255 }),
+  billingCustomerId: varchar('billing_customer_id', { length: 255 }),
+  isFoundingMember: boolean('is_founding_member').notNull().default(false),
   createdAt: timestamp('created_at').defaultNow(),
 });
 

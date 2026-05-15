@@ -4,6 +4,7 @@ import { requireUser, getUserId } from '../middleware/auth.js';
 import { db } from '../db/client.js';
 import { analyses, users, segments, follows } from '../db/schema.js';
 import { findAnalysis, findSegment, findUser } from '../db/helpers.js';
+import { config } from '../config.js';
 
 export const userRouter = Router();
 
@@ -30,6 +31,8 @@ userRouter.get('/user/profile', requireUser, async (req, res) => {
     plan: user.plan,
     creditsRemaining: user.creditsRemaining,
     creditsResetAt: user.creditsResetAt,
+    isFoundingMember: user.isFoundingMember,
+    betaMode: config.betaMode,
     badges,
   });
 });

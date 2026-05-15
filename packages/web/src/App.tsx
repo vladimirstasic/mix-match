@@ -7,6 +7,9 @@ import { setAuthTokenProvider, getUserProfile } from './api/client';
 
 import { DjProfile, LandingPage, PublicTracklist } from './components/public';
 
+import { PricingPage } from './pages/PricingPage';
+import { AccountPage } from './pages/AccountPage';
+
 import { Header, HomeView, ThemeToggle, ToastContainer, useToast } from './components/layout';
 
 import { ProgressBar, Timeline } from './components/analysis';
@@ -24,6 +27,8 @@ const App = () => (
   <Routes>
     <Route path="/t/:slug" element={<PublicTracklist />} />
     <Route path="/dj/:username" element={<DjProfile />} />
+    <Route path="/pricing" element={<PricingPage />} />
+    <Route path="/account" element={<AccountPage />} />
     <Route path="*" element={<MainApp />} />
   </Routes>
 );
