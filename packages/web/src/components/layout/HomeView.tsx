@@ -3,28 +3,18 @@ import type { AnalysisMode } from '@mix-match/shared';
 import { Dashboard, Analytics, Feed } from '../dashboard';
 import { FileUpload } from '../upload';
 import { ProfileSettings } from '../profile';
-import { Button } from '@/components/ui/button';
-import { Home, Rss, User, GitCompare, ListMusic } from 'lucide-react';
+import { Home, Rss, User } from 'lucide-react';
 
 type Tab = 'home' | 'feed' | 'profile';
 
 interface HomeViewProps {
   credits: number | null;
-  onCompare: () => void;
-  onManual: () => void;
   onSelectAnalysis: (id: string) => void;
   onFileSelected: (file: File, mode: AnalysisMode) => void;
   onUrlSubmitted: (url: string, mode: AnalysisMode) => void;
 }
 
-export const HomeView = ({
-  credits,
-  onCompare,
-  onManual,
-  onSelectAnalysis,
-  onFileSelected,
-  onUrlSubmitted,
-}: HomeViewProps) => {
+export const HomeView = ({ credits, onSelectAnalysis, onFileSelected, onUrlSubmitted }: HomeViewProps) => {
   const [tab, setTab] = useState<Tab>('home');
 
   return (
@@ -68,17 +58,6 @@ export const HomeView = ({
           )}
 
           <Dashboard onSelectAnalysis={onSelectAnalysis} />
-
-          <div className="flex justify-center gap-2">
-            <Button variant="outline" size="sm" onClick={onCompare}>
-              <GitCompare className="w-3.5 h-3.5 mr-1.5" />
-              Compare
-            </Button>
-            <Button variant="outline" size="sm" onClick={onManual}>
-              <ListMusic className="w-3.5 h-3.5 mr-1.5" />
-              Manual
-            </Button>
-          </div>
         </div>
       )}
 

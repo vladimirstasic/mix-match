@@ -188,7 +188,7 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
 
   if (/(?:youtube\.com|youtu\.be)/i.test(url)) {
     res.status(400).json({
-      error: 'YouTube is not supported yet. Try SoundCloud, Mixcloud, or upload an MP3 directly.',
+      error: 'YouTube is still in Beta. Try SoundCloud, Mixcloud, or upload an MP3 directly.',
       code: 'YOUTUBE_NOT_SUPPORTED',
     });
     return;

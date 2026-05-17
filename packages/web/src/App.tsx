@@ -190,8 +190,6 @@ const MainApp = () => {
               {isIdle && view === VIEW.HOME && (
                 <HomeView
                   credits={credits}
-                  onCompare={() => setView(VIEW.COMPARE)}
-                  onManual={() => setView(VIEW.MANUAL)}
                   onSelectAnalysis={loadAnalysis}
                   onFileSelected={startAnalysis}
                   onUrlSubmitted={startAnalysisFromUrl}

@@ -52,7 +52,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
       return;
     }
     if (/(?:youtube\.com|youtu\.be)/i.test(trimmed)) {
-      setError('YouTube is not supported yet. Try SoundCloud, Mixcloud, or upload an MP3 file.');
+      setError('YouTube is still in Beta. Try SoundCloud, Mixcloud, or upload an MP3 file.');
       return;
     }
     setError(null);
