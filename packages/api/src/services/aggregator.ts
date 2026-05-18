@@ -7,6 +7,8 @@ export function normalizeString(s: string): string {
     .toLowerCase()
     .replace(/\(.*?\)/g, '')
     .replace(/\[.*?\]/g, '')
+    .replace(/\s+(feat\.?|ft\.?|featuring)\s+.+$/i, '')
+    .replace(/,.+$/, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -15,8 +17,25 @@ export function normalizeTrackKey(artist: string, title: string): string {
   return `${normalizeString(artist)}::${normalizeString(title)}`;
 }
 
+function spotifyTrackId(url?: string | null): string | null {
+  return url?.match(/track\/([a-zA-Z0-9]+)/)?.[1] ?? null;
+}
+
+function deezerTrackId(url?: string | null): string | null {
+  return url?.match(/track\/(\d+)/)?.[1] ?? null;
+}
+
 export function isSameTrack(a: RawMatch, b: RawMatch): boolean {
   if (a.acrid && b.acrid && a.acrid === b.acrid) return true;
+
+  const aSp = spotifyTrackId(a.externalLinks?.spotify);
+  const bSp = spotifyTrackId(b.externalLinks?.spotify);
+  if (aSp && bSp && aSp === bSp) return true;
+
+  const aDz = deezerTrackId(a.externalLinks?.deezer);
+  const bDz = deezerTrackId(b.externalLinks?.deezer);
+  if (aDz && bDz && aDz === bDz) return true;
+
   return normalizeTrackKey(a.artist, a.title) === normalizeTrackKey(b.artist, b.title);
 }
 
@@ -49,7 +68,7 @@ export function aggregateMatches(raw: RawMatch[]): TrackMatch[] {
   for (let i = 1; i < sorted.length; i++) {
     const next = sorted[i];
 
-    if (isSameTrack(groupMatches[groupMatches.length - 1], next)) {
+    if (groupMatches.some(m => isSameTrack(m, next))) {
       groupMatches.push(next);
       groupEnd = next.startSec + CHUNK_DURATION_SEC;
     } else {

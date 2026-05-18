@@ -13,6 +13,26 @@ describe('normalizeString', () => {
   it('collapses whitespace', () => {
     expect(normalizeString('  Hello   World  ')).toBe('hello world');
   });
+
+  it('strips "feat. X" suffix', () => {
+    expect(normalizeString('More Heavy feat. Kaleta')).toBe('more heavy');
+  });
+
+  it('strips "ft. X" suffix', () => {
+    expect(normalizeString('Track ft. Someone')).toBe('track');
+  });
+
+  it('strips "featuring X" suffix', () => {
+    expect(normalizeString('Track featuring Someone Else')).toBe('track');
+  });
+
+  it('strips artist comma suffix', () => {
+    expect(normalizeString('Bosq, Kaleta')).toBe('bosq');
+  });
+
+  it('strips parens-feat from title', () => {
+    expect(normalizeString('More Heavy (feat. Kaleta)')).toBe('more heavy');
+  });
 });
 
 describe('isSameTrack', () => {
@@ -42,6 +62,57 @@ describe('isSameTrack', () => {
       ),
     ).toBe(false);
   });
+
+  it('matches by Spotify track ID even with different artist/title text', () => {
+    expect(
+      isSameTrack(
+        {
+          artist: 'Bosq',
+          title: 'More Heavy',
+          acrid: 'a1',
+          startSec: 0,
+          externalLinks: { spotify: 'https://open.spotify.com/track/abc123' },
+        },
+        {
+          artist: 'Bosq feat. Kaleta',
+          title: 'More Heavy feat. Kaleta',
+          acrid: 'a2',
+          startSec: 10,
+          externalLinks: { spotify: 'https://open.spotify.com/track/abc123' },
+        },
+      ),
+    ).toBe(true);
+  });
+
+  it('matches feat. variants by normalized text', () => {
+    expect(
+      isSameTrack(
+        { artist: 'Bosq, Kaleta', title: 'More Heavy', acrid: 'a1', startSec: 0 },
+        { artist: 'Bosq', title: 'More Heavy feat. Kaleta', acrid: 'a2', startSec: 10 },
+      ),
+    ).toBe(true);
+  });
+
+  it('matches by Deezer track ID', () => {
+    expect(
+      isSameTrack(
+        {
+          artist: 'A',
+          title: 'X',
+          acrid: 'a1',
+          startSec: 0,
+          externalLinks: { deezer: 'https://www.deezer.com/track/12345' },
+        },
+        {
+          artist: 'B',
+          title: 'Y',
+          acrid: 'a2',
+          startSec: 10,
+          externalLinks: { deezer: 'https://www.deezer.com/track/12345' },
+        },
+      ),
+    ).toBe(true);
+  });
 });
 
 describe('aggregateMatches', () => {
@@ -57,22 +128,24 @@ describe('aggregateMatches', () => {
       {
         track: 'Daft Punk - Around the World',
         start: '00:00',
-        end: '00:30',
+        end: '00:35',
         acrid: 'a',
         bpm: null,
         genre: null,
         musicalKey: null,
         score: null,
+        externalLinks: undefined,
       },
       {
         track: 'Chemical Brothers - Block Rockin Beats',
         start: '00:30',
-        end: '00:40',
+        end: '00:45',
         acrid: 'b',
         bpm: null,
         genre: null,
         musicalKey: null,
         score: null,
+        externalLinks: undefined,
       },
     ]);
   });
@@ -86,7 +159,7 @@ describe('aggregateMatches', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].start).toBe('00:00');
-    expect(result[0].end).toBe('00:30');
+    expect(result[0].end).toBe('00:35');
     expect(result[0].acrid).toBe('a');
   });
 
@@ -99,7 +172,7 @@ describe('aggregateMatches', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].start).toBe('00:00');
-    expect(result[0].end).toBe('00:30');
+    expect(result[0].end).toBe('00:35');
   });
 
   it('handles single match', () => {
@@ -108,17 +181,31 @@ describe('aggregateMatches', () => {
       {
         track: 'Artist - Song',
         start: '00:00',
-        end: '00:10',
+        end: '00:15',
         acrid: 'x',
         bpm: null,
         genre: null,
         musicalKey: null,
         score: null,
+        externalLinks: undefined,
       },
     ]);
   });
 
   it('handles empty input', () => {
     expect(aggregateMatches([])).toEqual([]);
+  });
+
+  it('merges 4 feat. metadata variants of the same track into one segment', () => {
+    const result = aggregateMatches([
+      { artist: 'Bosq, Kaleta', title: 'More Heavy', acrid: 'a1', startSec: 0 },
+      { artist: 'Bosq', title: 'More Heavy (feat. Kaleta)', acrid: 'a2', startSec: 120 },
+      { artist: 'Bosq feat. Kaleta', title: 'More Heavy feat. Kaleta', acrid: 'a3', startSec: 240 },
+      { artist: 'Bosq', title: 'More Heavy feat. Kaleta', acrid: 'a4', startSec: 360 },
+    ]);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].start).toBe('00:00');
+    expect(result[0].end).toBe('06:15');
   });
 });
