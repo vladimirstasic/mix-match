@@ -110,8 +110,10 @@ export function PricingPage() {
                 <div>
                   <h1 className="text-3xl font-bold tracking-tight">MixMatch is in Open Beta</h1>
                   <p className="text-muted-foreground mt-3">
-                    Every feature is free during Beta — no credit card, no scan limits, no holding back. We'll announce
-                    Beta end at least 7 days in advance via email.
+                    Try all premium features for free —{' '}
+                    <span className="font-medium text-foreground">5 scans/month</span>,{' '}
+                    <span className="font-medium text-foreground">2 per day</span>, detailed mode, Spotify export, no
+                    credit card. We'll announce Beta end at least 7 days in advance via email.
                   </p>
                 </div>
                 <div className="rounded-xl border border-primary/20 bg-primary/5 px-5 py-4 text-sm">

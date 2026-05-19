@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react';
-import { PLANS, PLAN_LIMITS, type Plan } from '@mix-match/shared';
+import { PLANS, PLAN_LIMITS, BETA_SCANS_PER_MONTH, BETA_SCANS_PER_DAY, type Plan } from '@mix-match/shared';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Crown, Loader2, CheckCircle2, Sparkles, Rocket } from 'lucide-react';
@@ -101,13 +101,32 @@ export function AccountPage() {
                           <Sparkles className="w-3 h-3" />
                           Beta Member
                         </span>
-                        <h2 className="text-xl font-semibold mt-2">All features unlocked</h2>
+                        <h2 className="text-xl font-semibold mt-2">All premium features unlocked</h2>
                       </div>
                     </div>
-                    <p className="text-sm text-muted-foreground">
-                      MixMatch is in Open Beta. No scan limits, no upgrade gates. Help us shape v1.
-                    </p>
-                    <p className="text-xs text-muted-foreground">
+
+                    <div>
+                      <div className="flex items-baseline justify-between mb-2">
+                        <span className="text-sm text-muted-foreground">Beta scans used this month</span>
+                        <span className="text-sm font-medium">
+                          {Math.max(0, BETA_SCANS_PER_MONTH - (profile?.creditsRemaining ?? 0))} /{' '}
+                          {BETA_SCANS_PER_MONTH}
+                        </span>
+                      </div>
+                      <div className="h-2 rounded-full bg-muted overflow-hidden">
+                        <div
+                          className="h-full bg-primary transition-all"
+                          style={{
+                            width: `${Math.min(100, (Math.max(0, BETA_SCANS_PER_MONTH - (profile?.creditsRemaining ?? 0)) / BETA_SCANS_PER_MONTH) * 100)}%`,
+                          }}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">
+                        Daily cap: {BETA_SCANS_PER_DAY} scans/day. Resets at midnight UTC.
+                      </p>
+                    </div>
+
+                    <p className="text-xs text-muted-foreground border-t border-border/50 pt-3">
                       We'll announce Beta end at least 7 days in advance via email. First 100 to subscribe afterwards
                       lock in lifetime Founding Member pricing — $6/mo Pro or $12/mo Studio.
                     </p>

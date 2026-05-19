@@ -68,6 +68,7 @@ const MainApp = () => {
 
   const [view, setView] = useState<ViewMode>(VIEW.HOME);
   const [credits, setCredits] = useState<number | null>(null);
+  const [betaMode, setBetaMode] = useState<boolean>(false);
 
   const previousPhase = useRef(phase);
 
@@ -138,6 +139,9 @@ const MainApp = () => {
       if (data?.creditsRemaining != null) {
         setCredits(data.creditsRemaining);
       }
+      if (data?.betaMode != null) {
+        setBetaMode(data.betaMode);
+      }
     });
   }, [isSignedIn]);
 
@@ -184,7 +188,7 @@ const MainApp = () => {
       <SignedIn>
         <div className="min-h-screen bg-background text-foreground text-[16px]">
           <div className="mx-auto max-w-5xl px-6 py-8">
-            <Header credits={credits} onLogoClick={goHome} />
+            <Header credits={credits} betaMode={betaMode} onLogoClick={goHome} />
 
             <main>
               {isIdle && view === VIEW.HOME && (
