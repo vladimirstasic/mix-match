@@ -7,7 +7,15 @@ import { createReadStream } from 'fs';
 import { v4 as uuid } from 'uuid';
 import { eq, lt, and, sql } from 'drizzle-orm';
 import { requireUser, getUserId } from '../middleware/auth.js';
-import { MAX_FILE_SIZE, ALLOWED_MIMETYPES, PLANS, PLAN_LIMITS, ANALYSIS_MODES } from '@mix-match/shared';
+import {
+  MAX_FILE_SIZE,
+  ALLOWED_MIMETYPES,
+  PLANS,
+  PLAN_LIMITS,
+  ANALYSIS_MODES,
+  BETA_SCANS_PER_MONTH,
+  BETA_SCANS_PER_DAY,
+} from '@mix-match/shared';
 import { db } from '../db/client.js';
 import { analyses, users } from '../db/schema.js';
 import { findUser } from '../db/helpers.js';
@@ -54,7 +62,49 @@ async function checkPlanLimits(
   res: import('express').Response,
   input: PlanCheckInput,
 ): Promise<boolean> {
-  if (config.betaMode) return true;
+  if (config.betaMode) {
+    const today = new Date().toISOString().slice(0, 10);
+    const dailyKey = `beta:daily:${userId}:${today}`;
+    const dailyCount = await redis.incr(dailyKey);
+    if (dailyCount === 1) await redis.expire(dailyKey, 86400 * 2);
+    if (dailyCount > BETA_SCANS_PER_DAY) {
+      res.status(403).json({
+        error: `Beta daily limit reached (${BETA_SCANS_PER_DAY} scans/day). Try again tomorrow.`,
+        code: 'BETA_DAILY_CAP',
+      });
+      return false;
+    }
+
+    const user = await findUser(userId);
+    if (user) {
+      if (user.creditsResetAt < new Date()) {
+        await db
+          .update(users)
+          .set({
+            creditsRemaining: BETA_SCANS_PER_MONTH,
+            creditsResetAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          })
+          .where(eq(users.clerkId, userId));
+      }
+
+      const result = await db
+        .update(users)
+        .set({ creditsRemaining: sql`${users.creditsRemaining} - 1` })
+        .where(and(eq(users.clerkId, userId), sql`${users.creditsRemaining} > 0`))
+        .returning({ creditsRemaining: users.creditsRemaining });
+
+      if (result.length === 0) {
+        await redis.decr(dailyKey);
+        res.status(403).json({
+          error: `Beta monthly limit reached (${BETA_SCANS_PER_MONTH} scans/month). Subscribe to Pro for unlimited scanning.`,
+          code: 'BETA_MONTHLY_CAP',
+        });
+        return false;
+      }
+    }
+
+    return true;
+  }
 
   const user = await findUser(userId);
   const planKey = (user?.plan ?? PLANS.FREE) as keyof typeof PLAN_LIMITS;

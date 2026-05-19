@@ -96,6 +96,8 @@ export const PLAN_FULL_PRICES: Record<Plan, number> = {
 export const FOUNDING_MEMBER_SEATS = 100;
 
 export const BETA_END_NOTICE_DAYS = 7;
+export const BETA_SCANS_PER_MONTH = 5;
+export const BETA_SCANS_PER_DAY = 2;
 
 // Analysis modes — step between chunks (chunk is always 10s, ACRCloud uses first 10s)
 export const FAST_STEP_SEC = 120; // 2 min — ~38 calls for 75min mix
