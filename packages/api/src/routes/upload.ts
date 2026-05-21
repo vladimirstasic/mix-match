@@ -62,6 +62,9 @@ async function checkPlanLimits(
   res: import('express').Response,
   input: PlanCheckInput,
 ): Promise<boolean> {
+  const adminCheck = await findUser(userId);
+  if (adminCheck?.isAdmin) return true;
+
   if (config.betaMode) {
     const today = new Date().toISOString().slice(0, 10);
     const dailyKey = `beta:daily:${userId}:${today}`;

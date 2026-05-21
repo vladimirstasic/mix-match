@@ -8,6 +8,7 @@ export const users = pgTable('users', {
   creditsResetAt: timestamp('credits_reset_at').notNull().defaultNow(),
   billingCustomerId: varchar('billing_customer_id', { length: 255 }),
   isFoundingMember: boolean('is_founding_member').notNull().default(false),
+  isAdmin: boolean('is_admin').notNull().default(false),
   createdAt: timestamp('created_at').defaultNow(),
 });
 

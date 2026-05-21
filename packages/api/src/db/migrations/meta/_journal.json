@@ -99,6 +99,13 @@
       "when": 1779667200000,
       "tag": "0013_billing_rename_plus_founding",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "7",
+      "when": 1779926400000,
+      "tag": "0014_add_is_admin",
+      "breakpoints": true
     }
   ]
 }
