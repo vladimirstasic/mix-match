@@ -314,9 +314,9 @@ export function useAnalysis() {
 
   const shareAnalysis = useCallback(async (): Promise<string | null> => {
     if (!state.analysisId) return null;
-    const slug = Math.random().toString(36).slice(2, 10);
-    await updateAnalysis(state.analysisId, { isPublic: true, slug });
-    return slug;
+    // Server generates the slug and ignores any client value, so use the slug it returns.
+    const updated = (await updateAnalysis(state.analysisId, { isPublic: true })) as { slug?: string | null };
+    return updated.slug ?? null;
   }, [state.analysisId]);
 
   return {
