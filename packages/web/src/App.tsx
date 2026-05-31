@@ -10,7 +10,7 @@ import { DjProfile, LandingPage, PublicTracklist } from './components/public';
 import { PricingPage } from './pages/PricingPage';
 import { AccountPage } from './pages/AccountPage';
 
-import { Header, HomeView, ThemeToggle, ToastContainer, useToast } from './components/layout';
+import { Header, HomeView, ToastContainer, useToast } from './components/layout';
 
 import { ProgressBar, Timeline } from './components/analysis';
 
@@ -178,10 +178,6 @@ const MainApp = () => {
       <ToastContainer toasts={toasts} onRemove={removeToast} />
 
       <SignedOut>
-        <div className="fixed top-4 right-4 z-50">
-          <ThemeToggle />
-        </div>
-
         <LandingPage />
       </SignedOut>
 

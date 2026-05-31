@@ -2,6 +2,7 @@ import { SignInButton } from '@clerk/clerk-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Disc3, Download, Share2, Headphones, Zap, Search, Globe, Music, Users } from 'lucide-react';
+import { ThemeToggle } from '../layout';
 
 const FEATURES = [
   {
@@ -49,7 +50,7 @@ const PRICING = [
     name: 'Free',
     price: '$0',
     period: 'forever',
-    features: ['3 mixes per month', 'Fast mode', 'Text export', 'Public share pages'],
+    features: ['5 scans per month', '2 scans per day', 'Fast mode', 'Text export', 'Public share pages'],
     cta: 'Get Started',
     highlighted: false,
   },
@@ -107,8 +108,12 @@ export function LandingPage() {
           <div className="flex items-center gap-2">
             <Disc3 className="w-5 h-5 text-primary" />
             <span className="font-semibold tracking-tight">MixMatch</span>
+            <span className="text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 uppercase">
+              Beta
+            </span>
           </div>
           <div className="flex items-center gap-3">
+            <ThemeToggle />
             <SignInButton mode="modal">
               <Button variant="ghost" size="sm">
                 Sign In
@@ -131,6 +136,16 @@ export function LandingPage() {
             </div>
           </div>
 
+          <div className="flex justify-center mb-6">
+            <span className="inline-flex items-center gap-2 text-xs font-medium px-3 py-1.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+              <span className="relative flex h-2 w-2">
+                <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-75 animate-ping" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+              </span>
+              MixMatch is in Beta — features may change as we polish things
+            </span>
+          </div>
+
           <h1 className="text-4xl sm:text-6xl font-bold tracking-tight mb-6 gradient-text">
             Identify every track in your mix
           </h1>
@@ -146,7 +161,9 @@ export function LandingPage() {
             </Button>
           </SignInButton>
 
-          <p className="text-sm text-muted-foreground mt-5">No credit card required &middot; 3 free scans per month</p>
+          <p className="text-sm text-muted-foreground mt-5">
+            No credit card required &middot; 5 free scans per month &middot; 2 per day
+          </p>
         </div>
       </section>
 
