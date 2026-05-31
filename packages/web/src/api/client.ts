@@ -5,6 +5,8 @@ export interface AnalysisResponse extends AnalysisResult {
   chunksAvailable: boolean;
   waveformData: number[] | null;
   sourceUrl?: string | null;
+  slug?: string | null;
+  isPublic?: boolean | null;
 }
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';

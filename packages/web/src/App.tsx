@@ -52,6 +52,8 @@ const MainApp = () => {
     segments,
     chunksAvailable,
     waveformData,
+    slug,
+    isPublic,
     error,
 
     startAnalysis,
@@ -252,6 +254,8 @@ const MainApp = () => {
                   filename={filename}
                   sourceUrl={sourceUrl}
                   waveformData={waveformData}
+                  slug={slug}
+                  isPublic={isPublic}
                   onRetrySegment={retrySegment}
                   onRetryAll={retryAll}
                   onReset={reset}

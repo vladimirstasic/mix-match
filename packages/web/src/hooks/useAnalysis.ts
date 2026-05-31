@@ -27,6 +27,8 @@ interface AnalysisState {
   segments: Segment[];
   chunksAvailable: boolean;
   waveformData: number[] | null;
+  slug: string | null;
+  isPublic: boolean;
   error: string | null;
 }
 
@@ -47,6 +49,8 @@ export function useAnalysis() {
     segments: [],
     chunksAvailable: false,
     waveformData: null,
+    slug: null,
+    isPublic: false,
     error: null,
   });
 
@@ -65,6 +69,8 @@ export function useAnalysis() {
           segments: result.segments || [],
           chunksAvailable: result.chunksAvailable || false,
           waveformData: result.waveformData || null,
+          slug: result.slug ?? null,
+          isPublic: result.isPublic ?? false,
         }));
       } else if (result.status === 'failed') {
         setState(s => ({ ...s, phase: 'failed', error: result.error || 'Failed' }));
@@ -197,6 +203,8 @@ export function useAnalysis() {
           segments: full.segments || [],
           chunksAvailable: full.chunksAvailable || false,
           waveformData: full.waveformData || null,
+          slug: full.slug ?? null,
+          isPublic: full.isPublic ?? false,
         }));
       } else if (full.status === 'failed') {
         setState(s => ({ ...s, phase: 'failed', analysisId: id, error: full.error || 'Failed' }));
@@ -225,6 +233,8 @@ export function useAnalysis() {
       segments: [],
       chunksAvailable: false,
       waveformData: null,
+      slug: null,
+      isPublic: false,
       error: null,
     });
   }, []);
@@ -245,6 +255,8 @@ export function useAnalysis() {
             segments: data.segments,
             chunksAvailable: data.chunksAvailable,
             waveformData: data.waveformData || null,
+            slug: data.slug ?? null,
+            isPublic: data.isPublic ?? false,
           }));
         } else if (data.status === 'processing' || data.status === 'pending') {
           setState(s => ({ ...s, phase: 'processing', analysisId: savedId }));
@@ -316,7 +328,9 @@ export function useAnalysis() {
     if (!state.analysisId) return null;
     // Server generates the slug and ignores any client value, so use the slug it returns.
     const updated = (await updateAnalysis(state.analysisId, { isPublic: true })) as { slug?: string | null };
-    return updated.slug ?? null;
+    const slug = updated.slug ?? null;
+    setState(s => ({ ...s, slug, isPublic: true }));
+    return slug;
   }, [state.analysisId]);
 
   return {

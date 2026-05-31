@@ -31,6 +31,8 @@ interface Props {
   filename?: string | null;
   sourceUrl?: string | null;
   waveformData?: number[] | null;
+  slug?: string | null;
+  isPublic?: boolean;
   onRetrySegment: (segmentId: string) => void;
   onRetryAll: () => void;
   onReset: () => void;
@@ -162,6 +164,8 @@ export function Timeline({
   filename,
   sourceUrl,
   waveformData,
+  slug,
+  isPublic,
   onRetrySegment,
   onRetryAll,
   onReset,
@@ -189,6 +193,11 @@ export function Timeline({
       .then(setSummary)
       .catch(() => {});
   }, [analysisId]);
+
+  // Hydrate the share link only for an already-public analysis (slug alone can linger on legacy private rows).
+  useEffect(() => {
+    setShareUrl(slug && isPublic ? `${window.location.origin}/t/${slug}` : null);
+  }, [slug, isPublic]);
 
   const segmentRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
@@ -517,26 +526,27 @@ export function Timeline({
                       >
                         <Pencil className="w-3 h-3" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={e => {
-                          e.stopPropagation();
-                          const base = shareUrl || `${window.location.origin}/t/share`;
-                          navigator.clipboard.writeText(
-                            `${seg.trackName} @ ${formatTime(seg.startSec)} — ${base}#t=${seg.startSec}`,
-                          );
-                          setCopied(`share-${seg.id}`);
-                          setTimeout(() => setCopied(null), 2000);
-                        }}
-                      >
-                        {copied === `share-${seg.id}` ? (
-                          <Check className="w-3 h-3 text-green-400" />
-                        ) : (
-                          <Link2 className="w-3 h-3" />
-                        )}
-                      </Button>
+                      {shareUrl && (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0"
+                          onClick={e => {
+                            e.stopPropagation();
+                            navigator.clipboard.writeText(
+                              `${seg.trackName} @ ${formatTime(seg.startSec)} — ${shareUrl}#t=${seg.startSec}`,
+                            );
+                            setCopied(`share-${seg.id}`);
+                            setTimeout(() => setCopied(null), 2000);
+                          }}
+                        >
+                          {copied === `share-${seg.id}` ? (
+                            <Check className="w-3 h-3 text-green-400" />
+                          ) : (
+                            <Link2 className="w-3 h-3" />
+                          )}
+                        </Button>
+                      )}
                       <button
                         className={`p-1 rounded-lg transition-colors ${bookmarkedIds.has(seg.id) ? 'text-blue-400' : 'text-muted-foreground/40 hover:text-blue-400'}`}
                         onClick={e => handleToggleBookmark(e, seg.id)}
