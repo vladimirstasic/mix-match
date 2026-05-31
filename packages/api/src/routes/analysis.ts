@@ -357,7 +357,7 @@ analysisRouter.patch('/analysis/:id/segments/:segId', async (req, res) => {
 analysisRouter.patch('/analysis/:id', requireUser, async (req, res) => {
   const userId = req.userId;
   const analysisId = req.params.id as string;
-  const { isPublic, slug } = req.body;
+  const { isPublic } = req.body;
 
   const analysis = await findAnalysis(analysisId);
   if (!analysis) {
@@ -371,8 +371,11 @@ analysisRouter.patch('/analysis/:id', requireUser, async (req, res) => {
 
   const updates: Record<string, unknown> = { updatedAt: new Date() };
   if (isPublic !== undefined) updates.isPublic = isPublic;
-  if (slug !== undefined || isPublic) {
-    // Generate slug server-side — ignore any client-provided value
+  if (isPublic === false) {
+    // Unshare revokes the public link — clear the slug so re-sharing mints a fresh one.
+    updates.slug = null;
+  } else if (isPublic && !analysis.slug) {
+    // First share mints a slug; keep it stable so re-sharing does not change the URL.
     const crypto = await import('crypto');
     updates.slug = crypto.randomBytes(6).toString('hex');
   }
