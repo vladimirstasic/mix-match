@@ -258,8 +258,8 @@ async function init3D() {
 
   const AMBER = new THREE.Color(0x2dd4bf); // low freq = teal
   const BRIGHT = new THREE.Color(0xa7f3e8); // high freq = pale teal (waveform reads as a spectrum)
-  const PALE = new THREE.Color(0x8fcfc6); // light-mode trace (lighter end)
-  const DEEP = new THREE.Color(0x0c4a44); // light-mode trace (scanned / crest)
+  const PALE = new THREE.Color(0x7fe9d9); // light-mode trace (lighter end) — brighter teal
+  const DEEP = new THREE.Color(0x0e9b8e); // light-mode trace (scanned / crest)
   let glowMesh = null;
   let dark3d = document.documentElement.dataset.theme !== 'light';
 
@@ -299,11 +299,21 @@ async function init3D() {
   function frame() {
     const time = (performance.now() - t0) / 1000;
     const headX = -W + head.t * 2 * W;
+    ptr.x += (ptr.tx - ptr.x) * 0.06;
+    ptr.y += (ptr.ty - ptr.y) * 0.06;
+    const cursorX = ptr.x * W; // pointer along the waveform
     for (let i = 0; i < BARS; i++) {
       const u = i / (BARS - 1);
       const x = -W + u * 2 * W;
-      const amp = env(u) * (0.4 + 0.6 * Math.abs(Math.sin(u * 55 + time * 4) * 0.7 + Math.sin(u * 17 - time * 2) * 0.3));
-      const h = 0.35 + amp * MAXH;
+      // dynamic DJ-style waveform: loudness envelope + mid detail + sharp transients (kicks)
+      const dyn = env(u);
+      const detail = Math.abs(Math.sin(u * 47 + time * 3.2) * 0.6 + Math.sin(u * 113 - time * 5) * 0.4);
+      const transient = Math.pow(Math.abs(Math.sin(u * 210 + time * 7)), 6) * 0.9;
+      const amp = dyn * (0.26 + 0.74 * detail) + dyn * transient;
+      // mouse interaction: bars rise + intensify under the cursor
+      const cd = x - cursorX;
+      const lift = Math.exp(-(cd * cd) / 9);
+      const h = 0.3 + amp * MAXH + lift * 2.4;
       wdummy.position.set(x, baseY, 0);
       wdummy.scale.set(1, h, 1);
       wdummy.updateMatrix();
@@ -313,10 +323,10 @@ async function init3D() {
       const scanned = head.scanning && x <= headX;
       const near = 1 - Math.min(1, Math.abs(x - headX) / 0.7);
       if (dark3d) {
-        c.copy(AMBER).lerp(BRIGHT, hf * 0.5 + (scanned ? 0.3 : 0) + near * 0.5);
-        c.multiplyScalar((head.scanning ? (scanned ? 1 : 0.28) : 0.55) + near * 0.7);
+        c.copy(AMBER).lerp(BRIGHT, hf * 0.5 + (scanned ? 0.3 : 0) + near * 0.5 + lift * 0.6);
+        c.multiplyScalar((head.scanning ? (scanned ? 1 : 0.3) : 0.6) + near * 0.7 + lift * 1.1);
       } else {
-        const f = Math.min(1, hf * 0.35 + (head.scanning ? (scanned ? 0.6 : 0.18) : 0.42) + near * 0.5);
+        const f = Math.min(1, hf * 0.3 + (head.scanning ? (scanned ? 0.6 : 0.22) : 0.4) + near * 0.5 + lift * 0.5);
         c.copy(PALE).lerp(DEEP, f);
       }
       wave.setColorAt(i, c);
@@ -326,8 +336,8 @@ async function init3D() {
     playhead.position.x = headX;
     playhead.material.opacity = head.scanning ? (scan.mode === 'done' ? 0.3 : 0.85) : 0;
 
-    ptr.x += (ptr.tx - ptr.x) * 0.05; ptr.y += (ptr.ty - ptr.y) * 0.05;
-    camera.position.x = ptr.x * 1.4; camera.position.y = 0.4 - ptr.y * 0.8;
+    camera.position.x = ptr.x * 1.4;
+    camera.position.y = 0.4 - ptr.y * 0.8;
     camera.lookAt(0, baseY, 0);
     renderer.renderAsync(scene, camera);
   }
