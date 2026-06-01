@@ -273,16 +273,16 @@ async function init3D() {
     glowMesh = glow;
   } catch (e) { console.warn('[lab] TSL glow skipped', e); }
 
-  const N = 420, W = 17, baseY = -1.0;
-  const pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
-  for (let i = 0; i < N; i++) pos[i * 3] = -W + (i / (N - 1)) * 2 * W;
-  const geo = new THREE.BufferGeometry();
-  geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  const trace = new THREE.Line(geo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending }));
-  scene.add(trace);
-
-  const env = (t) => (0.55 + 0.45 * Math.sin(t * 15.7)) * (1 - 0.72 * Math.exp(-Math.pow((t - 0.69) / 0.07, 2)));
+  const W = 17, baseY = -1.0, BARS = 200, MAXH = 3.0;
+  // amplitude envelope: loud in tracks, quiet around the "unknown" section
+  const env = (t) => (0.45 + 0.55 * Math.sin(t * 9.0) ** 2) * (1 - 0.74 * Math.exp(-Math.pow((t - 0.69) / 0.07, 2)));
+  // filled, mirrored audio waveform (the thing that reads as "audio")
+  const barMat = new THREE.MeshBasicMaterial({ transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+  const wave = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.1, 1), barMat, BARS);
+  wave.frustumCulled = false;
+  const wdummy = new THREE.Object3D();
+  for (let i = 0; i < BARS; i++) wave.setColorAt(i, AMBER); // create instanceColor buffer
+  scene.add(wave);
 
   const phGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, baseY - 4, 0), new THREE.Vector3(0, baseY + 4, 0)]);
   const playhead = new THREE.Line(phGeo, new THREE.LineBasicMaterial({ color: 0xffe2a0, transparent: true, opacity: 0.0 }));
@@ -291,8 +291,8 @@ async function init3D() {
   // dark = amber glow (additive); light = dark ink trace (normal) for a paper-scope look
   function applyTheme3d(t) {
     dark3d = t !== 'light';
-    trace.material.blending = dark3d ? THREE.AdditiveBlending : THREE.NormalBlending;
-    trace.material.needsUpdate = true;
+    wave.material.blending = dark3d ? THREE.AdditiveBlending : THREE.NormalBlending;
+    wave.material.needsUpdate = true;
     if (glowMesh) glowMesh.visible = dark3d;
     playhead.material.color.set(dark3d ? 0xffe2a0 : 0x5a3600);
   }
@@ -307,28 +307,30 @@ async function init3D() {
   function frame() {
     const time = (performance.now() - t0) / 1000;
     const headX = -W + head.t * 2 * W;
-    for (let i = 0; i < N; i++) {
-      const u = i / (N - 1);
-      const x = pos[i * 3];
-      const e = env(u);
-      pos[i * 3 + 1] = baseY + e * (Math.sin(u * 38 + time * 3) * 1.25 + Math.sin(u * 14 - time * 1.7) * 0.75 + Math.sin(u * 92 + time * 6) * 0.32);
+    for (let i = 0; i < BARS; i++) {
+      const u = i / (BARS - 1);
+      const x = -W + u * 2 * W;
+      const amp = env(u) * (0.4 + 0.6 * Math.abs(Math.sin(u * 55 + time * 4) * 0.7 + Math.sin(u * 17 - time * 2) * 0.3));
+      const h = 0.35 + amp * MAXH;
+      wdummy.position.set(x, baseY, 0);
+      wdummy.scale.set(1, h, 1);
+      wdummy.updateMatrix();
+      wave.setMatrixAt(i, wdummy.matrix);
+
+      const hf = 0.5 + 0.5 * Math.sin(u * 120 + time * 6); // high-frequency content -> brighter tint
       const scanned = head.scanning && x <= headX;
-      const near = 1 - Math.min(1, Math.abs(x - headX) / 0.55);
+      const near = 1 - Math.min(1, Math.abs(x - headX) / 0.7);
       if (dark3d) {
-        const base = head.scanning ? (scanned ? 1 : 0.2) : 0.34 + 0.1 * Math.sin(time * 2 + u * 9);
-        c.copy(AMBER).lerp(BRIGHT, Math.max(near, scanned ? 0.2 : 0));
-        const k = base + (head.scanning ? near * 0.9 : 0);
-        col[i * 3] = c.r * k; col[i * 3 + 1] = c.g * k; col[i * 3 + 2] = c.b * k;
+        c.copy(AMBER).lerp(BRIGHT, hf * 0.5 + (scanned ? 0.3 : 0) + near * 0.5);
+        c.multiplyScalar((head.scanning ? (scanned ? 1 : 0.28) : 0.55) + near * 0.7);
       } else {
-        // light: ink trace on bone — darkens where scanned / near the playhead
-        let f = head.scanning ? (scanned ? 0.95 : 0.28) : 0.5 + 0.12 * Math.sin(time * 2 + u * 9);
-        f = Math.min(1, f + (head.scanning ? near * 0.6 : 0));
+        const f = Math.min(1, hf * 0.35 + (head.scanning ? (scanned ? 0.6 : 0.18) : 0.42) + near * 0.5);
         c.copy(PALE).lerp(DEEP, f);
-        col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
       }
+      wave.setColorAt(i, c);
     }
-    geo.attributes.position.needsUpdate = true;
-    geo.attributes.color.needsUpdate = true;
+    wave.instanceMatrix.needsUpdate = true;
+    if (wave.instanceColor) wave.instanceColor.needsUpdate = true;
     playhead.position.x = headX;
     playhead.material.opacity = head.scanning ? (scan.mode === 'done' ? 0.3 : 0.85) : 0;
 
