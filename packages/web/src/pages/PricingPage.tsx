@@ -38,7 +38,7 @@ const TIERS: TierConfig[] = [
     highlight: true,
     features: [
       `${PLAN_LIMITS.pro.scans} scans per month`,
-      'YouTube, SoundCloud, Mixcloud, upload',
+      'SoundCloud, Mixcloud, upload',
       `Up to ${Math.round(PLAN_LIMITS.pro.maxFileBytes / 1024 / 1024)} MB uploads`,
       'Detailed mode (every 30 sec)',
       'Spotify playlist export',
@@ -136,7 +136,7 @@ export function PricingPage() {
             <div className="text-center mb-8">
               <h1 className="text-4xl font-bold tracking-tight">Choose your plan</h1>
               <p className="text-muted-foreground mt-3">
-                Start free. Upgrade when you need YouTube, longer mixes, or more scans.
+                Start free. Upgrade when you need longer mixes or more scans.
               </p>
             </div>
 

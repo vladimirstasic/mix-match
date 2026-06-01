@@ -13,7 +13,7 @@ const FEATURES = [
   {
     icon: Globe,
     title: 'URL Scanning',
-    description: 'Paste a YouTube, SoundCloud, or Mixcloud link. We download and scan automatically.',
+    description: 'Paste a SoundCloud or Mixcloud link and we download and scan it for you.',
   },
   {
     icon: Music,
@@ -38,11 +38,11 @@ const FEATURES = [
 ];
 
 const DEMO_TRACKS = [
-  { time: '00:00 — 05:30', track: 'Dorisburg - Irrbloss', status: 'identified' as const },
-  { time: '05:30 — 11:15', track: 'Hatikvah - Unforgettable', status: 'identified' as const },
-  { time: '11:15 — 16:40', track: 'DJ Hell - The Angst (Henrik Schwarz Remix)', status: 'identified' as const },
-  { time: '16:40 — 22:10', track: 'Unknown section', status: 'unknown' as const },
-  { time: '22:10 — 28:00', track: 'Âme - Rej', status: 'identified' as const },
+  { time: '00:00 → 05:30', track: 'Dorisburg - Irrbloss', status: 'identified' as const },
+  { time: '05:30 → 11:15', track: 'Hatikvah - Unforgettable', status: 'identified' as const },
+  { time: '11:15 → 16:40', track: 'DJ Hell - The Angst (Henrik Schwarz Remix)', status: 'identified' as const },
+  { time: '16:40 → 22:10', track: 'Unknown section', status: 'unknown' as const },
+  { time: '22:10 → 28:00', track: 'Âme - Rej', status: 'identified' as const },
 ];
 
 const PRICING = [
@@ -112,10 +112,10 @@ export function LandingPage() {
               Beta
             </span>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
             <SignInButton mode="modal">
-              <Button variant="ghost" size="sm">
+              <Button variant="ghost" size="sm" className="hidden sm:inline-flex">
                 Sign In
               </Button>
             </SignInButton>
@@ -142,7 +142,7 @@ export function LandingPage() {
                 <span className="absolute inline-flex h-full w-full rounded-full bg-primary opacity-75 animate-ping" />
                 <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
               </span>
-              MixMatch is in Beta — features may change as we polish things
+              We're in Beta and still polishing things
             </span>
           </div>
 
@@ -150,8 +150,8 @@ export function LandingPage() {
             Identify every track in your mix
           </h1>
           <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
-            Upload a DJ mix or paste a YouTube/SoundCloud link — get a complete timestamped tracklist with streaming
-            links and one-click export.
+            Upload a DJ mix or drop in a SoundCloud or Mixcloud link. You get back a full timestamped tracklist, with
+            streaming links and one-click export.
           </p>
 
           <SignInButton mode="modal">
@@ -176,7 +176,7 @@ export function LandingPage() {
               {
                 step: '01',
                 title: 'Upload or Paste URL',
-                desc: 'Drag a file or paste a YouTube/SoundCloud/Mixcloud link',
+                desc: 'Drag in a file or paste a SoundCloud or Mixcloud link',
               },
               {
                 step: '02',
@@ -186,7 +186,7 @@ export function LandingPage() {
               {
                 step: '03',
                 title: 'Get Your Tracklist',
-                desc: 'Timestamps, streaming links, export options — all instant',
+                desc: 'Timestamps, streaming links, and export options, ready in seconds',
               },
             ].map(item => (
               <Card key={item.step} className="text-center p-6">

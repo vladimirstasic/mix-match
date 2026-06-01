@@ -201,9 +201,7 @@ export function AccountPage() {
                       </li>
                       <li className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-primary" />
-                        {limits.youtube
-                          ? 'YouTube, SoundCloud, Mixcloud, upload'
-                          : 'SoundCloud, Mixcloud, upload (no YouTube)'}
+                        SoundCloud, Mixcloud, upload
                       </li>
                       <li className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-primary" />
