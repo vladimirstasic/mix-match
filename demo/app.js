@@ -256,17 +256,17 @@ async function init3D() {
   const camera = new THREE.PerspectiveCamera(45, sizes.w / sizes.h, 0.1, 100);
   camera.position.set(0, 0.4, 22);
 
-  const AMBER = new THREE.Color(0xffb000);
-  const BRIGHT = new THREE.Color(0xffe2a0);
-  const PALE = new THREE.Color(0xd9a85a); // light-mode trace (lighter end)
-  const DEEP = new THREE.Color(0x5a3600); // light-mode trace (scanned / crest)
+  const AMBER = new THREE.Color(0xff3d81); // low freq = magenta
+  const BRIGHT = new THREE.Color(0x22d3ee); // high freq = cyan (waveform reads as a spectrum)
+  const PALE = new THREE.Color(0xd98ab0); // light-mode trace (lighter end)
+  const DEEP = new THREE.Color(0x5a1030); // light-mode trace (scanned / crest)
   let glowMesh = null;
   let dark3d = document.documentElement.dataset.theme !== 'light';
 
   try {
     const { color, uv, smoothstep } = tsl;
     const gm = new THREE.MeshBasicNodeMaterial({ transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
-    gm.colorNode = color(0xffb000).mul(smoothstep(0.55, 0.0, uv().sub(0.5).length())).mul(0.13);
+    gm.colorNode = color(0xff3d81).mul(smoothstep(0.55, 0.0, uv().sub(0.5).length())).mul(0.13);
     const glow = new THREE.Mesh(new THREE.PlaneGeometry(60, 34), gm);
     glow.position.z = -6;
     scene.add(glow);
@@ -294,7 +294,7 @@ async function init3D() {
     wave.material.blending = dark3d ? THREE.AdditiveBlending : THREE.NormalBlending;
     wave.material.needsUpdate = true;
     if (glowMesh) glowMesh.visible = dark3d;
-    playhead.material.color.set(dark3d ? 0xffe2a0 : 0x5a3600);
+    playhead.material.color.set(dark3d ? 0x22d3ee : 0x5a1030);
   }
   lab = { applyTheme: applyTheme3d };
   applyTheme3d(document.documentElement.dataset.theme);
