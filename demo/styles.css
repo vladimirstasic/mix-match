@@ -84,6 +84,10 @@ a {
     radial-gradient(80% 60% at 50% 38%, rgba(255, 176, 0, 0.12), transparent 60%),
     radial-gradient(60% 50% at 50% 60%, rgba(255, 176, 0, 0.05), transparent 70%), #05060a;
 }
+[data-theme='light'] #lab-fallback {
+  background:
+    radial-gradient(80% 60% at 50% 30%, rgba(185, 118, 10, 0.1), transparent 60%), #ece8de;
+}
 .grid-overlay {
   position: fixed;
   inset: 0;
@@ -862,7 +866,7 @@ a {
   border: 1px solid var(--line-strong);
   background: rgba(5, 6, 8, 0.35);
 }
-[data-theme='light'] .scope { background: rgba(8, 9, 11, 0.9); }
+[data-theme='light'] .scope { background: rgba(255, 255, 255, 0.5); }
 .scope .corner { opacity: 0.7; }
 .scope .corner.tl { top: -1px; left: -1px; }
 .scope .corner.tr { top: -1px; right: -1px; }
@@ -873,11 +877,11 @@ a {
   gap: 1.6rem;
   font-size: 0.72rem;
   letter-spacing: 0.08em;
-  color: rgba(233, 231, 223, 0.45);
+  color: var(--ink-faint);
 }
 .scope-hud b { color: var(--signal); }
 .scope-center { text-align: center; }
-.s-pct { font-size: clamp(3rem, 12vw, 6rem); font-weight: 600; color: #f4f1e8; letter-spacing: -0.03em; }
+.s-pct { font-size: clamp(3rem, 12vw, 6rem); font-weight: 600; color: var(--ink); letter-spacing: -0.03em; }
 .s-track { margin-top: 0.4rem; font-size: 0.82rem; color: var(--match); min-height: 1.2em; }
 .s-progress { height: 3px; background: rgba(255, 255, 255, 0.1); }
 .s-progress i { display: block; height: 100%; width: 0; background: var(--signal); box-shadow: 0 0 12px var(--signal); transition: width 0.2s linear; }

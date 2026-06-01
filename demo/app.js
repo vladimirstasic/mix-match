@@ -76,10 +76,12 @@ function injectStatic() {
 
 /* ---------- theme (shared by landing + app toggles) ---------- */
 const THEME_KEY = 'mm-demo-theme';
+let lab = null; // set by init3D; lets the toggle recolour the scope
 function setTheme(t) {
   document.documentElement.dataset.theme = t;
   $$('#theme-label, .theme-label2').forEach((el) => (el.textContent = t.toUpperCase()));
   localStorage.setItem(THEME_KEY, t);
+  lab?.applyTheme(t);
 }
 function initTheme() {
   setTheme(localStorage.getItem(THEME_KEY) || 'dark');
@@ -256,6 +258,10 @@ async function init3D() {
 
   const AMBER = new THREE.Color(0xffb000);
   const BRIGHT = new THREE.Color(0xffe2a0);
+  const PALE = new THREE.Color(0xd9a85a); // light-mode trace (lighter end)
+  const DEEP = new THREE.Color(0x5a3600); // light-mode trace (scanned / crest)
+  let glowMesh = null;
+  let dark3d = document.documentElement.dataset.theme !== 'light';
 
   try {
     const { color, uv, smoothstep } = tsl;
@@ -264,6 +270,7 @@ async function init3D() {
     const glow = new THREE.Mesh(new THREE.PlaneGeometry(60, 34), gm);
     glow.position.z = -6;
     scene.add(glow);
+    glowMesh = glow;
   } catch (e) { console.warn('[lab] TSL glow skipped', e); }
 
   const N = 420, W = 17, baseY = -1.0;
@@ -281,6 +288,17 @@ async function init3D() {
   const playhead = new THREE.Line(phGeo, new THREE.LineBasicMaterial({ color: 0xffe2a0, transparent: true, opacity: 0.0 }));
   scene.add(playhead);
 
+  // dark = amber glow (additive); light = dark ink trace (normal) for a paper-scope look
+  function applyTheme3d(t) {
+    dark3d = t !== 'light';
+    trace.material.blending = dark3d ? THREE.AdditiveBlending : THREE.NormalBlending;
+    trace.material.needsUpdate = true;
+    if (glowMesh) glowMesh.visible = dark3d;
+    playhead.material.color.set(dark3d ? 0xffe2a0 : 0x5a3600);
+  }
+  lab = { applyTheme: applyTheme3d };
+  applyTheme3d(document.documentElement.dataset.theme);
+
   const ptr = { x: 0, y: 0, tx: 0, ty: 0 };
   addEventListener('pointermove', (e) => { ptr.tx = (e.clientX / innerWidth - 0.5) * 2; ptr.ty = (e.clientY / innerHeight - 0.5) * 2; }, { passive: true });
 
@@ -296,10 +314,18 @@ async function init3D() {
       pos[i * 3 + 1] = baseY + e * (Math.sin(u * 38 + time * 3) * 1.25 + Math.sin(u * 14 - time * 1.7) * 0.75 + Math.sin(u * 92 + time * 6) * 0.32);
       const scanned = head.scanning && x <= headX;
       const near = 1 - Math.min(1, Math.abs(x - headX) / 0.55);
-      let base = head.scanning ? (scanned ? 1 : 0.2) : 0.34 + 0.1 * Math.sin(time * 2 + u * 9);
-      c.copy(AMBER).lerp(BRIGHT, Math.max(near, scanned ? 0.2 : 0));
-      const k = base + (head.scanning ? near * 0.9 : 0);
-      col[i * 3] = c.r * k; col[i * 3 + 1] = c.g * k; col[i * 3 + 2] = c.b * k;
+      if (dark3d) {
+        const base = head.scanning ? (scanned ? 1 : 0.2) : 0.34 + 0.1 * Math.sin(time * 2 + u * 9);
+        c.copy(AMBER).lerp(BRIGHT, Math.max(near, scanned ? 0.2 : 0));
+        const k = base + (head.scanning ? near * 0.9 : 0);
+        col[i * 3] = c.r * k; col[i * 3 + 1] = c.g * k; col[i * 3 + 2] = c.b * k;
+      } else {
+        // light: ink trace on bone — darkens where scanned / near the playhead
+        let f = head.scanning ? (scanned ? 0.95 : 0.28) : 0.5 + 0.12 * Math.sin(time * 2 + u * 9);
+        f = Math.min(1, f + (head.scanning ? near * 0.6 : 0));
+        c.copy(PALE).lerp(DEEP, f);
+        col[i * 3] = c.r; col[i * 3 + 1] = c.g; col[i * 3 + 2] = c.b;
+      }
     }
     geo.attributes.position.needsUpdate = true;
     geo.attributes.color.needsUpdate = true;
