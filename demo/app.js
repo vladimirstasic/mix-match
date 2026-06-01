@@ -240,8 +240,8 @@ function showToast(msg) {
 async function init3D() {
   const canvas = $('#lab-canvas');
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-  let THREE, tsl;
-  try { THREE = await import('three'); tsl = await import('three/tsl'); }
+  let THREE;
+  try { THREE = await import('three'); }
   catch (e) { console.warn('[lab] three load failed', e); return; }
   let renderer;
   try { renderer = new THREE.WebGPURenderer({ canvas, antialias: true, alpha: true }); await renderer.init(); }
@@ -256,22 +256,14 @@ async function init3D() {
   const camera = new THREE.PerspectiveCamera(45, sizes.w / sizes.h, 0.1, 100);
   camera.position.set(0, 0.4, 22);
 
-  const AMBER = new THREE.Color(0xff3d81); // low freq = magenta
-  const BRIGHT = new THREE.Color(0x22d3ee); // high freq = cyan (waveform reads as a spectrum)
-  const PALE = new THREE.Color(0xd98ab0); // light-mode trace (lighter end)
-  const DEEP = new THREE.Color(0x5a1030); // light-mode trace (scanned / crest)
+  const AMBER = new THREE.Color(0x2dd4bf); // low freq = teal
+  const BRIGHT = new THREE.Color(0xa7f3e8); // high freq = pale teal (waveform reads as a spectrum)
+  const PALE = new THREE.Color(0x8fcfc6); // light-mode trace (lighter end)
+  const DEEP = new THREE.Color(0x0c4a44); // light-mode trace (scanned / crest)
   let glowMesh = null;
   let dark3d = document.documentElement.dataset.theme !== 'light';
 
-  try {
-    const { color, uv, smoothstep } = tsl;
-    const gm = new THREE.MeshBasicNodeMaterial({ transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
-    gm.colorNode = color(0xff3d81).mul(smoothstep(0.55, 0.0, uv().sub(0.5).length())).mul(0.13);
-    const glow = new THREE.Mesh(new THREE.PlaneGeometry(60, 34), gm);
-    glow.position.z = -6;
-    scene.add(glow);
-    glowMesh = glow;
-  } catch (e) { console.warn('[lab] TSL glow skipped', e); }
+  // background glow comes from the CSS #lab-fallback layer (no TSL dependency)
 
   const W = 17, baseY = -1.0, BARS = 200, MAXH = 3.0;
   // amplitude envelope: loud in tracks, quiet around the "unknown" section
@@ -294,7 +286,7 @@ async function init3D() {
     wave.material.blending = dark3d ? THREE.AdditiveBlending : THREE.NormalBlending;
     wave.material.needsUpdate = true;
     if (glowMesh) glowMesh.visible = dark3d;
-    playhead.material.color.set(dark3d ? 0x22d3ee : 0x5a1030);
+    playhead.material.color.set(dark3d ? 0xffb347 : 0xb86a00);
   }
   lab = { applyTheme: applyTheme3d };
   applyTheme3d(document.documentElement.dataset.theme);

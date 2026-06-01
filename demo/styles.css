@@ -7,40 +7,40 @@
 
 :root,
 [data-theme='dark'] {
-  --bg: #0a0611;
-  --panel: rgba(20, 12, 26, 0.72);
-  --panel-solid: #120b1a;
-  --ink: #ece7f0;
-  --ink-dim: rgba(236, 231, 240, 0.56);
-  --ink-faint: rgba(236, 231, 240, 0.34);
-  --line: rgba(236, 231, 240, 0.14);
-  --line-strong: rgba(236, 231, 240, 0.26);
-  --grid: rgba(255, 61, 129, 0.05);
-  --bar-bg: rgba(10, 6, 17, 0.72);
+  --bg: #05090a;
+  --panel: rgba(10, 18, 20, 0.72);
+  --panel-solid: #0a1314;
+  --ink: #e6efee;
+  --ink-dim: rgba(230, 239, 238, 0.56);
+  --ink-faint: rgba(230, 239, 238, 0.34);
+  --line: rgba(230, 239, 238, 0.14);
+  --line-strong: rgba(230, 239, 238, 0.26);
+  --grid: rgba(45, 212, 191, 0.05);
+  --bar-bg: rgba(5, 9, 10, 0.72);
 }
 [data-theme='light'] {
-  --bg: #f1ecf0;
-  --panel: #f6f1f5;
-  --panel-solid: #faf7f9;
-  --ink: #160f16;
-  --ink-dim: rgba(22, 15, 22, 0.62);
-  --ink-faint: rgba(22, 15, 22, 0.4);
-  --line: rgba(22, 15, 22, 0.16);
-  --line-strong: rgba(22, 15, 22, 0.28);
-  --grid: rgba(192, 24, 99, 0.05);
-  --bar-bg: rgba(241, 236, 240, 0.8);
+  --bg: #e9eeed;
+  --panel: #f2f6f5;
+  --panel-solid: #f8fbfa;
+  --ink: #0c1413;
+  --ink-dim: rgba(12, 20, 19, 0.62);
+  --ink-faint: rgba(12, 20, 19, 0.4);
+  --line: rgba(12, 20, 19, 0.16);
+  --line-strong: rgba(12, 20, 19, 0.28);
+  --grid: rgba(13, 125, 114, 0.05);
+  --bar-bg: rgba(233, 238, 237, 0.8);
 }
 :root {
-  --signal: #ff3d81; /* magenta */
-  --signal-dim: rgba(255, 61, 129, 0.5);
-  --match: #22d3ee; /* cyan = identified / second trace */
+  --signal: #2dd4bf; /* teal */
+  --signal-dim: rgba(45, 212, 191, 0.5);
+  --match: #ffb347; /* warm = identified accent */
   --maxw: 1180px;
   --mono: 'JetBrains Mono', ui-monospace, monospace;
   --disp: 'Space Grotesk', system-ui, sans-serif;
 }
 [data-theme='light'] {
-  --signal: #c01863;
-  --match: #0e7490;
+  --signal: #0d7d72;
+  --match: #b86a00;
 }
 
 * {
@@ -81,12 +81,12 @@ a {
   inset: 0;
   z-index: -3;
   background:
-    radial-gradient(80% 60% at 50% 38%, rgba(255, 61, 129, 0.14), transparent 60%),
-    radial-gradient(70% 55% at 72% 66%, rgba(34, 211, 238, 0.08), transparent 70%), #06030c;
+    radial-gradient(80% 60% at 50% 38%, rgba(45, 212, 191, 0.13), transparent 60%),
+    radial-gradient(70% 55% at 72% 66%, rgba(255, 179, 71, 0.06), transparent 70%), #03080a;
 }
 [data-theme='light'] #lab-fallback {
   background:
-    radial-gradient(80% 60% at 50% 30%, rgba(192, 24, 99, 0.1), transparent 60%), #f1ecf0;
+    radial-gradient(80% 60% at 50% 30%, rgba(13, 125, 114, 0.09), transparent 60%), #e9eeed;
 }
 .grid-overlay {
   position: fixed;
