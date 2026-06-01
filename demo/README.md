@@ -16,12 +16,17 @@ python3 -m http.server 8080
 
 or `npx serve demo`. Over `file://` it usually still works but may fall back to WebGL2 — or, if 3D can't start at all, a CSS gradient backdrop carries the hero. The page is usable either way.
 
-## The idea — the 3D *means* something
+## The idea — design + function in one place
 
-The hero is an **oscilloscope trace of a mix**. A **playhead sweeps across it**, "scanning"; as it passes each segment the **recognition log fills row by row** and the **HUD counts coverage** (POS / SEG / COV). It runs once automatically on load, and re-runs on **RUN ANALYSIS** / dropzone / URL. So the animation shows exactly what the product does — it isn't decoration.
+Two screens, like the real product:
 
-- Scan logic (`scanLoop` / `startScan` in `app.js`) is independent of 3D, so the HUD + log animate even with no WebGPU/WebGL.
-- 3D (`init3D`) renders the trace + playhead with `WebGPURenderer`, auto-falls back to WebGL2; one TSL node drives a subtle background glow.
+- **Landing** (`#screen-landing`): the marketing page. Its hero shows a calm oscilloscope *monitor* (preview) — it does **not** pretend to scan.
+- **App console** (`#screen-app`): where scanning actually happens. **Get started / Run a scan** opens it. Flow: **Upload** (file/URL + Fast/Detailed mode + recent scans) → **Scanning** → **Results**.
+
+The **Scanning** state is the meaningful 3D: the oscilloscope playhead follows real progress — `chunksProcessed / 128`, % complete, ETA, the track currently being matched — and the **recognition log fills row by row** as segments are identified, then it lands on **Results** (full log + confidence + export / share / Spotify). This mirrors the real `ProgressBar` → `Timeline` flow in `packages/web`.
+
+- The scan engine (`runScan` / `tickScan` / master `loop` in `app.js`) drives the HUD, progress and log; the 3D just reads `head.t`. So it still works with no WebGPU/WebGL.
+- 3D (`init3D`) renders the trace + playhead with `WebGPURenderer` (auto WebGL2 fallback); one TSL node drives a subtle background glow.
 
 ## Identity
 

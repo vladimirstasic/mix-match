@@ -25,140 +25,212 @@
   </head>
 
   <body>
-    <!-- Instrument screen (always dark) -->
     <canvas id="lab-canvas" aria-hidden="true"></canvas>
     <div id="lab-fallback" aria-hidden="true"></div>
     <div class="grid-overlay" aria-hidden="true"></div>
     <div class="scanlines" aria-hidden="true"></div>
 
-    <!-- Top instrument bar -->
-    <header class="bar" id="bar">
-      <a class="unit" href="#top">
-        <span class="led" aria-hidden="true"></span>
-        <span class="unit-name">MIXMATCH</span><span class="unit-sub">/lab</span>
-        <span class="tag">BETA</span>
-      </a>
-      <nav class="bar-nav" aria-label="Primary">
-        <a href="#how">[01] PIPELINE</a>
-        <a href="#accuracy">[02] RECOGNITION</a>
-        <a href="#features">[03] MODULES</a>
-        <a href="#pricing">[04] PLANS</a>
-      </nav>
-      <div class="bar-actions">
-        <button id="theme-toggle" class="ctrl" aria-label="Toggle light / dark">
-          <span class="ctrl-dot"></span><span id="theme-label">DARK</span>
+    <!-- ============================ LANDING ============================ -->
+    <div id="screen-landing">
+      <header class="bar">
+        <a class="unit" href="#top">
+          <span class="led" aria-hidden="true"></span>
+          <span class="unit-name">MIXMATCH</span><span class="unit-sub">/lab</span>
+          <span class="tag">BETA</span>
+        </a>
+        <nav class="bar-nav" aria-label="Primary">
+          <a href="#how">[01] PIPELINE</a>
+          <a href="#accuracy">[02] RECOGNITION</a>
+          <a href="#features">[03] MODULES</a>
+          <a href="#pricing">[04] PLANS</a>
+        </nav>
+        <div class="bar-actions">
+          <button id="theme-toggle" class="ctrl" aria-label="Toggle light / dark">
+            <span class="ctrl-dot"></span><span id="theme-label">DARK</span>
+          </button>
+          <button class="ctrl ctrl-signin" data-enter-app>SIGN IN</button>
+          <button class="btn" data-enter-app>GET STARTED</button>
+        </div>
+      </header>
+
+      <main id="top">
+        <section class="hero">
+          <span class="corner tl" aria-hidden="true"></span>
+          <span class="corner tr" aria-hidden="true"></span>
+          <span class="corner bl" aria-hidden="true"></span>
+          <span class="corner br" aria-hidden="true"></span>
+          <div class="hud" aria-hidden="true">
+            <span>SIG <b>124.0 BPM</b></span>
+            <span>MODE <b>MONITOR</b></span>
+            <span class="hud-state">PREVIEW</span>
+          </div>
+          <div class="hero-content">
+            <p class="kicker mono">// AI AUDIO FORENSICS — TRACK RECOGNITION</p>
+            <h1>Identify every track<br />in your mix</h1>
+            <p class="lede">
+              Upload a DJ set or drop in a SoundCloud or Mixcloud link. The engine listens through the whole mix and
+              returns a timestamped tracklist, with a confidence score on every hit.
+            </p>
+            <div class="hero-cta">
+              <button class="btn btn-lg" data-enter-app data-autorun>RUN A SCAN</button>
+              <button class="ctrl ctrl-lg" data-enter-app>OPEN THE CONSOLE →</button>
+            </div>
+            <p class="trust mono">NO CARD · 5 SCANS / MO · 2 / DAY</p>
+          </div>
+        </section>
+
+        <section class="panel" id="how">
+          <div class="wrap">
+            <h2 class="head" data-reveal><i>[01]</i> Pipeline</h2>
+            <div class="rows steps">
+              <article class="cell" data-reveal><span class="cno mono">01</span><h3>Ingest</h3><p>Drag a recording or paste a SoundCloud / Mixcloud link. We fetch and decode it.</p></article>
+              <article class="cell" data-reveal><span class="cno mono">02</span><h3>Fingerprint</h3><p>Acoustic fingerprints are extracted across the whole set, segment by segment.</p></article>
+              <article class="cell" data-reveal><span class="cno mono">03</span><h3>Match</h3><p>Each segment is matched against the catalog, with a confidence score per hit.</p></article>
+              <article class="cell" data-reveal><span class="cno mono">04</span><h3>Export</h3><p>Timestamps, streaming links, and export for Mixcloud, SoundCloud, or plain text.</p></article>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel alt" id="accuracy">
+          <div class="wrap narrow">
+            <h2 class="head" data-reveal><i>[02]</i> What a result looks like</h2>
+            <p class="sub" data-reveal>Every segment timestamped, every hit scored. This is the recognition log from a finished scan.</p>
+            <div class="log" data-reveal>
+              <div class="log-top mono"><span>RECOGNITION_LOG</span><span id="coverage-label">4 / 5 · 80%</span></div>
+              <div class="log-body" id="timeline"></div>
+            </div>
+          </div>
+        </section>
+
+        <section class="panel" id="features">
+          <div class="wrap">
+            <h2 class="head" data-reveal><i>[03]</i> Modules</h2>
+            <div class="rows features" id="features-grid"></div>
+          </div>
+        </section>
+
+        <section class="panel alt" id="pricing">
+          <div class="wrap">
+            <h2 class="head" data-reveal><i>[04]</i> Plans</h2>
+            <div class="rows pricing" id="pricing-grid"></div>
+          </div>
+        </section>
+
+        <section class="panel cta">
+          <div class="wrap narrow center">
+            <h2 class="head big" data-reveal>Your mix. Every track. Identified.</h2>
+            <button class="btn btn-lg" data-reveal data-enter-app data-autorun>RUN YOUR FIRST SCAN</button>
+          </div>
+        </section>
+      </main>
+
+      <footer class="foot">
+        <div class="wrap foot-in mono">
+          <span><span class="led" aria-hidden="true"></span> MIXMATCH /lab · BETA</span>
+          <span>POWERED BY ACRCLOUD · DEMO CONCEPT</span>
+        </div>
+      </footer>
+    </div>
+
+    <!-- ============================ APP CONSOLE ============================ -->
+    <div id="screen-app" hidden>
+      <header class="bar app-bar">
+        <button class="unit unit-btn" data-exit-app>
+          <span class="back">←</span>
+          <span class="unit-name">MIXMATCH</span><span class="unit-sub">/lab</span>
+          <span class="tag">BETA</span>
         </button>
-        <a href="#top" class="ctrl ctrl-signin">SIGN IN</a>
-        <a href="#top" class="btn">GET STARTED</a>
-      </div>
-    </header>
-
-    <main id="top">
-      <!-- HERO / scope -->
-      <section class="hero">
-        <span class="corner tl" aria-hidden="true"></span>
-        <span class="corner tr" aria-hidden="true"></span>
-        <span class="corner bl" aria-hidden="true"></span>
-        <span class="corner br" aria-hidden="true"></span>
-
-        <div class="hud" aria-hidden="true">
-          <span>SIG <b id="hud-bpm">124.0 BPM</b></span>
-          <span>POS <b id="hud-time">00:00</b></span>
-          <span>SEG <b id="hud-seg">0/5</b></span>
-          <span>COV <b id="hud-cov">0%</b></span>
-          <span class="hud-state" id="hud-state">IDLE</span>
+        <div class="app-route mono" id="app-route">CONSOLE / NEW SCAN</div>
+        <div class="bar-actions">
+          <span class="ctrl readonly mono">CREDITS <b id="credits">04</b></span>
+          <button class="ctrl" data-theme-toggle aria-label="Toggle theme"><span class="ctrl-dot"></span><span class="theme-label2">DARK</span></button>
+          <span class="avatar" aria-hidden="true">DJ</span>
         </div>
+      </header>
 
-        <div class="hero-content">
-          <p class="kicker mono">// AI AUDIO FORENSICS — TRACK RECOGNITION</p>
-          <h1>Identify every track<br />in your mix</h1>
-          <p class="lede">
-            Upload a DJ set or drop in a SoundCloud or Mixcloud link. The engine listens through the whole mix and
-            returns a timestamped tracklist, with a confidence score on every hit.
-          </p>
-
-          <div class="rig">
-            <div class="rig-tabs" role="tablist" aria-label="Input">
-              <button class="seg is-active" data-tab="upload" role="tab" aria-selected="true">UPLOAD</button>
-              <button class="seg" data-tab="url" role="tab" aria-selected="false">URL</button>
-            </div>
-            <div class="rig-body">
-              <div class="tab-panel is-active" data-panel="upload">
-                <button class="drop" id="dropzone" type="button">
-                  <span class="drop-ico" aria-hidden="true">▲</span>
-                  <span>DROP MP3 / DJ SET&nbsp;&nbsp;<i>· or click · up to 3h</i></span>
-                </button>
+      <div class="app-stage">
+        <!-- STATE: HOME / UPLOAD -->
+        <section class="app-view" data-view="home">
+          <div class="app-grid">
+            <div class="console big">
+              <div class="console-head mono"><span>// INPUT — NEW SCAN</span><span class="dim">SRC: FILE</span></div>
+              <div class="rig-tabs" role="tablist">
+                <button class="seg is-active" data-tab="upload" role="tab" aria-selected="true">UPLOAD</button>
+                <button class="seg" data-tab="url" role="tab" aria-selected="false">URL</button>
               </div>
-              <div class="tab-panel" data-panel="url">
-                <input id="url-input" type="url" inputmode="url" placeholder="https:// soundcloud or mixcloud link" aria-label="Mix URL" />
+              <div class="rig-body">
+                <div class="tab-panel is-active" data-panel="upload">
+                  <button class="drop big" id="dropzone" type="button">
+                    <span class="drop-ico" aria-hidden="true">▲</span>
+                    <span>DROP MP3 · WAV · FLAC · M4A<i> — or click · up to 3h</i></span>
+                  </button>
+                </div>
+                <div class="tab-panel" data-panel="url">
+                  <input id="url-input" type="url" inputmode="url" placeholder="https:// soundcloud or mixcloud link" aria-label="Mix URL" />
+                </div>
+
+                <div class="mode-row">
+                  <span class="mode-label mono">MODE</span>
+                  <button class="mode is-active" data-mode="fast">FAST <i>~20s</i></button>
+                  <button class="mode" data-mode="detailed">DETAILED <i>~2min</i></button>
+                </div>
+
+                <button class="btn btn-run" id="analyze-btn"><span class="analyze-label">RUN ANALYSIS</span></button>
               </div>
-              <button class="btn btn-run" id="analyze-btn"><span class="analyze-label">RUN ANALYSIS</span></button>
             </div>
-            <pre class="readout" id="analyzer-status" aria-live="polite"></pre>
+
+            <aside class="recent">
+              <div class="console-head mono"><span>// RECENT SCANS</span></div>
+              <ul class="recent-list" id="recent-list"></ul>
+            </aside>
           </div>
+        </section>
 
-          <p class="trust mono">NO CARD · 5 SCANS / MO · 2 / DAY</p>
-        </div>
-      </section>
-
-      <!-- 01 PIPELINE -->
-      <section class="panel" id="how">
-        <div class="wrap">
-          <h2 class="head" data-reveal><i>[01]</i> Pipeline</h2>
-          <div class="rows steps">
-            <article class="cell" data-reveal><span class="cno mono">01</span><h3>Ingest</h3><p>Drag a recording or paste a SoundCloud / Mixcloud link. We fetch and decode it.</p></article>
-            <article class="cell" data-reveal><span class="cno mono">02</span><h3>Fingerprint</h3><p>Acoustic fingerprints are extracted across the whole set, segment by segment.</p></article>
-            <article class="cell" data-reveal><span class="cno mono">03</span><h3>Match</h3><p>Each segment is matched against the catalog, with a confidence score per hit.</p></article>
-            <article class="cell" data-reveal><span class="cno mono">04</span><h3>Export</h3><p>Timestamps, streaming links, and export for Mixcloud, SoundCloud, or plain text.</p></article>
-          </div>
-        </div>
-      </section>
-
-      <!-- 02 RECOGNITION -->
-      <section class="panel alt" id="accuracy">
-        <div class="wrap narrow">
-          <h2 class="head" data-reveal><i>[02]</i> Recognition log</h2>
-          <p class="sub" data-reveal>A real result reads like a scope trace: every segment timestamped, every hit scored.</p>
-          <div class="log" data-reveal>
-            <div class="log-top mono">
-              <span>RECOGNITION_LOG</span><span id="coverage-label">— / 5 · 0%</span>
+        <!-- STATE: SCANNING (the live instrument) -->
+        <section class="app-view" data-view="scan" hidden>
+          <div class="scope">
+            <span class="corner tl"></span><span class="corner tr"></span>
+            <span class="corner bl"></span><span class="corner br"></span>
+            <div class="scope-hud mono">
+              <span>STATE <b id="s-state">SCANNING</b></span>
+              <span>SEGMENT <b id="s-seg">000 / 128</b></span>
+              <span>FOUND <b id="s-found">0</b></span>
+              <span>ETA <b id="s-eta">--s</b></span>
             </div>
-            <div class="log-body" id="timeline"></div>
+            <div class="scope-center">
+              <div class="s-pct mono" id="s-pct">0%</div>
+              <div class="s-track mono" id="s-track">initializing engine…</div>
+            </div>
+            <div class="s-progress"><i id="s-bar"></i></div>
           </div>
-        </div>
-      </section>
+          <div class="live">
+            <div class="console-head mono"><span>// RECOGNITION LOG · LIVE</span><span id="s-cov">0%</span></div>
+            <div class="log-body" id="live-log"></div>
+          </div>
+        </section>
 
-      <!-- 03 MODULES -->
-      <section class="panel" id="features">
-        <div class="wrap">
-          <h2 class="head" data-reveal><i>[03]</i> Modules</h2>
-          <div class="rows features" id="features-grid"></div>
-        </div>
-      </section>
-
-      <!-- 04 PLANS -->
-      <section class="panel alt" id="pricing">
-        <div class="wrap">
-          <h2 class="head" data-reveal><i>[04]</i> Plans</h2>
-          <div class="rows pricing" id="pricing-grid"></div>
-        </div>
-      </section>
-
-      <!-- CTA -->
-      <section class="panel cta">
-        <div class="wrap narrow center">
-          <h2 class="head big" data-reveal>Your mix. Every track. Identified.</h2>
-          <a href="#top" class="btn btn-lg" data-reveal>RUN YOUR FIRST SCAN</a>
-        </div>
-      </section>
-    </main>
-
-    <footer class="foot">
-      <div class="wrap foot-in mono">
-        <span><span class="led" aria-hidden="true"></span> MIXMATCH /lab · BETA</span>
-        <span>POWERED BY ACRCLOUD · DEMO CONCEPT</span>
+        <!-- STATE: RESULTS -->
+        <section class="app-view" data-view="results" hidden>
+          <div class="results-head">
+            <div>
+              <div class="console-head mono"><span>// SCAN COMPLETE</span></div>
+              <h2 class="r-title">warehouse-set.mp3</h2>
+              <p class="r-meta mono" id="r-meta">4 / 5 identified · 80% coverage · detailed</p>
+            </div>
+            <div class="r-actions">
+              <button class="ctrl">EXPORT ▾</button>
+              <button class="ctrl">SHARE</button>
+              <button class="ctrl">SPOTIFY</button>
+              <button class="btn" id="newscan-btn">NEW SCAN</button>
+            </div>
+          </div>
+          <div class="log">
+            <div class="log-top mono"><span>RECOGNITION_LOG</span><span id="r-cov">4 / 5 · 80%</span></div>
+            <div class="log-body" id="results-log"></div>
+          </div>
+        </section>
       </div>
-    </footer>
+    </div>
 
     <div class="toast mono" id="toast" role="status" aria-live="polite"></div>
     <script type="module" src="./app.js"></script>

@@ -1,9 +1,9 @@
 /* ============================================================
    MixMatch /lab — track recognition instrument (demo)
-   The 3D is MEANINGFUL: an oscilloscope trace of the mix that a
-   playhead sweeps across; as it scans, the recognition log fills
-   and the HUD counts coverage. Scan logic is independent of 3D,
-   so the instrument still "works" if WebGPU/WebGL can't start.
+   Two screens: a marketing LANDING and the APP CONSOLE where
+   scanning actually happens (Upload → Scanning → Results).
+   The oscilloscope playhead follows real scan progress; the same
+   scan engine drives the live HUD, progress and recognition log.
    ============================================================ */
 
 /* ---------- Content ---------- */
@@ -14,10 +14,9 @@ const TIMELINE = [
   { time: '16:40 → 22:10', track: 'Unknown section', status: 'unknown', conf: 0 },
   { time: '22:10 → 28:00', track: 'Âme — Rej', status: 'identified', conf: 0.95 },
 ];
-// normalized end-of-segment positions (fraction of the set) -> when the playhead reveals each row
-const REVEAL_AT = [0.196, 0.402, 0.595, 0.79, 1.0];
+const REVEAL_AT = [0.196, 0.402, 0.595, 0.79, 1.0]; // normalized end of each segment
 const SET_SECONDS = 28 * 60;
-const SCAN_SECS = 5.5;
+const TOTAL_CHUNKS = 128;
 
 const FEATURES = [
   { key: 'F.01', title: 'Audio fingerprinting', desc: 'ACRCloud recognition. Fast scans the highlights, Detailed goes segment by segment.' },
@@ -27,173 +26,204 @@ const FEATURES = [
   { key: 'F.05', title: 'Streaming links', desc: 'Spotify, YouTube, and Deezer links with inline players per identified track.' },
   { key: 'F.06', title: 'Shareable pages', desc: 'Public tracklist page on a custom URL. Clean layout, embedded players.' },
 ];
-
 const PRICING = [
   { name: 'FREE', price: '$0', per: 'forever', featured: false, cta: 'GET STARTED', features: ['5 scans / month', '2 scans / day', 'Fast mode', 'Text export', 'Public share pages'] },
   { name: 'PRO', price: '$9.99', per: '/ mo', featured: true, cta: 'START TRIAL', features: ['30 scans / month', 'Fast + Detailed', 'All export formats', 'Spotify playlists', 'Streaming links'] },
   { name: 'STUDIO', price: '$29.99', per: '/ mo', featured: false, cta: 'CONTACT', features: ['Unlimited scans', 'Everything in Pro', 'URL scanning', 'DJ profile page', 'Custom URL'] },
 ];
+const RECENT = [
+  { name: 'warehouse-set.mp3', stat: '4/5', date: 'YESTERDAY · 28:00' },
+  { name: 'boiler-room-rip', stat: '11/12', date: '3 DAYS AGO · 61:20' },
+  { name: 'sunset-b2b.wav', stat: '7/9', date: 'LAST WEEK · 44:10' },
+];
 
-/* ---------- Inject ---------- */
-const $ = (s) => document.querySelector(s);
-const $$ = (s) => [...document.querySelectorAll(s)];
+/* ---------- helpers ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+const fmt = (sec) => `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+function rowHTML(t) {
+  return `<div class="row ${t.status}">
+    <span class="r-time mono">${t.time}</span>
+    <span class="r-track">${t.track}</span>
+    ${t.status === 'identified'
+      ? `<span class="r-conf"><span class="cbar"><i class="cfill" style="width:${Math.round(t.conf * 100)}%"></i></span>${Math.round(t.conf * 100)}%</span>`
+      : `<span class="r-conf">no match</span>`}
+  </div>`;
+}
 
-function injectTimeline() {
-  $('#timeline').innerHTML = TIMELINE.map(
-    (t) => `
-    <div class="row ${t.status}" data-row>
+/* ---------- inject ---------- */
+function injectStatic() {
+  $('#timeline').innerHTML = TIMELINE.map((t) => `<div class="row ${t.status} show">
       <span class="r-time mono">${t.time}</span>
       <span class="r-track">${t.track}</span>
       ${t.status === 'identified'
-        ? `<span class="r-conf"><span class="cbar"><i class="cfill" data-conf="${t.conf}"></i></span>${Math.round(t.conf * 100)}%</span>`
+        ? `<span class="r-conf"><span class="cbar"><i class="cfill" style="width:${Math.round(t.conf * 100)}%"></i></span>${Math.round(t.conf * 100)}%</span>`
         : `<span class="r-conf">no match</span>`}
-    </div>`,
-  ).join('');
-}
-function injectFeatures() {
+    </div>`).join('');
   $('#features-grid').innerHTML = FEATURES.map(
     (f) => `<article class="cell feature" data-reveal><span class="fkey mono">${f.key}</span><h3>${f.title}</h3><p>${f.desc}</p></article>`,
   ).join('');
-}
-function injectPricing() {
   $('#pricing-grid').innerHTML = PRICING.map(
-    (p) => `
-    <div class="price ${p.featured ? 'featured' : ''}" data-reveal>
-      ${p.featured ? '<span class="ptag">POPULAR</span>' : ''}
-      <h3>${p.name}</h3>
-      <div class="pamt"><span class="num">${p.price}</span> <span class="per">${p.per}</span></div>
+    (p) => `<div class="price ${p.featured ? 'featured' : ''}" data-reveal>${p.featured ? '<span class="ptag">POPULAR</span>' : ''}
+      <h3>${p.name}</h3><div class="pamt"><span class="num">${p.price}</span> <span class="per">${p.per}</span></div>
       <ul>${p.features.map((f) => `<li>${f}</li>`).join('')}</ul>
-      <a href="#top" class="btn">${p.cta}</a>
-    </div>`,
+      <button class="btn" data-enter-app>${p.cta}</button></div>`,
+  ).join('');
+  $('#recent-list').innerHTML = RECENT.map(
+    (r) => `<li data-enter-results><span class="rl-name">${r.name}</span><span class="rl-stat">${r.stat}</span><span class="rl-date mono">${r.date}</span></li>`,
   ).join('');
 }
 
-/* ---------- Theme ---------- */
+/* ---------- theme (shared by landing + app toggles) ---------- */
 const THEME_KEY = 'mm-demo-theme';
+function setTheme(t) {
+  document.documentElement.dataset.theme = t;
+  $$('#theme-label, .theme-label2').forEach((el) => (el.textContent = t.toUpperCase()));
+  localStorage.setItem(THEME_KEY, t);
+}
 function initTheme() {
-  const saved = localStorage.getItem(THEME_KEY) || 'dark';
-  apply(saved);
-  $('#theme-toggle').addEventListener('click', () => {
-    const next = document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark';
-    apply(next);
-    localStorage.setItem(THEME_KEY, next);
-  });
-  function apply(t) {
-    document.documentElement.dataset.theme = t;
-    $('#theme-label').textContent = t.toUpperCase();
-  }
+  setTheme(localStorage.getItem(THEME_KEY) || 'dark');
+  $$('#theme-toggle, [data-theme-toggle]').forEach((b) =>
+    b.addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark')),
+  );
 }
 
-/* ---------- Tabs + inputs ---------- */
+/* ---------- router ---------- */
+const app = { view: 'home', mode: 'fast' };
+function enterApp(autorun) {
+  $('#screen-landing').hidden = true;
+  $('#screen-app').hidden = false;
+  scrollTo(0, 0);
+  setView('home');
+  if (autorun) setTimeout(runScan, 350);
+}
+function exitApp() {
+  $('#screen-app').hidden = true;
+  $('#screen-landing').hidden = false;
+  scan.mode = 'idle';
+  app.view = 'home';
+}
+function setView(v) {
+  app.view = v;
+  $$('.app-view').forEach((el) => (el.hidden = el.dataset.view !== v));
+  $('#app-route').textContent =
+    v === 'home' ? 'CONSOLE / NEW SCAN' : v === 'scan' ? 'CONSOLE / SCANNING' : 'CONSOLE / RESULT';
+}
+
+/* ---------- app inputs ---------- */
 function initInputs() {
-  const tabs = $$('.seg');
-  tabs.forEach((tab) =>
+  $$('.seg').forEach((tab) =>
     tab.addEventListener('click', () => {
-      tabs.forEach((t) => {
-        t.classList.toggle('is-active', t === tab);
-        t.setAttribute('aria-selected', t === tab ? 'true' : 'false');
-      });
+      $$('.seg').forEach((t) => { t.classList.toggle('is-active', t === tab); t.setAttribute('aria-selected', t === tab); });
       $$('.tab-panel').forEach((p) => p.classList.toggle('is-active', p.dataset.panel === tab.dataset.tab));
+    }),
+  );
+  $$('.mode').forEach((m) =>
+    m.addEventListener('click', () => {
+      app.mode = m.dataset.mode;
+      $$('.mode').forEach((x) => x.classList.toggle('is-active', x === m));
     }),
   );
   const dz = $('#dropzone');
   ['dragenter', 'dragover'].forEach((e) => dz.addEventListener(e, (ev) => { ev.preventDefault(); dz.classList.add('is-over'); }));
-  ['dragleave', 'drop'].forEach((e) => dz.addEventListener(e, (ev) => { ev.preventDefault(); dz.classList.remove('is-over'); if (e === 'drop') startScan(); }));
-  dz.addEventListener('click', startScan);
-  $('#analyze-btn').addEventListener('click', startScan);
+  ['dragleave', 'drop'].forEach((e) => dz.addEventListener(e, (ev) => { ev.preventDefault(); dz.classList.remove('is-over'); if (e === 'drop') runScan(); }));
+  dz.addEventListener('click', runScan);
+  $('#analyze-btn').addEventListener('click', runScan);
+  $('#newscan-btn').addEventListener('click', () => setView('home'));
+
+  $$('[data-enter-app]').forEach((b) => b.addEventListener('click', () => enterApp(b.hasAttribute('data-autorun'))));
+  $$('[data-exit-app]').forEach((b) => b.addEventListener('click', exitApp));
+  // recent scans jump straight to a finished result
+  document.addEventListener('click', (e) => {
+    const li = e.target.closest('[data-enter-results]');
+    if (li) { fillResults(); setView('results'); }
+  });
 }
 
-/* ---------- Scan engine (drives HUD + log; 3D reads it) ---------- */
-const scan = { mode: 'idle', t: 0, last: performance.now() };
-let revealed = 0;
-let identified = 0;
+/* ---------- scan engine (drives app HUD + log; 3D reads it) ---------- */
+const scan = { mode: 'idle', t: 0, last: performance.now(), secs: 4 };
+let found = 0;
 
-const STATUS_LINES = [
-  '> decoding audio stream',
-  '> extracting fingerprints · 128 segments',
-  '> matching against catalog',
-  '> 4 / 5 segments identified · 80% coverage',
-];
-
-function startScan() {
-  // reset
+function runScan() {
+  setView('scan');
   scan.mode = 'scan';
   scan.t = 0;
-  revealed = 0;
-  identified = 0;
-  $$('[data-row]').forEach((r) => {
-    r.classList.remove('show');
-    const f = r.querySelector('.cfill');
-    if (f) f.style.width = '0';
-  });
-  setCoverage();
-  // readout
-  const btn = $('#analyze-btn');
-  btn.querySelector('.analyze-label').textContent = 'SCANNING…';
-  const out = $('#analyzer-status');
-  out.classList.add('is-open');
-  out.textContent = '';
-  let i = 0;
-  const type = () => {
-    if (scan.mode !== 'scan' && scan.mode !== 'done') return;
-    if (i < STATUS_LINES.length) {
-      out.textContent += (i ? '\n' : '') + STATUS_LINES[i];
-      i += 1;
-      setTimeout(type, (SCAN_SECS * 1000) / STATUS_LINES.length);
+  scan.secs = app.mode === 'detailed' ? 6.5 : 4;
+  found = 0;
+  $('#live-log').innerHTML = '';
+  $('#s-found').textContent = '0';
+  $('#s-cov').textContent = '0%';
+  $('#s-track').textContent = 'initializing engine…';
+}
+
+function currentSegment(t) {
+  for (let i = 0; i < REVEAL_AT.length; i++) if (t < REVEAL_AT[i]) return i;
+  return REVEAL_AT.length - 1;
+}
+
+function tickScan() {
+  if (scan.mode !== 'scan') return;
+  const chunk = Math.min(TOTAL_CHUNKS, Math.round(scan.t * TOTAL_CHUNKS));
+  const pct = Math.round(scan.t * 100);
+  $('#s-pct').textContent = `${pct}%`;
+  $('#s-bar').style.width = `${pct}%`;
+  $('#s-seg').textContent = `${String(chunk).padStart(3, '0')} / ${TOTAL_CHUNKS}`;
+  const rem = Math.ceil((1 - scan.t) * scan.secs);
+  $('#s-eta').textContent = `${rem}s`;
+  const seg = TIMELINE[currentSegment(scan.t)];
+  $('#s-track').textContent = seg.status === 'identified' ? `matching · ${seg.track}` : 'no catalog match in this segment';
+
+  // reveal rows into the live log as the playhead crosses each segment end
+  REVEAL_AT.forEach((p, i) => {
+    if (scan.t >= p && !$(`#live-log [data-i='${i}']`)) {
+      const html = rowHTML(TIMELINE[i]).replace('<div class="row', `<div data-i="${i}" class="row show`);
+      $('#live-log').insertAdjacentHTML('beforeend', html);
+      if (TIMELINE[i].status === 'identified') found += 1;
+      $('#s-found').textContent = String(found);
+      $('#s-cov').textContent = `${Math.round((found / TIMELINE.length) * 100)}%`;
     }
-  };
-  setTimeout(type, 250);
+  });
+
+  if (scan.t >= 1) {
+    scan.mode = 'done';
+    $('#s-state').textContent = 'DONE';
+    setTimeout(() => { fillResults(); setView('results'); showToast('Demo — connect the real backend to scan an actual mix.'); }, 600);
+  }
 }
 
-function revealRow(i) {
-  const row = $$('[data-row]')[i];
-  if (!row || row.classList.contains('show')) return;
-  row.classList.add('show');
-  const fill = row.querySelector('.cfill');
-  if (fill) fill.style.width = `${Number(fill.dataset.conf) * 100}%`;
-  revealed += 1;
-  if (TIMELINE[i].status === 'identified') identified += 1;
-  setCoverage();
-}
-function setCoverage() {
-  const cov = Math.round((identified / TIMELINE.length) * 100);
-  $('#hud-seg').textContent = `${identified}/${TIMELINE.length}`;
-  $('#hud-cov').textContent = `${cov}%`;
-  $('#coverage-label').textContent = `${identified} / ${TIMELINE.length} · ${cov}%`;
-}
-function fmt(sec) {
-  const m = Math.floor(sec / 60);
-  const s = Math.floor(sec % 60);
-  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+function fillResults() {
+  $('#results-log').innerHTML = TIMELINE.map((t) => rowHTML(t).replace('class="row', 'class="row show')).join('');
+  const id = TIMELINE.filter((t) => t.status === 'identified').length;
+  const cov = Math.round((id / TIMELINE.length) * 100);
+  $('#r-meta').textContent = `${id} / ${TIMELINE.length} identified · ${cov}% coverage · ${app.mode}`;
+  $('#r-cov').textContent = `${id} / ${TIMELINE.length} · ${cov}%`;
 }
 
-function scanLoop(now) {
+/* ---------- master loop (advances scan + the 3D playhead value) ---------- */
+const head = { t: 0, scanning: false };
+function loop(now) {
   const dt = Math.min(0.05, (now - scan.last) / 1000);
   scan.last = now;
-  if (scan.mode === 'scan') {
-    scan.t = Math.min(1, scan.t + dt / SCAN_SECS);
-    $('#hud-time').textContent = fmt(scan.t * SET_SECONDS);
-    $('#hud-state').textContent = 'SCANNING';
-    REVEAL_AT.forEach((p, i) => { if (scan.t >= p) revealRow(i); });
-    if (scan.t >= 1) {
-      scan.mode = 'done';
-      $('#hud-state').textContent = 'DONE';
-      $('#analyze-btn').querySelector('.analyze-label').textContent = 'RUN ANALYSIS';
-      showToast('Demo preview — connect the real app to scan an actual mix.');
-    }
+  if (scan.mode === 'scan') scan.t = Math.min(1, scan.t + dt / scan.secs);
+  tickScan();
+
+  if (app.view === 'scan' && scan.mode !== 'idle') {
+    head.t = scan.t;
+    head.scanning = true;
+  } else {
+    head.t = (now / 7000) % 1; // calm monitor sweep on the landing
+    head.scanning = false;
   }
-  requestAnimationFrame(scanLoop);
+  requestAnimationFrame(loop);
 }
 
-/* ---------- Reveal on scroll + toast + bar ---------- */
+/* ---------- reveal-on-scroll + toast ---------- */
 function initReveal() {
   const io = new IntersectionObserver(
-    (es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); if (e.target.id === 'accuracy' && scan.mode === 'idle') startScan(); } }),
+    (es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); } }),
     { threshold: 0.12 },
   );
   $$('[data-reveal]').forEach((el) => io.observe(el));
-  const acc = $('#accuracy');
-  if (acc) io.observe(acc);
 }
 let toastTimer;
 function showToast(msg) {
@@ -208,23 +238,12 @@ function showToast(msg) {
 async function init3D() {
   const canvas = $('#lab-canvas');
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-
   let THREE, tsl;
-  try {
-    THREE = await import('three');
-    tsl = await import('three/tsl');
-  } catch (e) {
-    console.warn('[lab] three.js load failed; CSS backdrop only.', e);
-    return;
-  }
+  try { THREE = await import('three'); tsl = await import('three/tsl'); }
+  catch (e) { console.warn('[lab] three load failed', e); return; }
   let renderer;
-  try {
-    renderer = new THREE.WebGPURenderer({ canvas, antialias: true, alpha: true });
-    await renderer.init();
-  } catch (e) {
-    console.warn('[lab] renderer init failed; CSS backdrop only.', e);
-    return;
-  }
+  try { renderer = new THREE.WebGPURenderer({ canvas, antialias: true, alpha: true }); await renderer.init(); }
+  catch (e) { console.warn('[lab] renderer init failed', e); return; }
 
   const sizes = { w: innerWidth, h: innerHeight };
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -238,99 +257,61 @@ async function init3D() {
   const AMBER = new THREE.Color(0xffb000);
   const BRIGHT = new THREE.Color(0xffe2a0);
 
-  // --- subtle TSL background glow (the one explicit TSL touch) ---
   try {
     const { color, uv, smoothstep } = tsl;
-    const glowMat = new THREE.MeshBasicNodeMaterial({ transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
-    const dist = uv().sub(0.5).length();
-    glowMat.colorNode = color(0xffb000).mul(smoothstep(0.55, 0.0, dist)).mul(0.14);
-    const glow = new THREE.Mesh(new THREE.PlaneGeometry(60, 34), glowMat);
+    const gm = new THREE.MeshBasicNodeMaterial({ transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+    gm.colorNode = color(0xffb000).mul(smoothstep(0.55, 0.0, uv().sub(0.5).length())).mul(0.13);
+    const glow = new THREE.Mesh(new THREE.PlaneGeometry(60, 34), gm);
     glow.position.z = -6;
     scene.add(glow);
-  } catch (e) {
-    console.warn('[lab] TSL glow skipped', e);
-  }
+  } catch (e) { console.warn('[lab] TSL glow skipped', e); }
 
-  // --- oscilloscope trace (vertex-coloured line) ---
-  const N = 420;
-  const W = 17; // half-width
-  const baseY = -1.2;
-  const pos = new Float32Array(N * 3);
-  const col = new Float32Array(N * 3);
+  const N = 420, W = 17, baseY = -1.0;
+  const pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
   for (let i = 0; i < N; i++) pos[i * 3] = -W + (i / (N - 1)) * 2 * W;
   const geo = new THREE.BufferGeometry();
   geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
   geo.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  const mat = new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending });
-  const trace = new THREE.Line(geo, mat);
+  const trace = new THREE.Line(geo, new THREE.LineBasicMaterial({ vertexColors: true, transparent: true, blending: THREE.AdditiveBlending }));
   scene.add(trace);
-  // faint after-glow copy
-  const glow2 = new THREE.Line(geo, new THREE.LineBasicMaterial({ color: 0xffb000, transparent: true, opacity: 0.18, blending: THREE.AdditiveBlending }));
-  glow2.position.y = -0.06;
-  scene.add(glow2);
 
-  // amplitude envelope: louder in tracks, quiet in the "unknown" middle
-  const env = (t) => {
-    const dip = 1 - 0.75 * Math.exp(-Math.pow((t - 0.69) / 0.08, 2)); // quiet around the unknown section
-    return (0.5 + 0.5 * Math.sin(t * 6.28 * 2.5)) * 0.4 + 0.5 * dip;
-  };
+  const env = (t) => (0.55 + 0.45 * Math.sin(t * 15.7)) * (1 - 0.72 * Math.exp(-Math.pow((t - 0.69) / 0.07, 2)));
 
-  // --- playhead ---
   const phGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, baseY - 4, 0), new THREE.Vector3(0, baseY + 4, 0)]);
-  const playhead = new THREE.Line(phGeo, new THREE.LineBasicMaterial({ color: 0xffe2a0, transparent: true, opacity: 0.9 }));
+  const playhead = new THREE.Line(phGeo, new THREE.LineBasicMaterial({ color: 0xffe2a0, transparent: true, opacity: 0.0 }));
   scene.add(playhead);
 
-  // --- pointer parallax ---
   const ptr = { x: 0, y: 0, tx: 0, ty: 0 };
   addEventListener('pointermove', (e) => { ptr.tx = (e.clientX / innerWidth - 0.5) * 2; ptr.ty = (e.clientY / innerHeight - 0.5) * 2; }, { passive: true });
 
   const t0 = performance.now();
   const c = new THREE.Color();
-
   function frame() {
     const time = (performance.now() - t0) / 1000;
-    const headT = scan.mode === 'idle' ? 0 : scan.t;
-    const headX = -W + headT * 2 * W;
-
+    const headX = -W + head.t * 2 * W;
     for (let i = 0; i < N; i++) {
       const u = i / (N - 1);
       const x = pos[i * 3];
       const e = env(u);
-      // live waveform: layered sines + fast detail, scrolling
-      const y =
-        baseY +
-        e *
-          (Math.sin(u * 38 + time * 3) * 1.3 +
-            Math.sin(u * 14 - time * 1.7) * 0.8 +
-            Math.sin(u * 90 + time * 6) * 0.35);
-      pos[i * 3 + 1] = y;
-
-      // colour: scanned = bright amber, ahead = dim, crest at the playhead
-      const scanned = x <= headX;
-      const near = 1 - Math.min(1, Math.abs(x - headX) / 0.6);
-      let base = scanned ? 1 : 0.22;
-      if (scan.mode === 'idle') base = 0.32 + 0.12 * Math.sin(time * 2 + u * 10);
-      c.copy(scanned && near < 0.001 ? AMBER : AMBER).lerp(BRIGHT, Math.max(near, scanned ? 0.15 : 0));
-      col[i * 3] = c.r * (base + near * 0.8);
-      col[i * 3 + 1] = c.g * (base + near * 0.8);
-      col[i * 3 + 2] = c.b * (base + near * 0.8);
+      pos[i * 3 + 1] = baseY + e * (Math.sin(u * 38 + time * 3) * 1.25 + Math.sin(u * 14 - time * 1.7) * 0.75 + Math.sin(u * 92 + time * 6) * 0.32);
+      const scanned = head.scanning && x <= headX;
+      const near = 1 - Math.min(1, Math.abs(x - headX) / 0.55);
+      let base = head.scanning ? (scanned ? 1 : 0.2) : 0.34 + 0.1 * Math.sin(time * 2 + u * 9);
+      c.copy(AMBER).lerp(BRIGHT, Math.max(near, scanned ? 0.2 : 0));
+      const k = base + (head.scanning ? near * 0.9 : 0);
+      col[i * 3] = c.r * k; col[i * 3 + 1] = c.g * k; col[i * 3 + 2] = c.b * k;
     }
     geo.attributes.position.needsUpdate = true;
     geo.attributes.color.needsUpdate = true;
-
     playhead.position.x = headX;
-    playhead.material.opacity = scan.mode === 'scan' ? 0.9 : scan.mode === 'done' ? 0.35 : 0.0;
+    playhead.material.opacity = head.scanning ? (scan.mode === 'done' ? 0.3 : 0.85) : 0;
 
-    ptr.x += (ptr.tx - ptr.x) * 0.05;
-    ptr.y += (ptr.ty - ptr.y) * 0.05;
-    camera.position.x = ptr.x * 1.4;
-    camera.position.y = 0.4 - ptr.y * 0.8;
+    ptr.x += (ptr.tx - ptr.x) * 0.05; ptr.y += (ptr.ty - ptr.y) * 0.05;
+    camera.position.x = ptr.x * 1.4; camera.position.y = 0.4 - ptr.y * 0.8;
     camera.lookAt(0, baseY, 0);
-
     renderer.renderAsync(scene, camera);
   }
   renderer.setAnimationLoop(frame);
-
   addEventListener('resize', () => {
     sizes.w = innerWidth; sizes.h = innerHeight;
     camera.aspect = sizes.w / sizes.h; camera.updateProjectionMatrix();
@@ -338,15 +319,10 @@ async function init3D() {
   });
 }
 
-/* ---------- Boot ---------- */
-injectTimeline();
-injectFeatures();
-injectPricing();
+/* ---------- boot ---------- */
+injectStatic();
 initTheme();
 initInputs();
 initReveal();
-setCoverage();
-requestAnimationFrame(scanLoop);
+requestAnimationFrame(loop);
 init3D();
-// first impression: auto-run one scan so the instrument shows what it does
-setTimeout(() => { if (scan.mode === 'idle') startScan(); }, 1500);
