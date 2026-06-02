@@ -298,6 +298,7 @@ async function init3D() {
 
   const t0 = performance.now();
   const c = new THREE.Color();
+  const heights = new Float32Array(BARS); // eased bar heights for smooth motion
   function frame() {
     const time = (performance.now() - t0) / 1000;
     const headX = -W + head.t * 2 * W;
@@ -307,15 +308,17 @@ async function init3D() {
     for (let i = 0; i < BARS; i++) {
       const u = i / (BARS - 1);
       const x = -W + u * 2 * W;
-      // dynamic DJ-style waveform: loudness envelope + mid detail + sharp transients (kicks)
+      // calm, smooth waveform: slow swell + gentle detail (no fast jitter / sharp transients)
       const dyn = env(u);
-      const detail = Math.abs(Math.sin(u * 47 + time * 3.2) * 0.6 + Math.sin(u * 113 - time * 5) * 0.4);
-      const transient = Math.pow(Math.abs(Math.sin(u * 210 + time * 7)), 6) * 0.9;
-      const amp = dyn * (0.26 + 0.74 * detail) + dyn * transient;
+      const detail = 0.5 + 0.5 * Math.sin(u * 22 + time * 0.7);
+      const swell = 0.5 + 0.5 * Math.sin(u * 6 - time * 0.4);
+      const amp = dyn * (0.4 + 0.4 * detail + 0.2 * swell);
       // mouse interaction: bars rise + intensify under the cursor
       const cd = x - cursorX;
       const lift = Math.exp(-(cd * cd) / 9);
-      const h = 0.3 + amp * MAXH + lift * 2.4;
+      const target = 0.3 + amp * MAXH + lift * 2.2;
+      heights[i] += (target - heights[i]) * 0.08; // temporal easing -> smooth glide, not jitter
+      const h = heights[i];
       wdummy.position.set(x, baseY, 0);
       wdummy.scale.set(1, h, 1);
       wdummy.updateMatrix();
@@ -323,14 +326,15 @@ async function init3D() {
 
       const scanned = head.scanning && x <= headX;
       const near = 1 - Math.min(1, Math.abs(x - headX) / 0.7);
+      const hNorm = Math.min(1, (h - 0.3) / MAXH);
       if (dark3d) {
         // Winamp spectrum: colour by amplitude (quiet green -> loud red); cursor pushes bars "hot"
-        const ampN = Math.min(1, amp * 0.8 + lift * 0.7);
+        const ampN = Math.min(1, hNorm + lift * 0.3);
         if (ampN < 0.5) c.copy(WIN_LO).lerp(WIN_MID, ampN * 2);
         else c.copy(WIN_MID).lerp(WIN_HI, (ampN - 0.5) * 2);
         c.multiplyScalar((head.scanning ? (scanned ? 1 : 0.5) : 0.85) + near * 0.4);
       } else {
-        const f = Math.min(1, 0.3 + amp * 0.5 + (head.scanning ? (scanned ? 0.3 : 0) : 0.1) + near * 0.4 + lift * 0.5);
+        const f = Math.min(1, 0.3 + hNorm * 0.5 + (head.scanning ? (scanned ? 0.3 : 0) : 0.1) + near * 0.4 + lift * 0.5);
         c.copy(PALE).lerp(DEEP, f);
       }
       wave.setColorAt(i, c);
