@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Check, Loader2, Disc3 } from 'lucide-react';
 import { formatTime } from '@mix-match/shared';
+import { PageChrome } from '../layout';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
@@ -66,10 +67,7 @@ export function PublicTracklist() {
 
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute top-[-15%] right-[10%] w-[400px] h-[400px] rounded-full bg-purple-600/8 blur-[100px]" />
-        <div className="absolute bottom-[-10%] left-[20%] w-[300px] h-[300px] rounded-full bg-indigo-500/6 blur-[80px]" />
-      </div>
+      <PageChrome variant="full" />
 
       <div className="max-w-2xl mx-auto px-4 py-12">
         <header className="text-center mb-10">

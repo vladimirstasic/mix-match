@@ -154,6 +154,49 @@
     content: '// ';
     opacity: 0.6;
   }
+  .grid-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask: radial-gradient(120% 90% at 50% 30%, #000 40%, transparent 95%);
+    -webkit-mask: radial-gradient(120% 90% at 50% 30%, #000 40%, transparent 95%);
+  }
+  .scanlines {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.025) 0 1px,
+      transparent 1px 3px
+    );
+    mix-blend-mode: overlay;
+    opacity: 0.5;
+  }
+  :root:not(.dark) .scanlines {
+    display: none;
+  }
+  .waveform-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: none;
+    background:
+      radial-gradient(80% 60% at 50% 38%, rgba(31, 224, 72, 0.12), transparent 60%),
+      radial-gradient(70% 55% at 72% 66%, rgba(255, 210, 30, 0.06), transparent 70%);
+  }
+  :root:not(.dark) .waveform-backdrop {
+    background: radial-gradient(80% 60% at 50% 30%, rgba(15, 122, 58, 0.09), transparent 60%);
+  }
   .glass {
     @apply backdrop-blur-xl bg-glass-bg border border-glass-border;
   }

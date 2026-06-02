@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Disc3, Loader2, Music } from 'lucide-react';
+import { PageChrome } from '../layout';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
@@ -60,10 +61,7 @@ export function DjProfile() {
 
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute top-[-20%] left-[20%] w-[400px] h-[400px] rounded-full bg-purple-600/8 blur-[100px]" />
-        <div className="absolute bottom-[-10%] right-[10%] w-[300px] h-[300px] rounded-full bg-violet-500/6 blur-[80px]" />
-      </div>
+      <PageChrome variant="full" />
 
       <div className="max-w-2xl mx-auto px-4 py-12">
         <header className="text-center mb-10">

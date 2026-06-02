@@ -14,9 +14,10 @@ export const Header = ({ credits, betaMode, onLogoClick }: HeaderProps) => {
       <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
         <button className="flex items-center gap-2 hover:opacity-80 transition-opacity" onClick={onLogoClick}>
           <Disc3 className="w-5 h-5 text-primary" />
-          <span className="font-semibold tracking-tight">MixMatch</span>
+          <span className="font-semibold tracking-tight">MIXMATCH</span>
+          <span className="font-mono text-xs text-muted-foreground -ml-1">/studio</span>
           {betaMode && (
-            <span className="text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 uppercase">
+            <span className="font-mono text-[10px] tracking-wider px-1.5 py-0.5 bg-primary/10 text-primary border border-primary/20 uppercase">
               Beta
             </span>
           )}

@@ -10,7 +10,7 @@ import { DjProfile, LandingPage, PublicTracklist } from './components/public';
 import { PricingPage } from './pages/PricingPage';
 import { AccountPage } from './pages/AccountPage';
 
-import { Header, HomeView, ToastContainer, useToast } from './components/layout';
+import { Header, HomeView, PageChrome, ToastContainer, useToast } from './components/layout';
 
 import { ProgressBar, Timeline } from './components/analysis';
 
@@ -185,6 +185,7 @@ const MainApp = () => {
 
       <SignedIn>
         <div className="min-h-screen bg-background text-foreground text-[16px]">
+          <PageChrome variant="grid" />
           <div className="mx-auto max-w-5xl px-6 py-8">
             <Header credits={credits} betaMode={betaMode} onLogoClick={goHome} />
 

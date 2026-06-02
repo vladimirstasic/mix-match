@@ -112,7 +112,7 @@ export function SpotifyPlaylistModal({ open, onClose, segments, analysisId, file
           <Button variant="outline" size="sm" onClick={onClose} disabled={creating}>
             Cancel
           </Button>
-          <Button size="sm" onClick={handleCreate} disabled={creating || selected.size === 0}>
+          <Button variant="spotify" size="sm" onClick={handleCreate} disabled={creating || selected.size === 0}>
             {creating ? <Loader2 className="w-4 h-4 animate-spin" /> : `Create Playlist (${selected.size})`}
           </Button>
         </div>

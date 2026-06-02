@@ -693,12 +693,7 @@ export function Timeline({
         {segments.some(
           s => s.status === 'identified' && s.externalLinks && (s.externalLinks as Record<string, string>).spotify,
         ) && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-green-400 border-green-500/20 hover:bg-green-500/10"
-            onClick={() => setShowSpotifyModal(true)}
-          >
+          <Button variant="spotify" size="sm" onClick={() => setShowSpotifyModal(true)}>
             Spotify Playlist
           </Button>
         )}

@@ -2,7 +2,7 @@ import { SignInButton } from '@clerk/clerk-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Disc3, Download, Share2, Headphones, Zap, Search, Globe, Music, Users } from 'lucide-react';
-import { ThemeToggle } from '../layout';
+import { PageChrome, ThemeToggle } from '../layout';
 
 const FEATURES = [
   {
@@ -89,26 +89,16 @@ const PRICING = [
 export function LandingPage() {
   return (
     <div className="min-h-screen bg-background text-foreground overflow-hidden">
-      {/* Animated background blobs */}
-      <div className="fixed inset-0 -z-10">
-        <div className="absolute top-[-20%] left-[-10%] w-[600px] h-[600px] rounded-full bg-purple-600/10 blur-[120px] animate-gradient-shift" />
-        <div
-          className="absolute bottom-[-20%] right-[-10%] w-[500px] h-[500px] rounded-full bg-violet-500/8 blur-[100px] animate-gradient-shift"
-          style={{ animationDelay: '-5s' }}
-        />
-        <div
-          className="absolute top-[40%] right-[20%] w-[300px] h-[300px] rounded-full bg-indigo-500/6 blur-[80px] animate-gradient-shift"
-          style={{ animationDelay: '-10s' }}
-        />
-      </div>
+      <PageChrome variant="full" />
 
       {/* Glass Nav */}
       <nav className="fixed top-0 inset-x-0 z-50 backdrop-blur-2xl bg-background/60 border-b border-border/50">
         <div className="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Disc3 className="w-5 h-5 text-primary" />
-            <span className="font-semibold tracking-tight">MixMatch</span>
-            <span className="text-[10px] font-bold tracking-wider px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 uppercase">
+            <span className="font-semibold tracking-tight">MIXMATCH</span>
+            <span className="font-mono text-xs text-muted-foreground -ml-1">/studio</span>
+            <span className="font-mono text-[10px] tracking-wider px-1.5 py-0.5 bg-primary/10 text-primary border border-primary/20 uppercase">
               Beta
             </span>
           </div>
@@ -120,7 +110,9 @@ export function LandingPage() {
               </Button>
             </SignInButton>
             <SignInButton mode="modal">
-              <Button size="sm">Get Started</Button>
+              <Button size="sm" className="clip-bevel">
+                Get Started
+              </Button>
             </SignInButton>
           </div>
         </div>
@@ -146,7 +138,7 @@ export function LandingPage() {
             </span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-bold tracking-tight mb-6 gradient-text">
+          <h1 className="text-4xl sm:text-6xl font-bold tracking-tight mb-6 text-foreground">
             Identify every track in your mix
           </h1>
           <p className="text-lg sm:text-xl text-muted-foreground mb-10 max-w-2xl mx-auto leading-relaxed">
@@ -155,7 +147,7 @@ export function LandingPage() {
           </p>
 
           <SignInButton mode="modal">
-            <Button size="lg" className="text-base px-10 py-6 h-auto">
+            <Button size="lg" className="clip-bevel text-base px-10 py-6 h-auto">
               <Zap className="w-5 h-5" />
               Start Scanning Free
             </Button>
@@ -209,14 +201,14 @@ export function LandingPage() {
           <h2 className="text-2xl sm:text-3xl font-bold text-center mb-4">See it in action</h2>
           <p className="text-center text-muted-foreground mb-8">Here's what a typical result looks like</p>
 
-          <Card className="glow-purple overflow-hidden">
+          <Card className="overflow-hidden">
             <div className="p-4 border-b border-border/50 flex items-center gap-2">
               <div className="flex gap-1.5">
                 <div className="w-3 h-3 rounded-full bg-white/10" />
                 <div className="w-3 h-3 rounded-full bg-white/10" />
                 <div className="w-3 h-3 rounded-full bg-white/10" />
               </div>
-              <span className="text-xs text-muted-foreground ml-2 font-mono">mixmatch.app/t/my-set</span>
+              <span className="text-xs text-muted-foreground ml-2 font-mono">mixmatch.studio/t/my-set</span>
             </div>
             <CardContent className="pt-4 space-y-1.5">
               {DEMO_TRACKS.map((t, i) => (
@@ -301,7 +293,7 @@ export function LandingPage() {
             <Card className="p-6">
               <CardContent className="p-0 space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500 to-indigo-600" />
+                  <div className="w-12 h-12 rounded-full bg-primary/20 border border-primary/40" />
                   <div>
                     <p className="font-semibold">@deep_selector</p>
                     <p className="text-xs text-muted-foreground">12 public mixes &middot; 48 followers</p>
@@ -331,9 +323,9 @@ export function LandingPage() {
           <p className="text-center text-muted-foreground mb-12">Start free, upgrade when you need more</p>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {PRICING.map(plan => (
-              <Card key={plan.name} className={plan.highlighted ? 'border-primary/40 glow-purple relative' : ''}>
+              <Card key={plan.name} className={plan.highlighted ? 'border-primary/60 relative' : ''}>
                 {plan.highlighted && (
-                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-medium bg-gradient-to-r from-purple-600 to-violet-500 text-white px-3 py-1 rounded-full">
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 text-[10px] font-mono uppercase tracking-wider bg-primary text-primary-foreground px-3 py-1">
                     Most Popular
                   </div>
                 )}
@@ -366,7 +358,7 @@ export function LandingPage() {
       {/* Final CTA */}
       <section className="py-20">
         <div className="max-w-2xl mx-auto px-4 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold mb-4 gradient-text">Your mix. Every track. Identified.</h2>
+          <h2 className="text-2xl sm:text-3xl font-bold mb-4 text-foreground">Your mix. Every track. Identified.</h2>
           <p className="text-muted-foreground mb-8">Join DJs who never post an incomplete tracklist.</p>
           <SignInButton mode="modal">
             <Button size="lg" className="text-base px-10 py-6 h-auto">
@@ -381,7 +373,8 @@ export function LandingPage() {
         <div className="max-w-4xl mx-auto px-4 flex items-center justify-between text-xs text-muted-foreground">
           <div className="flex items-center gap-2">
             <Disc3 className="w-4 h-4" />
-            <span>MixMatch</span>
+            <span className="font-semibold">MIXMATCH</span>
+            <span className="font-mono text-muted-foreground -ml-1">/studio</span>
           </div>
           <p>Powered by ACRCloud</p>
         </div>

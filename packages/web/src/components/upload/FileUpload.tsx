@@ -1,10 +1,7 @@
 import { useCallback, useRef, useState, type DragEvent } from 'react';
 import type { AnalysisMode } from '@mix-match/shared';
 import { MAX_FILE_SIZE, ALLOWED_MIMETYPES } from '@mix-match/shared';
-import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
-import { Link, Zap, Search, Upload } from 'lucide-react';
 
 interface Props {
   onFileSelected: (file: File, mode: AnalysisMode) => void;
@@ -12,13 +9,15 @@ interface Props {
   disabled?: boolean;
 }
 
+type Tab = 'file' | 'url';
+
 export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) {
+  const [tab, setTab] = useState<Tab>('file');
+  const [mode, setMode] = useState<AnalysisMode>('fast');
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<'file' | 'url'>('file');
-  const [urlInput, setUrlInput] = useState('');
   const [pendingFile, setPendingFile] = useState<File | null>(null);
-  const [pendingUrl, setPendingUrl] = useState<string | null>(null);
+  const [urlInput, setUrlInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
   const validate = (file: File): string | null => {
@@ -39,86 +38,94 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
     setPendingFile(file);
   }, []);
 
-  const handleUrlSubmit = () => {
-    const trimmed = urlInput.trim();
-    if (!trimmed) {
-      setError('Please enter a URL');
-      return;
-    }
-    try {
-      new URL(trimmed);
-    } catch {
-      setError('Please enter a valid URL');
-      return;
-    }
-    if (/(?:youtube\.com|youtu\.be)/i.test(trimmed)) {
-      setError('YouTube is still in Beta. Try SoundCloud, Mixcloud, or upload an MP3 file.');
-      return;
-    }
-    setError(null);
-    setPendingUrl(trimmed);
-  };
-
-  const selectMode = (mode: AnalysisMode) => {
-    if (pendingFile) {
-      onFileSelected(pendingFile, mode);
-      setPendingFile(null);
-    } else if (pendingUrl) {
-      onUrlSubmitted(pendingUrl, mode);
-      setPendingUrl(null);
-      setUrlInput('');
-    }
-  };
-
   const onDrop = (e: DragEvent) => {
     e.preventDefault();
     setDragOver(false);
     if (e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
   };
 
+  const validateUrl = (raw: string): string | null => {
+    const trimmed = raw.trim();
+    if (!trimmed) return 'Please enter a URL';
+    try {
+      new URL(trimmed);
+    } catch {
+      return 'Please enter a valid URL';
+    }
+    if (/(?:youtube\.com|youtu\.be)/i.test(trimmed)) {
+      return 'YouTube is still in Beta. Try SoundCloud, Mixcloud, or upload an MP3 file.';
+    }
+    return null;
+  };
+
+  const run = () => {
+    if (tab === 'file') {
+      if (!pendingFile) {
+        setError('Drop or select a file first');
+        return;
+      }
+      onFileSelected(pendingFile, mode);
+      setPendingFile(null);
+    } else {
+      const err = validateUrl(urlInput);
+      if (err) {
+        setError(err);
+        return;
+      }
+      setError(null);
+      onUrlSubmitted(urlInput.trim(), mode);
+      setUrlInput('');
+    }
+  };
+
+  const canRun = tab === 'file' ? !!pendingFile : urlInput.trim().length > 0;
+
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-center gap-1 p-1 rounded-xl bg-glass-bg border border-glass-border w-fit mx-auto">
-        <Button
-          variant={tab === 'file' ? 'secondary' : 'ghost'}
-          size="sm"
+    <div className={`border border-border bg-card ${disabled ? 'opacity-50 pointer-events-none' : ''}`}>
+      <div className="flex items-center justify-between px-4 py-2 border-b border-border">
+        <span className="label-comment">INPUT — NEW SCAN</span>
+        <span className="label-mono">SRC: {tab === 'file' ? 'FILE' : 'URL'}</span>
+      </div>
+
+      <div className="grid grid-cols-2">
+        <button
+          className={`px-4 py-3 font-mono uppercase tracking-[0.08em] text-xs border-r border-border transition-colors ${
+            tab === 'file' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+          }`}
           onClick={() => {
             setTab('file');
             setError(null);
           }}
         >
-          <Upload className="w-3.5 h-3.5 mr-1.5" />
-          Upload File
-        </Button>
-        <Button
-          variant={tab === 'url' ? 'secondary' : 'ghost'}
-          size="sm"
+          Upload
+        </button>
+        <button
+          className={`px-4 py-3 font-mono uppercase tracking-[0.08em] text-xs transition-colors ${
+            tab === 'url' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
+          }`}
           onClick={() => {
             setTab('url');
             setError(null);
           }}
         >
-          <Link className="w-3.5 h-3.5 mr-1.5" />
-          Paste URL
-        </Button>
+          URL
+        </button>
       </div>
 
-      {tab === 'file' ? (
-        <div
-          className={`rounded-2xl border-2 border-dashed cursor-pointer transition-all duration-300 ${
-            dragOver
-              ? 'border-primary bg-primary/5 glow-purple'
-              : 'border-border hover:border-primary/40 hover:bg-muted/30'
-          } ${disabled ? 'opacity-50 pointer-events-none' : ''}`}
-          onDragOver={e => {
-            e.preventDefault();
-            setDragOver(true);
-          }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={onDrop}
-          onClick={() => inputRef.current?.click()}
-        >
-          <div className="flex flex-col items-center justify-center py-16 gap-4">
+      <div className="p-4 space-y-3">
+        {tab === 'file' ? (
+          <div
+            className={`border border-dashed py-10 px-4 text-center cursor-pointer transition-colors ${
+              dragOver ? 'border-primary' : 'border-border hover:border-primary/60'
+            }`}
+            onDragOver={e => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={onDrop}
+            onClick={() => inputRef.current?.click()}
+          >
             <input
               ref={inputRef}
               type="file"
@@ -126,87 +133,54 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
               onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
               hidden
             />
-            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <Upload className="w-6 h-6 text-primary" />
-            </div>
-            <div className="text-center">
-              <p className="font-medium">Drop your DJ mix here</p>
-              <p className="text-sm text-muted-foreground mt-1">or click to browse</p>
-            </div>
-            <p className="text-xs text-muted-foreground">MP3, WAV, FLAC, M4A — up to 300MB</p>
-            {error && <p className="text-sm text-destructive">{error}</p>}
+            <span className="label-mono-strong">
+              <span className="text-primary">▲ </span>
+              {pendingFile ? pendingFile.name : 'DROP MP3 · WAV · FLAC · M4A — or click · up to 300MB'}
+            </span>
           </div>
-        </div>
-      ) : (
-        <Card className={disabled ? 'opacity-50 pointer-events-none' : ''}>
-          <CardContent className="flex flex-col items-center justify-center py-16 gap-4">
-            <div className="w-14 h-14 rounded-2xl bg-primary/10 flex items-center justify-center">
-              <Link className="w-6 h-6 text-primary" />
-            </div>
-            <div className="text-center">
-              <p className="font-medium">Paste a URL to scan</p>
-              <p className="text-sm text-muted-foreground mt-1">SoundCloud, Mixcloud, or direct audio link</p>
-            </div>
-            <input
-              type="url"
-              value={urlInput}
-              onChange={e => setUrlInput(e.target.value)}
-              onKeyDown={e => {
-                if (e.key === 'Enter') handleUrlSubmit();
-              }}
-              placeholder="https://soundcloud.com/... or mixcloud.com/..."
-              className="w-full max-w-md px-4 py-2.5 rounded-xl border border-border bg-glass-bg backdrop-blur-sm text-sm focus:outline-none focus:ring-2 focus:ring-primary/50 focus:border-primary/30 transition-all"
-            />
-            <Button onClick={handleUrlSubmit} disabled={!urlInput.trim()}>
-              Scan
-            </Button>
-            {error && <p className="text-sm text-destructive">{error}</p>}
-          </CardContent>
-        </Card>
-      )}
+        ) : (
+          <input
+            type="url"
+            value={urlInput}
+            onChange={e => setUrlInput(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') run();
+            }}
+            placeholder="https://soundcloud.com/... or mixcloud.com/..."
+            className="w-full px-4 py-3 border border-border bg-transparent font-mono text-sm focus:outline-none focus:border-primary"
+          />
+        )}
 
-      <Dialog
-        open={!!(pendingFile || pendingUrl)}
-        onOpenChange={() => {
-          setPendingFile(null);
-          setPendingUrl(null);
-        }}
-      >
-        <DialogContent hideClose className="max-w-md">
-          <DialogTitle>Choose scan mode</DialogTitle>
-          <DialogDescription className="truncate px-4">{pendingFile ? pendingFile.name : pendingUrl}</DialogDescription>
-          <div className="grid grid-cols-2 gap-3 mt-2">
-            <button
-              className="flex flex-col items-center gap-3 p-5 rounded-xl border border-glass-border bg-transparent hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
-              onClick={() => selectMode('fast')}
-            >
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                <Zap className="w-5 h-5 text-primary" />
-              </div>
-              <span className="font-medium">Fast</span>
-              <span className="text-xs text-muted-foreground text-center">
-                ~20 seconds
-                <br />
-                Scans every 2 min
-              </span>
-            </button>
-            <button
-              className="flex flex-col items-center gap-3 p-5 rounded-xl border border-glass-border bg-transparent hover:border-primary/50 hover:bg-primary/5 transition-all duration-200 group"
-              onClick={() => selectMode('detailed')}
-            >
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
-                <Search className="w-5 h-5 text-primary" />
-              </div>
-              <span className="font-medium">Detailed</span>
-              <span className="text-xs text-muted-foreground text-center">
-                ~2 minutes
-                <br />
-                Scans every 30s
-              </span>
-            </button>
-          </div>
-        </DialogContent>
-      </Dialog>
+        <div className="flex items-center gap-2">
+          <span className="label-mono mr-1">MODE</span>
+          <button
+            className={`px-3 py-2 font-mono uppercase tracking-[0.08em] text-xs border transition-colors ${
+              mode === 'fast'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'border-border text-foreground hover:border-primary'
+            }`}
+            onClick={() => setMode('fast')}
+          >
+            Fast <i className={`not-italic ${mode === 'fast' ? 'opacity-70' : 'opacity-50'}`}>~20s</i>
+          </button>
+          <button
+            className={`px-3 py-2 font-mono uppercase tracking-[0.08em] text-xs border transition-colors ${
+              mode === 'detailed'
+                ? 'bg-primary text-primary-foreground border-primary'
+                : 'border-border text-foreground hover:border-primary'
+            }`}
+            onClick={() => setMode('detailed')}
+          >
+            Detailed <i className={`not-italic ${mode === 'detailed' ? 'opacity-70' : 'opacity-50'}`}>~2min</i>
+          </button>
+        </div>
+
+        <Button className="clip-bevel w-full" size="lg" disabled={!canRun} onClick={run}>
+          Run Analysis
+        </Button>
+
+        {error && <p className="text-sm text-destructive font-mono">{error}</p>}
+      </div>
     </div>
   );
 }
