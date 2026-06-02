@@ -310,14 +310,14 @@ async function init3D() {
       const x = -W + u * 2 * W;
       // calm, smooth waveform: slow swell + gentle detail (no fast jitter / sharp transients)
       const dyn = env(u);
-      const detail = 0.5 + 0.5 * Math.sin(u * 22 + time * 0.7);
-      const swell = 0.5 + 0.5 * Math.sin(u * 6 - time * 0.4);
+      const detail = 0.5 + 0.5 * Math.sin(u * 22 + time * 0.91);
+      const swell = 0.5 + 0.5 * Math.sin(u * 6 - time * 0.52);
       const amp = dyn * (0.4 + 0.4 * detail + 0.2 * swell);
       // mouse interaction: bars rise + intensify under the cursor
       const cd = x - cursorX;
       const lift = Math.exp(-(cd * cd) / 9);
       const target = 0.3 + amp * MAXH + lift * 2.2;
-      heights[i] += (target - heights[i]) * 0.08; // temporal easing -> smooth glide, not jitter
+      heights[i] += (target - heights[i]) * 0.1; // temporal easing -> smooth glide, not jitter
       const h = heights[i];
       wdummy.position.set(x, baseY, 0);
       wdummy.scale.set(1, h, 1);
