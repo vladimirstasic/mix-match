@@ -101,7 +101,7 @@ const PLANS = [
 
 export function LandingPage() {
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-hidden">
+    <div className="min-h-screen text-foreground overflow-hidden">
       <PageChrome variant="full" />
 
       <header className="landing-bar">
