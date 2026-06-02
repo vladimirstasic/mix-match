@@ -256,10 +256,11 @@ async function init3D() {
   const camera = new THREE.PerspectiveCamera(45, sizes.w / sizes.h, 0.1, 100);
   camera.position.set(0, 0.4, 22);
 
-  const AMBER = new THREE.Color(0x2dd4bf); // low freq = teal
-  const BRIGHT = new THREE.Color(0xa7f3e8); // high freq = pale teal (waveform reads as a spectrum)
-  const PALE = new THREE.Color(0x7fe9d9); // light-mode trace (lighter end) — brighter teal
-  const DEEP = new THREE.Color(0x0e9b8e); // light-mode trace (scanned / crest)
+  const WIN_LO = new THREE.Color(0x1fe048); // quiet = green
+  const WIN_MID = new THREE.Color(0xffd21e); // mid = yellow
+  const WIN_HI = new THREE.Color(0xff3b2f); // loud = red (Winamp spectrum)
+  const PALE = new THREE.Color(0x7fdca0); // light-mode trace (lighter end)
+  const DEEP = new THREE.Color(0x0f7a3a); // light-mode trace (scanned / crest)
   let glowMesh = null;
   let dark3d = document.documentElement.dataset.theme !== 'light';
 
@@ -273,7 +274,7 @@ async function init3D() {
   const wave = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.1, 1), barMat, BARS);
   wave.frustumCulled = false;
   const wdummy = new THREE.Object3D();
-  for (let i = 0; i < BARS; i++) wave.setColorAt(i, AMBER); // create instanceColor buffer
+  for (let i = 0; i < BARS; i++) wave.setColorAt(i, WIN_LO); // create instanceColor buffer
   scene.add(wave);
 
   const phGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, baseY - 4, 0), new THREE.Vector3(0, baseY + 4, 0)]);
@@ -284,6 +285,7 @@ async function init3D() {
   function applyTheme3d(t) {
     dark3d = t !== 'light';
     wave.material.blending = dark3d ? THREE.AdditiveBlending : THREE.NormalBlending;
+    wave.material.opacity = dark3d ? 0.8 : 0.5; // keep the waveform a subtle backdrop
     wave.material.needsUpdate = true;
     if (glowMesh) glowMesh.visible = dark3d;
     playhead.material.color.set(dark3d ? 0xffb347 : 0xb86a00);
@@ -319,14 +321,16 @@ async function init3D() {
       wdummy.updateMatrix();
       wave.setMatrixAt(i, wdummy.matrix);
 
-      const hf = 0.5 + 0.5 * Math.sin(u * 120 + time * 6); // high-frequency content -> brighter tint
       const scanned = head.scanning && x <= headX;
       const near = 1 - Math.min(1, Math.abs(x - headX) / 0.7);
       if (dark3d) {
-        c.copy(AMBER).lerp(BRIGHT, hf * 0.5 + (scanned ? 0.3 : 0) + near * 0.5 + lift * 0.6);
-        c.multiplyScalar((head.scanning ? (scanned ? 1 : 0.3) : 0.6) + near * 0.7 + lift * 1.1);
+        // Winamp spectrum: colour by amplitude (quiet green -> loud red); cursor pushes bars "hot"
+        const ampN = Math.min(1, amp * 0.8 + lift * 0.7);
+        if (ampN < 0.5) c.copy(WIN_LO).lerp(WIN_MID, ampN * 2);
+        else c.copy(WIN_MID).lerp(WIN_HI, (ampN - 0.5) * 2);
+        c.multiplyScalar((head.scanning ? (scanned ? 1 : 0.5) : 0.85) + near * 0.4);
       } else {
-        const f = Math.min(1, hf * 0.3 + (head.scanning ? (scanned ? 0.6 : 0.22) : 0.4) + near * 0.5 + lift * 0.5);
+        const f = Math.min(1, 0.3 + amp * 0.5 + (head.scanning ? (scanned ? 0.3 : 0) : 0.1) + near * 0.4 + lift * 0.5);
         c.copy(PALE).lerp(DEEP, f);
       }
       wave.setColorAt(i, c);
