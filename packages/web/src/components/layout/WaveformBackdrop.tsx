@@ -34,9 +34,9 @@ export const WaveformBackdrop = () => {
       const isDark = () => document.documentElement.classList.contains('dark');
       let dark3d = isDark();
 
-      const W = 17;
+      const W = 28;
       const baseY = -1.0;
-      const BARS = 200;
+      const BARS = 320;
       const MAXH = 3.0;
       const env = (t: number) =>
         (0.45 + 0.55 * Math.sin(t * 9.0) ** 2) * (1 - 0.74 * Math.exp(-Math.pow((t - 0.69) / 0.07, 2)));
