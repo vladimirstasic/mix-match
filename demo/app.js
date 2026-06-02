@@ -1,5 +1,5 @@
 /* ============================================================
-   MixMatch /lab — track recognition instrument (demo)
+   MixMatch /studio — track recognition instrument (demo)
    Two screens: a marketing LANDING and the APP CONSOLE where
    scanning actually happens (Upload → Scanning → Results).
    The oscilloscope playhead follows real scan progress; the same

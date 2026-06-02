@@ -1,4 +1,4 @@
-# MixMatch /lab — redesign demo (track-recognition instrument)
+# MixMatch /studio — redesign demo (track-recognition instrument)
 
 A **standalone, throwaway** concept of a redesigned landing page. No build step, no backend — `index.html`, `styles.css`, `app.js`. Copy and meaning match the real site (still Beta, no YouTube as a scan input, SoundCloud / Mixcloud / upload), with an **oscilloscope / instrument** visual identity and a light / dark toggle.
 
