@@ -263,6 +263,7 @@
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
+  width: max-content;
 }
 .btn-demo {
   display: inline-flex;
@@ -325,9 +326,10 @@
   font-family: var(--font-mono);
   font-size: 0.58rem;
   letter-spacing: 0.16em;
-  padding: 0.12rem 0.35rem;
+  padding: 0.18rem 0.4rem;
   color: var(--primary);
-  border: 1px solid var(--signal-dim);
+  background: color-mix(in srgb, var(--primary) 8%, transparent);
+  border: 1px solid var(--primary);
 }
 .bar-nav {
   display: flex;
