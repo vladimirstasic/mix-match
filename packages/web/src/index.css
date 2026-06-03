@@ -800,3 +800,67 @@
   max-width: 1180px;
   margin: 0 auto;
 }
+
+/* ---- console-head + recent (app screen, ported from demo) ---- */
+.console-head {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.7rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--ink-faint);
+  border-bottom: 1px solid var(--border);
+  text-transform: uppercase;
+}
+.console-head .dim {
+  color: var(--ink-faint);
+}
+.recent {
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+.recent-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.recent-list li {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.3rem 1rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.recent-list li:last-child {
+  border-bottom: 0;
+}
+.recent-list li:hover {
+  background: var(--popover);
+}
+.recent-list .rl-name {
+  font-size: 0.9rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.recent-list .rl-stat {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--primary);
+}
+.recent-list .rl-date {
+  grid-column: 1 / -1;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  color: var(--ink-faint);
+}
+.recent-list .rl-empty {
+  padding: 1.5rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  color: var(--ink-faint);
+  text-align: center;
+}

@@ -54,9 +54,9 @@ export const HomeView = ({ credits, onSelectAnalysis, onFileSelected, onUrlSubmi
             ) : (
               <FileUpload onFileSelected={onFileSelected} onUrlSubmitted={onUrlSubmitted} />
             )}
-            <aside className="border border-border bg-card">
-              <div className="px-4 py-2 border-b border-border">
-                <span className="label-comment">RECENT SCANS</span>
+            <aside className="recent">
+              <div className="console-head">
+                <span>// RECENT SCANS</span>
               </div>
               <Dashboard onSelectAnalysis={onSelectAnalysis} />
             </aside>
