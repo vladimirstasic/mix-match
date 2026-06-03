@@ -151,7 +151,7 @@ function SourceEmbed({ url }: { url: string }) {
       height={embed.height}
       allow="autoplay; clipboard-write; encrypted-media"
       loading="lazy"
-      className="rounded-xl border border-border/50"
+      className="border border-border/50"
       style={{ border: 'none' }}
     />
   );
@@ -624,7 +624,7 @@ export function Timeline({
                         height="152"
                         allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                         loading="lazy"
-                        className="rounded-xl border border-border/50"
+                        className="border border-border/50"
                         style={{ border: 'none' }}
                       />
                     )}
@@ -635,7 +635,7 @@ export function Timeline({
                         height="200"
                         allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                         loading="lazy"
-                        className="rounded-xl border border-border/50"
+                        className="border border-border/50"
                         style={{ border: 'none' }}
                       />
                     )}
@@ -646,7 +646,7 @@ export function Timeline({
                         height="130"
                         allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
                         loading="lazy"
-                        className="rounded-xl border border-border/50"
+                        className="border border-border/50"
                         style={{ border: 'none' }}
                       />
                     )}
