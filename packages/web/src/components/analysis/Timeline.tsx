@@ -324,12 +324,7 @@ export function Timeline({
       {filename && (
         <div className="space-y-3">
           {sourceUrl ? (
-            <a
-              href={sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="block hover:text-primary transition-colors"
-            >
+            <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="r-title-link block">
               <div className="label-comment">SCAN COMPLETE</div>
               <h1 className="r-title truncate">{filename}</h1>
             </a>

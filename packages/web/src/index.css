@@ -639,6 +639,34 @@
   .hud { display: none; }
 }
 
+/* Compact app-bar on small screens */
+@media (max-width: 640px) {
+  .landing-bar {
+    gap: 0.5rem;
+    padding: 0 0.75rem;
+  }
+  .landing-bar .app-route { display: none; }
+  .landing-bar .ctrl.readonly { display: none; }
+  .landing-bar .unit { font-size: 0.85rem; gap: 0.3rem; }
+  .landing-bar .unit-name { letter-spacing: 0.04em; }
+  .landing-bar .tag { padding: 0.1rem 0.3rem; }
+  .ctrl, .ctrl-lg { padding: 0.4rem 0.6rem; font-size: 0.68rem; letter-spacing: 0.06em; }
+  .btn-demo { padding: 0.55rem 0.9rem; font-size: 0.72rem; }
+  .btn-demo.btn-lg { padding: 0.75rem 1.2rem; font-size: 0.82rem; }
+  .hero-cta { gap: 0.5rem; }
+  .corner.tl { top: 64px; left: 12px; }
+  .corner.tr { top: 64px; right: 12px; }
+  .corner.bl { bottom: 12px; left: 12px; }
+  .corner.br { bottom: 12px; right: 12px; }
+}
+
+/* Stack log row content on mobile so track names don't overflow */
+@media (max-width: 640px) {
+  .log-row {
+    grid-template-columns: 1fr;
+  }
+}
+
 .feature .fkey {
   font-family: var(--font-mono);
   font-size: 0.7rem;
@@ -882,6 +910,7 @@
   font-weight: 700;
   letter-spacing: -0.02em;
   margin-top: 0.4rem;
+  color: var(--foreground);
 }
 .r-meta {
   font-family: var(--font-mono);
@@ -896,6 +925,13 @@
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+.r-title-link {
+  color: var(--foreground);
+  transition: color 0.2s;
+}
+.r-title-link:hover {
+  color: var(--primary);
+}
 /* Soft halo behind analysis content — same scrim motif as hero */
 .results-scrim {
   position: relative;
@@ -903,8 +939,9 @@
 .results-scrim::before {
   content: '';
   position: absolute;
-  inset: -4% -8%;
+  inset: -8% -12%;
   z-index: -1;
-  background: radial-gradient(50% 60% at 50% 35%, var(--background) 30%, transparent 75%);
+  background: radial-gradient(60% 70% at 50% 40%, var(--background) 55%, transparent 90%);
   pointer-events: none;
 }
+
