@@ -127,12 +127,8 @@
   * {
     @apply border-border;
   }
-  html {
-    scrollbar-gutter: stable;
-  }
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    overflow-x: hidden;
   }
 }
 
@@ -246,13 +242,14 @@
    ============================================================ */
 
 .landing-bar {
-  position: sticky;
+  position: fixed;
   top: 0;
+  inset-inline: 0;
   z-index: 50;
   height: 54px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 1rem;
   padding: 0 1.25rem;
   background: var(--bar-bg);
@@ -261,14 +258,7 @@
   border-bottom: 1px solid var(--border);
 }
 .landing-bar > .unit {
-  justify-self: start;
-}
-.landing-bar > .bar-nav,
-.landing-bar > .app-route {
-  justify-self: center;
-}
-.landing-bar > .bar-actions {
-  justify-self: end;
+  align-self: center;
 }
 .btn-demo {
   display: inline-flex;
