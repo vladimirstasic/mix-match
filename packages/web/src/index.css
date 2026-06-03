@@ -54,21 +54,21 @@
   --card-foreground: #0e140f;
   --popover: #f7faf6;
   --popover-foreground: #0e140f;
-  --primary: #0f7a3a;
+  --primary: #128a3e;
   --primary-foreground: #ffffff;
   --secondary: rgba(14, 20, 15, 0.06);
   --secondary-foreground: #0e140f;
   --muted: rgba(14, 20, 15, 0.04);
   --muted-foreground: rgba(14, 20, 15, 0.62);
-  --accent: #b8860b;
+  --accent: #c69210;
   --accent-foreground: #ffffff;
   --destructive: oklch(0.577 0.245 27.325);
   --destructive-foreground: #ffffff;
   --border: rgba(14, 20, 15, 0.16);
   --input: rgba(14, 20, 15, 0.16);
-  --ring: #0f7a3a;
+  --ring: #128a3e;
   --spotify: #1DB954;
-  --spotify-foreground: #ffffff;
+  --spotify-foreground: #0a0a0a;
   --grid: rgba(15, 122, 58, 0.05);
   --line-strong: rgba(14, 20, 15, 0.28);
   --signal-dim: rgba(31, 224, 72, 0.5);
@@ -77,8 +77,8 @@
   --glass-bg: rgba(247, 250, 246, 0.7);
   --glass-border: rgba(14, 20, 15, 0.08);
   --glass-hover: rgba(14, 20, 15, 0.04);
-  --chart-1: #0f7a3a;
-  --chart-2: #b8860b;
+  --chart-1: #128a3e;
+  --chart-2: #c69210;
   --chart-3: oklch(0.6 0.118 184.704);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
@@ -93,7 +93,7 @@
   --card-foreground: #dfeadd;
   --popover: #0a120c;
   --popover-foreground: #dfeadd;
-  --primary: #1fe048;
+  --primary: #1fc843;
   --primary-foreground: #0a0a0a;
   --secondary: rgba(223, 234, 221, 0.08);
   --secondary-foreground: #dfeadd;
@@ -105,9 +105,9 @@
   --destructive-foreground: oklch(0.637 0.237 25.331);
   --border: rgba(223, 234, 221, 0.14);
   --input: rgba(223, 234, 221, 0.14);
-  --ring: #1fe048;
+  --ring: #1fc843;
   --spotify: #1DB954;
-  --spotify-foreground: #ffffff;
+  --spotify-foreground: #0a0a0a;
   --grid: rgba(31, 224, 72, 0.05);
   --line-strong: rgba(223, 234, 221, 0.26);
   --signal-dim: rgba(31, 224, 72, 0.5);
@@ -116,7 +116,7 @@
   --glass-bg: rgba(10, 16, 12, 0.5);
   --glass-border: rgba(223, 234, 221, 0.08);
   --glass-hover: rgba(223, 234, 221, 0.04);
-  --chart-1: #1fe048;
+  --chart-1: #1fc843;
   --chart-2: #ffd21e;
   --chart-3: oklch(0.769 0.188 70.08);
   --chart-4: oklch(0.696 0.17 162.48);
@@ -685,6 +685,10 @@
 }
 .log-row.identified {
   border-left-color: var(--accent);
+}
+.log-row.bookmarked {
+  border-left-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 5%, var(--card));
 }
 .r-time {
   font-family: var(--font-mono);

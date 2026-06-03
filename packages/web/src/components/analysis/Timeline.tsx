@@ -40,12 +40,12 @@ interface Props {
   onShare: () => Promise<string | null>;
 }
 
-const LINK_LABELS: { key: keyof ExternalLinks; label: string; color: string }[] = [
-  { key: 'spotify', label: 'Spotify', color: 'text-green-400 hover:text-green-300' },
-  { key: 'appleMusic', label: 'Apple', color: 'text-pink-400 hover:text-pink-300' },
-  { key: 'beatport', label: 'Beatport', color: 'text-blue-400 hover:text-blue-300' },
-  { key: 'youtube', label: 'YouTube', color: 'text-red-400 hover:text-red-300' },
-  { key: 'deezer', label: 'Deezer', color: 'text-purple-400 hover:text-purple-300' },
+const LINK_LABELS: { key: keyof ExternalLinks; label: string }[] = [
+  { key: 'spotify', label: 'SPF' },
+  { key: 'appleMusic', label: 'AP' },
+  { key: 'beatport', label: 'BP' },
+  { key: 'youtube', label: 'YT' },
+  { key: 'deezer', label: 'DZ' },
 ];
 
 function StreamingLinks({
@@ -63,10 +63,12 @@ function StreamingLinks({
   if (available.length === 0) return null;
 
   const embeddable = new Set(['spotify', 'deezer', 'youtube']);
+  const baseChip =
+    'inline-flex items-center px-2 py-0.5 text-[10px] font-mono uppercase tracking-[0.08em] border border-border text-primary hover:border-primary transition-colors cursor-pointer';
 
   return (
     <span className="inline-flex items-center gap-1">
-      {available.map(({ key, label, color }) => {
+      {available.map(({ key, label }) => {
         if (embeddable.has(key) && links[key]) {
           const isExpanded = expandedService === key;
           return (
@@ -76,20 +78,14 @@ function StreamingLinks({
                 e.stopPropagation();
                 onToggleEmbed(segmentId, key);
               }}
-              className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ${color} ${isExpanded ? 'ring-1 ring-current/30 bg-current/10' : 'bg-muted/50 border border-glass-border hover:bg-accent'} transition-all cursor-pointer`}
+              className={`${baseChip} ${isExpanded ? 'bg-primary text-primary-foreground border-primary' : ''}`}
             >
               {label}
             </button>
           );
         }
         return (
-          <a
-            key={key}
-            href={links[key]}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`inline-flex items-center rounded-md px-2 py-0.5 text-[10px] font-medium ${color} bg-muted/50 border border-glass-border hover:bg-accent transition-all`}
-          >
+          <a key={key} href={links[key]} target="_blank" rel="noopener noreferrer" className={baseChip}>
             {label}
           </a>
         );
@@ -478,27 +474,27 @@ export function Timeline({
 
                     {seg.status === 'identified' && editingId !== seg.id && (
                       <>
-                        <div className="w-4 h-4 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-                          <Check className="w-2.5 h-2.5 text-green-400" />
+                        <div className="w-4 h-4 bg-primary/15 flex items-center justify-center shrink-0">
+                          <Check className="w-2.5 h-2.5 text-primary" />
                         </div>
                         <span className="font-medium text-sm flex-1 min-w-0 truncate">{seg.trackName}</span>
                         {isDuplicate(seg.acrid) && (
-                          <span className="text-[10px] bg-yellow-500/10 text-yellow-400 rounded-md px-1.5 py-0.5 shrink-0 border border-yellow-500/20">
+                          <span className="text-[10px] font-mono uppercase tracking-[0.08em] text-accent border border-accent/40 bg-accent/10 px-1.5 py-0.5 shrink-0">
                             x{trackCounts.get(seg.acrid!)}
                           </span>
                         )}
                         {seg.bpm && (
-                          <span className="text-[10px] text-muted-foreground bg-muted/50 border border-glass-border rounded-md px-1.5 py-0.5 shrink-0">
+                          <span className="text-[10px] font-mono uppercase tracking-[0.08em] text-muted-foreground border border-border px-1.5 py-0.5 shrink-0">
                             {seg.bpm} BPM
                           </span>
                         )}
                         {seg.genre && (
-                          <span className="text-[10px] text-muted-foreground bg-muted/50 border border-glass-border rounded-md px-1.5 py-0.5 shrink-0 hidden sm:inline">
+                          <span className="text-[10px] font-mono uppercase tracking-[0.08em] text-muted-foreground border border-border px-1.5 py-0.5 shrink-0 hidden sm:inline">
                             {seg.genre}
                           </span>
                         )}
                         {seg.musicalKey && (
-                          <span className="text-[10px] text-muted-foreground bg-muted/50 border border-glass-border rounded-md px-1.5 py-0.5 shrink-0 hidden sm:inline">
+                          <span className="text-[10px] font-mono uppercase tracking-[0.08em] text-muted-foreground border border-border px-1.5 py-0.5 shrink-0 hidden sm:inline">
                             {seg.musicalKey}
                           </span>
                         )}
@@ -549,22 +545,22 @@ export function Timeline({
                             }}
                           >
                             {copied === `share-${seg.id}` ? (
-                              <Check className="w-3 h-3 text-green-400" />
+                              <Check className="w-3 h-3 text-primary" />
                             ) : (
                               <Link2 className="w-3 h-3" />
                             )}
                           </Button>
                         )}
                         <button
-                          className={`p-1 rounded-lg transition-colors ${bookmarkedIds.has(seg.id) ? 'text-blue-400' : 'text-muted-foreground/40 hover:text-blue-400'}`}
+                          className={`p-1 transition-colors ${bookmarkedIds.has(seg.id) ? 'text-accent' : 'text-muted-foreground/40 hover:text-accent'}`}
                           onClick={e => handleToggleBookmark(e, seg.id)}
                         >
-                          <Bookmark className={`w-3 h-3 ${bookmarkedIds.has(seg.id) ? 'fill-blue-400' : ''}`} />
+                          <Bookmark className={`w-3 h-3 ${bookmarkedIds.has(seg.id) ? 'fill-current' : ''}`} />
                         </button>
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 w-6 p-0 text-green-400"
+                          className="h-6 w-6 p-0 text-primary"
                           onClick={e => {
                             e.stopPropagation();
                             voteSegment(seg.id, 1);
@@ -575,7 +571,7 @@ export function Timeline({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="h-6 w-6 p-0 text-red-400"
+                          className="h-6 w-6 p-0 text-destructive"
                           onClick={e => {
                             e.stopPropagation();
                             voteSegment(seg.id, -1);
