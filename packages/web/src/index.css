@@ -247,9 +247,9 @@
   inset-inline: 0;
   z-index: 50;
   height: 54px;
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
   align-items: center;
-  justify-content: space-between;
   gap: 1rem;
   padding: 0 1.25rem;
   background: var(--bar-bg);
@@ -257,16 +257,15 @@
   -webkit-backdrop-filter: blur(14px);
   border-bottom: 1px solid var(--border);
 }
-/* Truly center nav / app-route in the viewport so right-side action
-   widths can't drift it off. Demo gets away with plain space-between
-   because its flex children happen to be balanced; ours aren't. */
+.landing-bar > .unit {
+  justify-self: start;
+}
 .landing-bar > .bar-nav,
 .landing-bar > .app-route {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  transform: translate(-50%, -50%);
-  width: max-content;
+  justify-self: center;
+}
+.landing-bar > .bar-actions {
+  justify-self: end;
 }
 .btn-demo {
   display: inline-flex;
