@@ -127,9 +127,6 @@
   * {
     @apply border-border;
   }
-  html {
-    font-size: 19px;
-  }
   body {
     @apply bg-background text-foreground font-sans antialiased;
   }
