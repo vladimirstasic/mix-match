@@ -198,7 +198,7 @@ const MainApp = () => {
         <div className="min-h-screen text-foreground text-[16px]">
           <PageChrome variant={isIdle ? 'full' : 'none'} />
           <Header credits={credits} betaMode={betaMode} onLogoClick={goHome} appRoute={appRoute} />
-          <div className="mx-auto max-w-5xl px-6 pt-[80px] pb-8">
+          <div className="mx-auto max-w-5xl px-6 py-8">
             <main>
               {isIdle && view === VIEW.HOME && (
                 <HomeView
