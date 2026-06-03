@@ -1,5 +1,4 @@
 import { SignInButton } from '@clerk/clerk-react';
-import { Button } from '@/components/ui/button';
 import { PageChrome, ThemeToggle } from '../layout';
 
 const PIPELINE = [
@@ -123,9 +122,9 @@ export function LandingPage() {
             <button className="ctrl">SIGN IN</button>
           </SignInButton>
           <SignInButton mode="modal">
-            <Button size="sm" className="clip-bevel">
+            <button className="btn-demo" type="button">
               GET STARTED
-            </Button>
+            </button>
           </SignInButton>
         </div>
       </header>
@@ -168,9 +167,9 @@ export function LandingPage() {
             </p>
             <div className="hero-cta">
               <SignInButton mode="modal">
-                <Button size="lg" className="clip-bevel">
+                <button className="btn-demo btn-lg" type="button">
                   RUN A SCAN
-                </Button>
+                </button>
               </SignInButton>
               <SignInButton mode="modal">
                 <button className="ctrl ctrl-lg">OPEN THE CONSOLE →</button>
@@ -266,9 +265,11 @@ export function LandingPage() {
                   </ul>
                   <SignInButton mode="modal">
                     {p.featured ? (
-                      <Button className="clip-bevel w-full">{p.cta}</Button>
+                      <button className="btn-demo" type="button" style={{ width: '100%', justifyContent: 'center' }}>
+                        {p.cta}
+                      </button>
                     ) : (
-                      <button className="ctrl w-full" style={{ width: '100%', justifyContent: 'center' }}>
+                      <button className="ctrl" type="button" style={{ width: '100%', justifyContent: 'center' }}>
                         {p.cta}
                       </button>
                     )}
@@ -283,9 +284,9 @@ export function LandingPage() {
           <div className="wrap narrow center">
             <h2 className="head big">Your mix. Every track. Identified.</h2>
             <SignInButton mode="modal">
-              <Button size="lg" className="clip-bevel">
+              <button className="btn-demo btn-lg" type="button">
                 RUN YOUR FIRST SCAN
-              </Button>
+              </button>
             </SignInButton>
           </div>
         </section>
