@@ -1,5 +1,5 @@
 import { Route, Routes } from 'react-router-dom';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { SignedIn, SignedOut, useAuth } from '@clerk/clerk-react';
 
 import { useAnalysis } from './hooks/useAnalysis';
@@ -12,7 +12,9 @@ import { AccountPage } from './pages/AccountPage';
 
 import { Header, HomeView, PageChrome, ToastContainer, useToast } from './components/layout';
 
-import { ProgressBar, Timeline } from './components/analysis';
+import { ProgressBar } from './components/analysis';
+
+const Timeline = lazy(() => import('./components/analysis/Timeline').then(m => ({ default: m.Timeline })));
 
 import { MixCompare } from './components/dashboard';
 import { ManualTracklist } from './components/upload';
@@ -241,38 +243,42 @@ const MainApp = () => {
 
                   {phase === PHASE.PROCESSING && segments.length > 0 && (
                     <div className="mt-6">
-                      <Timeline
-                        segments={segments}
-                        chunksAvailable={false}
-                        analysisId={analysisId || ''}
-                        waveformData={null}
-                        onRetrySegment={() => {}}
-                        onRetryAll={() => {}}
-                        onReset={() => {}}
-                        onEditSegment={() => {}}
-                        onShare={async () => null}
-                      />
+                      <Suspense fallback={null}>
+                        <Timeline
+                          segments={segments}
+                          chunksAvailable={false}
+                          analysisId={analysisId || ''}
+                          waveformData={null}
+                          onRetrySegment={() => {}}
+                          onRetryAll={() => {}}
+                          onReset={() => {}}
+                          onEditSegment={() => {}}
+                          onShare={async () => null}
+                        />
+                      </Suspense>
                     </div>
                   )}
                 </>
               )}
 
               {phase === PHASE.COMPLETED && segments.length > 0 && (
-                <Timeline
-                  segments={segments}
-                  chunksAvailable={chunksAvailable}
-                  analysisId={analysisId!}
-                  filename={filename}
-                  sourceUrl={sourceUrl}
-                  waveformData={waveformData}
-                  slug={slug}
-                  isPublic={isPublic}
-                  onRetrySegment={retrySegment}
-                  onRetryAll={retryAll}
-                  onReset={reset}
-                  onEditSegment={editSegment}
-                  onShare={shareAnalysis}
-                />
+                <Suspense fallback={null}>
+                  <Timeline
+                    segments={segments}
+                    chunksAvailable={chunksAvailable}
+                    analysisId={analysisId!}
+                    filename={filename}
+                    sourceUrl={sourceUrl}
+                    waveformData={waveformData}
+                    slug={slug}
+                    isPublic={isPublic}
+                    onRetrySegment={retrySegment}
+                    onRetryAll={retryAll}
+                    onReset={reset}
+                    onEditSegment={editSegment}
+                    onShare={shareAnalysis}
+                  />
+                </Suspense>
               )}
 
               {phase === PHASE.FAILED && (

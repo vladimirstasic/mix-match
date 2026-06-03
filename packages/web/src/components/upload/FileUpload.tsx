@@ -113,43 +113,45 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
       </div>
 
       <div className="p-4 space-y-3">
-        {tab === 'file' ? (
-          <div
-            className={`border border-dashed py-10 px-4 text-center cursor-pointer transition-colors ${
-              dragOver ? 'border-primary' : 'border-border hover:border-primary/60'
-            }`}
-            onDragOver={e => {
-              e.preventDefault();
-              setDragOver(true);
-            }}
-            onDragLeave={() => setDragOver(false)}
-            onDrop={onDrop}
-            onClick={() => inputRef.current?.click()}
-          >
+        <div className="min-h-[7rem] flex items-stretch">
+          {tab === 'file' ? (
+            <div
+              className={`flex-1 border border-dashed flex items-center justify-center px-4 text-center cursor-pointer transition-colors ${
+                dragOver ? 'border-primary' : 'border-border hover:border-primary/60'
+              }`}
+              onDragOver={e => {
+                e.preventDefault();
+                setDragOver(true);
+              }}
+              onDragLeave={() => setDragOver(false)}
+              onDrop={onDrop}
+              onClick={() => inputRef.current?.click()}
+            >
+              <input
+                ref={inputRef}
+                type="file"
+                accept=".mp3,.wav,.flac,.m4a"
+                onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
+                hidden
+              />
+              <span className="label-mono-strong">
+                <span className="text-primary">▲ </span>
+                {pendingFile ? pendingFile.name : 'DROP MP3 · WAV · FLAC · M4A — or click · up to 300MB'}
+              </span>
+            </div>
+          ) : (
             <input
-              ref={inputRef}
-              type="file"
-              accept=".mp3,.wav,.flac,.m4a"
-              onChange={e => e.target.files?.[0] && handleFile(e.target.files[0])}
-              hidden
+              type="url"
+              value={urlInput}
+              onChange={e => setUrlInput(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') run();
+              }}
+              placeholder="https://soundcloud.com/... or mixcloud.com/..."
+              className="flex-1 w-full px-4 border border-border bg-transparent font-mono text-sm focus:outline-none focus:border-primary"
             />
-            <span className="label-mono-strong">
-              <span className="text-primary">▲ </span>
-              {pendingFile ? pendingFile.name : 'DROP MP3 · WAV · FLAC · M4A — or click · up to 300MB'}
-            </span>
-          </div>
-        ) : (
-          <input
-            type="url"
-            value={urlInput}
-            onChange={e => setUrlInput(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') run();
-            }}
-            placeholder="https://soundcloud.com/... or mixcloud.com/..."
-            className="w-full px-4 py-3 border border-border bg-transparent font-mono text-sm focus:outline-none focus:border-primary"
-          />
-        )}
+          )}
+        </div>
 
         <div className="flex items-center gap-2">
           <span className="label-mono mr-1">MODE</span>

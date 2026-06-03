@@ -1,4 +1,3 @@
-export { Timeline } from './Timeline';
 export { ProgressBar } from './ProgressBar';
 export { Waveform } from './Waveform';
 export { Recommendations } from './Recommendations';

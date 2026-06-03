@@ -324,7 +324,7 @@ export function Timeline({
   const isDuplicate = (acrid: string | null) => (acrid ? (trackCounts.get(acrid) || 0) > 1 : false);
 
   return (
-    <div className="space-y-6">
+    <div className="results-scrim space-y-6">
       {filename && (
         <div className="space-y-3">
           {sourceUrl ? (

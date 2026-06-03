@@ -892,3 +892,15 @@
   gap: 0.5rem;
   flex-wrap: wrap;
 }
+/* Soft halo behind analysis content — same scrim motif as hero */
+.results-scrim {
+  position: relative;
+}
+.results-scrim::before {
+  content: '';
+  position: absolute;
+  inset: -4% -8%;
+  z-index: -1;
+  background: radial-gradient(50% 60% at 50% 35%, var(--background) 30%, transparent 75%);
+  pointer-events: none;
+}
