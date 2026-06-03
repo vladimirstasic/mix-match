@@ -45,7 +45,7 @@ export const HomeView = ({ credits, onSelectAnalysis, onFileSelected, onUrlSubmi
           <span className="corner tr" aria-hidden />
           <span className="corner bl" aria-hidden />
           <span className="corner br" aria-hidden />
-          <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-4 p-6">
+          <div className="grid grid-cols-1 gap-4 p-6">
             {credits === 0 ? (
               <div className="border border-border bg-card text-center py-12 px-4">
                 <p className="font-mono uppercase tracking-[0.1em] text-sm">No credits remaining</p>

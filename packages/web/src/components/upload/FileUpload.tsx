@@ -87,7 +87,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
         <span className="label-mono">SRC: {tab === 'file' ? 'FILE' : 'URL'}</span>
       </div>
 
-      <div className="grid grid-cols-2">
+      <div className="grid grid-cols-2 border-b border-border">
         <button
           className={`px-4 py-3 font-mono uppercase tracking-[0.08em] text-xs border-r border-border transition-colors ${
             tab === 'file' ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'

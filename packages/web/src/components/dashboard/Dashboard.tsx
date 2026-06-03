@@ -52,12 +52,7 @@ export function Dashboard({ onSelectAnalysis }: Props) {
   };
 
   if (loading) {
-    return (
-      <div className="rl-empty">
-        <Loader2 className="w-3 h-3 animate-spin inline-block mr-2" />
-        LOADING…
-      </div>
-    );
+    return <div className="rl-empty">LOADING…</div>;
   }
 
   if (analyses.length === 0) {
