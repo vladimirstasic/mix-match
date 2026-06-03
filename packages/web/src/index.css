@@ -864,3 +864,31 @@
   color: var(--ink-faint);
   text-align: center;
 }
+
+/* ---- results head + log (analysis page, ported from demo) ---- */
+.results-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+.r-title {
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  margin-top: 0.4rem;
+}
+.r-meta {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  margin-top: 0.4rem;
+}
+.r-actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}

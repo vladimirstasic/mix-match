@@ -332,40 +332,45 @@ export function Timeline({
               href={sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-2xl font-bold truncate block hover:text-primary transition-colors"
+              className="block hover:text-primary transition-colors"
             >
-              {filename}
+              <div className="label-comment">SCAN COMPLETE</div>
+              <h1 className="r-title truncate">{filename}</h1>
             </a>
           ) : (
-            <h1 className="text-2xl font-bold truncate">{filename}</h1>
+            <>
+              <div className="label-comment">SCAN COMPLETE</div>
+              <h1 className="r-title truncate">{filename}</h1>
+            </>
           )}
           {sourceUrl && <SourceEmbed url={sourceUrl} />}
         </div>
       )}
 
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <h2 className="text-xl font-semibold">
-          <span className="gradient-text">{identified.length}</span> track{identified.length !== 1 ? 's' : ''} found
+      <div className="results-head">
+        <div>
+          <p className="r-meta">
+            {identified.length} / {segments.length} identified
+            {totalDuration > 0 && ` · ${Math.round((identified.length / segments.length) * 100)}% coverage`}
+            {unknown.length > 0 && ` · ${unknown.length} unknown`}
+          </p>
+        </div>
+        <div className="r-actions">
           {unknown.length > 0 && (
-            <span className="text-muted-foreground font-normal text-sm ml-2">({unknown.length} unidentified)</span>
-          )}
-        </h2>
-        <div className="flex gap-2">
-          {unknown.length > 0 && (
-            <Button variant="outline" size="sm" onClick={() => setHideUnknown(!hideUnknown)}>
-              {hideUnknown ? <Eye className="w-3.5 h-3.5 mr-1" /> : <EyeOff className="w-3.5 h-3.5 mr-1" />}
-              {hideUnknown ? 'Show unknown' : 'Hide unknown'}
-            </Button>
+            <button type="button" className="ctrl" onClick={() => setHideUnknown(!hideUnknown)}>
+              {hideUnknown ? <Eye className="w-3 h-3" /> : <EyeOff className="w-3 h-3" />}
+              {hideUnknown ? 'SHOW UNKNOWN' : 'HIDE UNKNOWN'}
+            </button>
           )}
           {unknown.length > 0 && chunksAvailable && (
-            <Button variant="outline" size="sm" onClick={onRetryAll} disabled={retrying.length > 0}>
-              <RotateCw className="w-3.5 h-3.5 mr-1" />
-              Retry all
-            </Button>
+            <button type="button" className="ctrl" onClick={onRetryAll} disabled={retrying.length > 0}>
+              <RotateCw className="w-3 h-3" />
+              RETRY ALL
+            </button>
           )}
-          <Button variant="outline" size="sm" onClick={onReset}>
-            New
-          </Button>
+          <button type="button" className="btn-demo" onClick={onReset}>
+            NEW SCAN
+          </button>
         </div>
       </div>
 
@@ -412,268 +417,272 @@ export function Timeline({
         </div>
       )}
 
-      <div className="space-y-2">
-        {visibleSegments.map(seg => (
-          <React.Fragment key={seg.id}>
-            <Card
-              ref={(el: HTMLDivElement | null) => {
-                if (el) segmentRefs.current.set(seg.id, el);
-                else segmentRefs.current.delete(seg.id);
-              }}
-              className={`border-l-3 transition-all duration-200 ${
-                seg.status === 'identified'
-                  ? bookmarkedIds.has(seg.id)
-                    ? 'border-l-green-400 ring-1 ring-green-500/20 bg-green-500/[0.03]'
-                    : 'border-l-green-400/70'
-                  : seg.status === 'retrying'
-                    ? 'border-l-primary'
-                    : 'border-l-muted-foreground/10'
-              }`}
-            >
-              <CardContent className="py-3 space-y-2">
-                <div className="flex items-center gap-3">
-                  <span className="font-mono text-[11px] text-muted-foreground whitespace-nowrap min-w-[100px] sm:min-w-[110px]">
-                    {formatTime(seg.startSec)} — {formatTime(seg.endSec)}
-                  </span>
+      <div className="log">
+        <div className="log-top">
+          <span>RECOGNITION_LOG</span>
+          <span>
+            {identified.length} / {segments.length}
+            {segments.length > 0 && ` · ${Math.round((identified.length / segments.length) * 100)}%`}
+          </span>
+        </div>
+        <div className="log-body space-y-2 p-2">
+          {visibleSegments.map(seg => (
+            <React.Fragment key={seg.id}>
+              <div
+                ref={(el: HTMLDivElement | null) => {
+                  if (el) segmentRefs.current.set(seg.id, el);
+                  else segmentRefs.current.delete(seg.id);
+                }}
+                className={`log-row ${
+                  seg.status === 'identified' ? 'identified' : seg.status === 'retrying' ? 'retrying' : 'unknown'
+                } ${bookmarkedIds.has(seg.id) ? 'bookmarked' : ''}`}
+                style={{ display: 'block' }}
+              >
+                <div className="py-1 space-y-2">
+                  <div className="flex items-center gap-3">
+                    <span className="font-mono text-[11px] text-muted-foreground whitespace-nowrap min-w-[100px] sm:min-w-[110px]">
+                      {formatTime(seg.startSec)} — {formatTime(seg.endSec)}
+                    </span>
 
-                  {seg.status === 'identified' && editingId === seg.id && (
-                    <div className="flex items-center gap-2 flex-1">
-                      <input
-                        className="flex-1 bg-glass-bg border border-border rounded-lg outline-none text-sm font-medium px-2 py-1 focus:ring-2 focus:ring-primary/50"
-                        value={editValue}
-                        onChange={e => setEditValue(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') {
+                    {seg.status === 'identified' && editingId === seg.id && (
+                      <div className="flex items-center gap-2 flex-1">
+                        <input
+                          className="flex-1 bg-glass-bg border border-border rounded-lg outline-none text-sm font-medium px-2 py-1 focus:ring-2 focus:ring-primary/50"
+                          value={editValue}
+                          onChange={e => setEditValue(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              onEditSegment(seg.id, editValue);
+                              setEditingId(null);
+                            } else if (e.key === 'Escape') {
+                              setEditingId(null);
+                            }
+                          }}
+                          autoFocus
+                        />
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
                             onEditSegment(seg.id, editValue);
                             setEditingId(null);
-                          } else if (e.key === 'Escape') {
-                            setEditingId(null);
-                          }
-                        }}
-                        autoFocus
-                      />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          onEditSegment(seg.id, editValue);
-                          setEditingId(null);
-                        }}
-                      >
-                        Save
-                      </Button>
-                      <Button variant="ghost" size="sm" onClick={() => setEditingId(null)}>
-                        Cancel
-                      </Button>
-                    </div>
-                  )}
+                          }}
+                        >
+                          Save
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={() => setEditingId(null)}>
+                          Cancel
+                        </Button>
+                      </div>
+                    )}
+
+                    {seg.status === 'identified' && editingId !== seg.id && (
+                      <>
+                        <div className="w-4 h-4 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
+                          <Check className="w-2.5 h-2.5 text-green-400" />
+                        </div>
+                        <span className="font-medium text-sm flex-1 min-w-0 truncate">{seg.trackName}</span>
+                        {isDuplicate(seg.acrid) && (
+                          <span className="text-[10px] bg-yellow-500/10 text-yellow-400 rounded-md px-1.5 py-0.5 shrink-0 border border-yellow-500/20">
+                            x{trackCounts.get(seg.acrid!)}
+                          </span>
+                        )}
+                        {seg.bpm && (
+                          <span className="text-[10px] text-muted-foreground bg-muted/50 border border-glass-border rounded-md px-1.5 py-0.5 shrink-0">
+                            {seg.bpm} BPM
+                          </span>
+                        )}
+                        {seg.genre && (
+                          <span className="text-[10px] text-muted-foreground bg-muted/50 border border-glass-border rounded-md px-1.5 py-0.5 shrink-0 hidden sm:inline">
+                            {seg.genre}
+                          </span>
+                        )}
+                        {seg.musicalKey && (
+                          <span className="text-[10px] text-muted-foreground bg-muted/50 border border-glass-border rounded-md px-1.5 py-0.5 shrink-0 hidden sm:inline">
+                            {seg.musicalKey}
+                          </span>
+                        )}
+                      </>
+                    )}
+                  </div>
 
                   {seg.status === 'identified' && editingId !== seg.id && (
-                    <>
-                      <div className="w-4 h-4 rounded-full bg-green-500/10 flex items-center justify-center shrink-0">
-                        <Check className="w-2.5 h-2.5 text-green-400" />
-                      </div>
-                      <span className="font-medium text-sm flex-1 min-w-0 truncate">{seg.trackName}</span>
-                      {isDuplicate(seg.acrid) && (
-                        <span className="text-[10px] bg-yellow-500/10 text-yellow-400 rounded-md px-1.5 py-0.5 shrink-0 border border-yellow-500/20">
-                          x{trackCounts.get(seg.acrid!)}
-                        </span>
+                    <div className="flex items-center gap-1.5 ml-[100px] sm:ml-[110px] flex-wrap">
+                      {seg.externalLinks && (
+                        <StreamingLinks
+                          links={seg.externalLinks}
+                          segmentId={seg.id}
+                          expandedService={expandedEmbed?.segId === seg.id ? expandedEmbed.service : null}
+                          onToggleEmbed={(id, svc) =>
+                            setExpandedEmbed(
+                              expandedEmbed?.segId === id && expandedEmbed.service === svc
+                                ? null
+                                : { segId: id, service: svc },
+                            )
+                          }
+                        />
                       )}
-                      {seg.bpm && (
-                        <span className="text-[10px] text-muted-foreground bg-muted/50 border border-glass-border rounded-md px-1.5 py-0.5 shrink-0">
-                          {seg.bpm} BPM
-                        </span>
-                      )}
-                      {seg.genre && (
-                        <span className="text-[10px] text-muted-foreground bg-muted/50 border border-glass-border rounded-md px-1.5 py-0.5 shrink-0 hidden sm:inline">
-                          {seg.genre}
-                        </span>
-                      )}
-                      {seg.musicalKey && (
-                        <span className="text-[10px] text-muted-foreground bg-muted/50 border border-glass-border rounded-md px-1.5 py-0.5 shrink-0 hidden sm:inline">
-                          {seg.musicalKey}
-                        </span>
-                      )}
-                    </>
-                  )}
-                </div>
-
-                {seg.status === 'identified' && editingId !== seg.id && (
-                  <div className="flex items-center gap-1.5 ml-[100px] sm:ml-[110px] flex-wrap">
-                    {seg.externalLinks && (
-                      <StreamingLinks
-                        links={seg.externalLinks}
-                        segmentId={seg.id}
-                        expandedService={expandedEmbed?.segId === seg.id ? expandedEmbed.service : null}
-                        onToggleEmbed={(id, svc) =>
-                          setExpandedEmbed(
-                            expandedEmbed?.segId === id && expandedEmbed.service === svc
-                              ? null
-                              : { segId: id, service: svc },
-                          )
-                        }
-                      />
-                    )}
-                    <div className="flex items-center gap-0.5 ml-auto opacity-60 hover:opacity-100 transition-opacity">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0"
-                        onClick={() => {
-                          setEditingId(seg.id);
-                          setEditValue(seg.trackName ?? '');
-                        }}
-                      >
-                        <Pencil className="w-3 h-3" />
-                      </Button>
-                      {shareUrl && (
+                      <div className="flex items-center gap-0.5 ml-auto opacity-60 hover:opacity-100 transition-opacity">
                         <Button
                           variant="ghost"
                           size="sm"
                           className="h-6 w-6 p-0"
-                          onClick={e => {
-                            e.stopPropagation();
-                            navigator.clipboard.writeText(
-                              `${seg.trackName} @ ${formatTime(seg.startSec)} — ${shareUrl}#t=${seg.startSec}`,
-                            );
-                            setCopied(`share-${seg.id}`);
-                            setTimeout(() => setCopied(null), 2000);
+                          onClick={() => {
+                            setEditingId(seg.id);
+                            setEditValue(seg.trackName ?? '');
                           }}
                         >
-                          {copied === `share-${seg.id}` ? (
-                            <Check className="w-3 h-3 text-green-400" />
-                          ) : (
-                            <Link2 className="w-3 h-3" />
-                          )}
+                          <Pencil className="w-3 h-3" />
                         </Button>
-                      )}
-                      <button
-                        className={`p-1 rounded-lg transition-colors ${bookmarkedIds.has(seg.id) ? 'text-blue-400' : 'text-muted-foreground/40 hover:text-blue-400'}`}
-                        onClick={e => handleToggleBookmark(e, seg.id)}
-                      >
-                        <Bookmark className={`w-3 h-3 ${bookmarkedIds.has(seg.id) ? 'fill-blue-400' : ''}`} />
-                      </button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0 text-green-400"
-                        onClick={e => {
-                          e.stopPropagation();
-                          voteSegment(seg.id, 1);
-                        }}
-                      >
-                        <ThumbsUp className="w-3 h-3" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-6 w-6 p-0 text-red-400"
-                        onClick={e => {
-                          e.stopPropagation();
-                          voteSegment(seg.id, -1);
-                        }}
-                      >
-                        <ThumbsDown className="w-3 h-3" />
-                      </Button>
-                    </div>
-                  </div>
-                )}
-
-                {seg.status === 'unknown' && (
-                  <div className="flex items-center gap-3">
-                    <HelpCircle className="w-4 h-4 text-muted-foreground/50 shrink-0" />
-                    <span className="text-muted-foreground/70 italic text-sm">Unknown section</span>
-                    <div className="ml-auto">
-                      {chunksAvailable ? (
-                        <Button variant="ghost" size="sm" onClick={() => onRetrySegment(seg.id)}>
-                          <RotateCw className="w-3 h-3 mr-1" />
-                          Retry
+                        {shareUrl && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-6 w-6 p-0"
+                            onClick={e => {
+                              e.stopPropagation();
+                              navigator.clipboard.writeText(
+                                `${seg.trackName} @ ${formatTime(seg.startSec)} — ${shareUrl}#t=${seg.startSec}`,
+                              );
+                              setCopied(`share-${seg.id}`);
+                              setTimeout(() => setCopied(null), 2000);
+                            }}
+                          >
+                            {copied === `share-${seg.id}` ? (
+                              <Check className="w-3 h-3 text-green-400" />
+                            ) : (
+                              <Link2 className="w-3 h-3" />
+                            )}
+                          </Button>
+                        )}
+                        <button
+                          className={`p-1 rounded-lg transition-colors ${bookmarkedIds.has(seg.id) ? 'text-blue-400' : 'text-muted-foreground/40 hover:text-blue-400'}`}
+                          onClick={e => handleToggleBookmark(e, seg.id)}
+                        >
+                          <Bookmark className={`w-3 h-3 ${bookmarkedIds.has(seg.id) ? 'fill-blue-400' : ''}`} />
+                        </button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-green-400"
+                          onClick={e => {
+                            e.stopPropagation();
+                            voteSegment(seg.id, 1);
+                          }}
+                        >
+                          <ThumbsUp className="w-3 h-3" />
                         </Button>
-                      ) : (
-                        <span className="text-xs text-muted-foreground/50">Chunks expired</span>
-                      )}
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-6 w-6 p-0 text-red-400"
+                          onClick={e => {
+                            e.stopPropagation();
+                            voteSegment(seg.id, -1);
+                          }}
+                        >
+                          <ThumbsDown className="w-3 h-3" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                )}
-
-                {seg.status === 'retrying' && (
-                  <div className="flex items-center gap-3">
-                    <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" />
-                    <span className="text-muted-foreground italic text-sm">Retrying...</span>
-                  </div>
-                )}
-
-                {seg.attempts > 1 && (
-                  <span className="text-[10px] text-muted-foreground/50 ml-auto">attempt {seg.attempts}</span>
-                )}
-              </CardContent>
-              {expandedEmbed?.segId === seg.id && seg.externalLinks && (
-                <div className="px-4 pb-4">
-                  {expandedEmbed.service === 'spotify' && seg.externalLinks.spotify && (
-                    <iframe
-                      src={getSpotifyEmbedUrl(seg.externalLinks.spotify) || ''}
-                      width="100%"
-                      height="152"
-                      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                      loading="lazy"
-                      className="rounded-xl border border-border/50"
-                      style={{ border: 'none' }}
-                    />
                   )}
-                  {expandedEmbed.service === 'youtube' && seg.externalLinks.youtube && (
-                    <iframe
-                      src={getYoutubeEmbedUrl(seg.externalLinks.youtube) || ''}
-                      width="100%"
-                      height="200"
-                      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                      loading="lazy"
-                      className="rounded-xl border border-border/50"
-                      style={{ border: 'none' }}
-                    />
+
+                  {seg.status === 'unknown' && (
+                    <div className="flex items-center gap-3">
+                      <HelpCircle className="w-4 h-4 text-muted-foreground/50 shrink-0" />
+                      <span className="text-muted-foreground/70 italic text-sm">Unknown section</span>
+                      <div className="ml-auto">
+                        {chunksAvailable ? (
+                          <Button variant="ghost" size="sm" onClick={() => onRetrySegment(seg.id)}>
+                            <RotateCw className="w-3 h-3 mr-1" />
+                            Retry
+                          </Button>
+                        ) : (
+                          <span className="text-xs text-muted-foreground/50">Chunks expired</span>
+                        )}
+                      </div>
+                    </div>
                   )}
-                  {expandedEmbed.service === 'deezer' && seg.externalLinks.deezer && (
-                    <iframe
-                      src={getDeezerEmbedUrl(seg.externalLinks.deezer) || ''}
-                      width="100%"
-                      height="130"
-                      allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                      loading="lazy"
-                      className="rounded-xl border border-border/50"
-                      style={{ border: 'none' }}
-                    />
+
+                  {seg.status === 'retrying' && (
+                    <div className="flex items-center gap-3">
+                      <Loader2 className="w-4 h-4 text-primary animate-spin shrink-0" />
+                      <span className="text-muted-foreground italic text-sm">Retrying...</span>
+                    </div>
+                  )}
+
+                  {seg.attempts > 1 && (
+                    <span className="text-[10px] text-muted-foreground/50 ml-auto">attempt {seg.attempts}</span>
                   )}
                 </div>
-              )}
-            </Card>
-          </React.Fragment>
-        ))}
+                {expandedEmbed?.segId === seg.id && seg.externalLinks && (
+                  <div className="px-4 pb-4">
+                    {expandedEmbed.service === 'spotify' && seg.externalLinks.spotify && (
+                      <iframe
+                        src={getSpotifyEmbedUrl(seg.externalLinks.spotify) || ''}
+                        width="100%"
+                        height="152"
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                        loading="lazy"
+                        className="rounded-xl border border-border/50"
+                        style={{ border: 'none' }}
+                      />
+                    )}
+                    {expandedEmbed.service === 'youtube' && seg.externalLinks.youtube && (
+                      <iframe
+                        src={getYoutubeEmbedUrl(seg.externalLinks.youtube) || ''}
+                        width="100%"
+                        height="200"
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                        loading="lazy"
+                        className="rounded-xl border border-border/50"
+                        style={{ border: 'none' }}
+                      />
+                    )}
+                    {expandedEmbed.service === 'deezer' && seg.externalLinks.deezer && (
+                      <iframe
+                        src={getDeezerEmbedUrl(seg.externalLinks.deezer) || ''}
+                        width="100%"
+                        height="130"
+                        allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                        loading="lazy"
+                        className="rounded-xl border border-border/50"
+                        style={{ border: 'none' }}
+                      />
+                    )}
+                  </div>
+                )}
+              </div>
+            </React.Fragment>
+          ))}
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 pt-5 border-t border-border/50">
-        <span className="text-xs text-muted-foreground uppercase tracking-wider">Export</span>
+        <span className="label-mono">EXPORT</span>
         {(['text', 'mixcloud', 'soundcloud', 'youtube', 'markdown'] as const).map(fmt => (
-          <Button key={fmt} variant="outline" size="sm" onClick={() => openExport(fmt)}>
+          <button key={fmt} type="button" className="ctrl" onClick={() => openExport(fmt)}>
             {fmt === 'text'
-              ? 'Text'
+              ? 'TEXT'
               : fmt === 'mixcloud'
-                ? 'Mixcloud'
+                ? 'MIXCLOUD'
                 : fmt === 'soundcloud'
-                  ? 'SoundCloud'
+                  ? 'SOUNDCLOUD'
                   : fmt === 'youtube'
-                    ? 'YouTube'
-                    : 'Markdown'}
-          </Button>
+                    ? 'YOUTUBE'
+                    : 'MARKDOWN'}
+          </button>
         ))}
-        <Button variant="outline" size="sm" onClick={exportAsImage}>
-          Image
-        </Button>
+        <button type="button" className="ctrl" onClick={exportAsImage}>
+          IMAGE
+        </button>
         {segments.some(
           s => s.status === 'identified' && s.externalLinks && (s.externalLinks as Record<string, string>).spotify,
         ) && (
-          <Button
-            variant="outline"
-            size="sm"
-            className="text-green-400 border-green-500/20 hover:bg-green-500/10"
+          <button
+            type="button"
+            className="ctrl"
+            style={{ color: 'var(--spotify)', borderColor: 'var(--spotify)' }}
             onClick={() => {
               const links = segments
                 .filter(
@@ -687,19 +696,19 @@ export function Timeline({
               setTimeout(() => setCopied(null), 2000);
             }}
           >
-            {copied === 'spotify' ? 'Copied!' : 'Spotify Links'}
-          </Button>
+            {copied === 'spotify' ? 'COPIED!' : 'SPOTIFY LINKS'}
+          </button>
         )}
         {segments.some(
           s => s.status === 'identified' && s.externalLinks && (s.externalLinks as Record<string, string>).spotify,
         ) && (
           <Button variant="spotify" size="sm" onClick={() => setShowSpotifyModal(true)}>
-            Spotify Playlist
+            SPOTIFY PLAYLIST
           </Button>
         )}
-        <Button
-          variant="outline"
-          size="sm"
+        <button
+          type="button"
+          className="ctrl"
           disabled={sharing || !!shareUrl}
           onClick={async () => {
             setSharing(true);
@@ -711,9 +720,9 @@ export function Timeline({
             }
           }}
         >
-          <Share2 className="w-3.5 h-3.5 mr-1" />
-          {sharing ? 'Sharing...' : 'Share'}
-        </Button>
+          <Share2 className="w-3 h-3" />
+          {sharing ? 'SHARING…' : 'SHARE'}
+        </button>
       </div>
 
       {shareUrl && (
