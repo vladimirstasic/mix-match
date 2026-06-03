@@ -17,18 +17,44 @@ import { ProgressBar } from './components/analysis';
 const Timeline = lazy(() => import('./components/analysis/Timeline').then(m => ({ default: m.Timeline })));
 
 const AnalysisLoading = () => (
-  <div className="results-scrim space-y-4">
-    <div className="label-comment">LOADING ANALYSIS…</div>
+  <div className="results-scrim space-y-6 animate-pulse">
+    <div className="space-y-3">
+      <div className="label-comment">SCAN COMPLETE</div>
+      <div className="h-7 bg-muted/60 w-2/3 max-w-md" />
+    </div>
+
+    <div className="flex items-start justify-between gap-4 flex-wrap">
+      <div className="h-3 bg-muted/50 w-64" />
+      <div className="flex gap-2">
+        <div className="h-8 w-28 bg-muted/40" />
+        <div className="h-8 w-24 bg-muted/40" />
+      </div>
+    </div>
+
     <div className="log">
       <div className="log-top">
         <span>RECOGNITION_LOG</span>
         <span>… / …</span>
       </div>
       <div className="log-body p-2 space-y-2">
-        {[1, 2, 3, 4, 5].map(i => (
-          <div key={i} className="log-row" style={{ display: 'block', height: '3.5rem', opacity: 0.5 - i * 0.05 }} />
+        {[1, 2, 3, 4, 5, 6].map(i => (
+          <div
+            key={i}
+            className="log-row identified"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', height: '3rem' }}
+          >
+            <div className="bg-muted/50 h-3 w-24 ml-1" />
+            <div className="bg-muted/40 h-3 flex-1 max-w-md" />
+          </div>
         ))}
       </div>
+    </div>
+
+    <div className="flex flex-wrap items-center gap-2 pt-5 border-t border-border/50">
+      <div className="h-3 w-16 bg-muted/50" />
+      {[1, 2, 3, 4, 5].map(i => (
+        <div key={i} className="h-7 w-20 bg-muted/40" />
+      ))}
     </div>
   </div>
 );
@@ -215,7 +241,7 @@ const MainApp = () => {
 
       <SignedIn>
         <div className="min-h-screen text-foreground text-[16px]">
-          <PageChrome variant={isIdle ? 'full' : 'none'} />
+          <PageChrome variant={isIdle || phase === PHASE.LOADING ? 'full' : 'none'} />
           <Header credits={credits} betaMode={betaMode} onLogoClick={goHome} appRoute={appRoute} />
           <div className="mx-auto max-w-5xl px-6 pt-[80px] pb-8">
             <main>
