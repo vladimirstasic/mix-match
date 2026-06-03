@@ -20,14 +20,14 @@ const AnalysisLoading = () => (
   <div className="results-scrim space-y-6 animate-pulse">
     <div className="space-y-3">
       <div className="label-comment">SCAN COMPLETE</div>
-      <div className="h-7 bg-muted/60 w-2/3 max-w-md" />
+      <div className="h-7 bg-foreground/10 w-2/3 max-w-md" />
     </div>
 
     <div className="flex items-start justify-between gap-4 flex-wrap">
-      <div className="h-3 bg-muted/50 w-64" />
+      <div className="h-3 bg-foreground/10 w-64" />
       <div className="flex gap-2">
-        <div className="h-8 w-28 bg-muted/40" />
-        <div className="h-8 w-24 bg-muted/40" />
+        <div className="h-8 w-28 bg-foreground/10" />
+        <div className="h-8 w-24 bg-foreground/10" />
       </div>
     </div>
 
@@ -43,17 +43,17 @@ const AnalysisLoading = () => (
             className="log-row identified"
             style={{ display: 'flex', alignItems: 'center', gap: '0.9rem', height: '3rem' }}
           >
-            <div className="bg-muted/50 h-3 w-24 ml-1" />
-            <div className="bg-muted/40 h-3 flex-1 max-w-md" />
+            <div className="bg-foreground/15 h-3 w-24 ml-1" />
+            <div className="bg-foreground/10 h-3 flex-1 max-w-md" />
           </div>
         ))}
       </div>
     </div>
 
     <div className="flex flex-wrap items-center gap-2 pt-5 border-t border-border/50">
-      <div className="h-3 w-16 bg-muted/50" />
+      <div className="h-3 w-16 bg-foreground/10" />
       {[1, 2, 3, 4, 5].map(i => (
-        <div key={i} className="h-7 w-20 bg-muted/40" />
+        <div key={i} className="h-7 w-20 bg-foreground/10" />
       ))}
     </div>
   </div>
