@@ -3,7 +3,6 @@ import type { AnalysisMode } from '@mix-match/shared';
 import { Dashboard, Analytics, Feed } from '../dashboard';
 import { FileUpload } from '../upload';
 import { ProfileSettings } from '../profile';
-import { Home, Rss, User } from 'lucide-react';
 
 type Tab = 'home' | 'feed' | 'profile';
 
@@ -17,47 +16,51 @@ interface HomeViewProps {
 export const HomeView = ({ credits, onSelectAnalysis, onFileSelected, onUrlSubmitted }: HomeViewProps) => {
   const [tab, setTab] = useState<Tab>('home');
 
+  const TABS: { id: Tab; label: string }[] = [
+    { id: 'home', label: 'Home' },
+    { id: 'feed', label: 'Feed' },
+    { id: 'profile', label: 'Profile' },
+  ];
+
   return (
     <div className="space-y-6">
-      {/* Tab Bar */}
-      <div className="flex items-center justify-center">
-        <div className="flex items-center gap-1 p-1 rounded-xl bg-glass-bg border border-glass-border">
-          {(
-            [
-              { id: 'home', label: 'Home', icon: Home },
-              { id: 'feed', label: 'Feed', icon: Rss },
-              { id: 'profile', label: 'Profile', icon: User },
-            ] as const
-          ).map(({ id, label, icon: Icon }) => (
-            <button
-              key={id}
-              className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 ${
-                tab === id
-                  ? 'bg-primary/10 text-primary border border-primary/20'
-                  : 'text-muted-foreground hover:text-foreground hover:bg-accent'
-              }`}
-              onClick={() => setTab(id)}
-            >
-              <Icon className="w-3.5 h-3.5" />
-              {label}
-            </button>
-          ))}
-        </div>
+      <div className="flex items-stretch border border-border max-w-md mx-auto">
+        {TABS.map(({ id, label }, i) => (
+          <button
+            key={id}
+            type="button"
+            className={`flex-1 px-4 py-2.5 font-mono uppercase tracking-[0.1em] text-xs transition-colors ${
+              i < TABS.length - 1 ? 'border-r border-border' : ''
+            } ${tab === id ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
+            onClick={() => setTab(id)}
+          >
+            {label}
+          </button>
+        ))}
       </div>
 
-      {/* Tab Content */}
       {tab === 'home' && (
-        <div className="space-y-6">
-          {credits === 0 ? (
-            <div className="text-center py-12 rounded-2xl border border-border/50 bg-muted/30">
-              <p className="font-medium">No credits remaining</p>
-              <p className="text-sm text-muted-foreground mt-1">Credits reset monthly. Upgrade for more.</p>
-            </div>
-          ) : (
-            <FileUpload onFileSelected={onFileSelected} onUrlSubmitted={onUrlSubmitted} />
-          )}
-
-          <Dashboard onSelectAnalysis={onSelectAnalysis} />
+        <div className="app-stage relative">
+          <span className="corner tl" aria-hidden />
+          <span className="corner tr" aria-hidden />
+          <span className="corner bl" aria-hidden />
+          <span className="corner br" aria-hidden />
+          <div className="grid grid-cols-1 md:grid-cols-[1fr_320px] gap-4 p-6">
+            {credits === 0 ? (
+              <div className="border border-border bg-card text-center py-12 px-4">
+                <p className="font-mono uppercase tracking-[0.1em] text-sm">No credits remaining</p>
+                <p className="text-sm text-muted-foreground mt-2">Credits reset monthly. Upgrade for more.</p>
+              </div>
+            ) : (
+              <FileUpload onFileSelected={onFileSelected} onUrlSubmitted={onUrlSubmitted} />
+            )}
+            <aside className="border border-border bg-card">
+              <div className="px-4 py-2 border-b border-border">
+                <span className="label-comment">RECENT SCANS</span>
+              </div>
+              <Dashboard onSelectAnalysis={onSelectAnalysis} />
+            </aside>
+          </div>
         </div>
       )}
 

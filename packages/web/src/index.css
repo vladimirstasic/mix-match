@@ -315,6 +315,28 @@
   align-items: center;
   gap: 0.6rem;
 }
+.app-route {
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  letter-spacing: 0.1em;
+  color: var(--muted-foreground);
+  text-transform: uppercase;
+  flex: 1;
+  text-align: center;
+}
+.unit-btn {
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.ctrl.readonly {
+  cursor: default;
+}
+.ctrl.readonly b {
+  color: var(--primary);
+  font-weight: 600;
+}
 .ctrl {
   font-family: var(--font-mono);
   font-size: 0.72rem;
@@ -365,6 +387,10 @@
 .corner.tr { top: 74px; right: 22px; border-left: 0; border-bottom: 0; }
 .corner.bl { bottom: 22px; left: 22px; border-right: 0; border-top: 0; }
 .corner.br { bottom: 22px; right: 22px; border-left: 0; border-top: 0; }
+.app-stage > .corner.tl { top: 0; left: 0; }
+.app-stage > .corner.tr { top: 0; right: 0; bottom: auto; }
+.app-stage > .corner.bl { bottom: 0; left: 0; top: auto; }
+.app-stage > .corner.br { bottom: 0; right: 0; top: auto; }
 
 .hud {
   position: absolute;
