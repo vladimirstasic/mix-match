@@ -16,6 +16,23 @@ import { ProgressBar } from './components/analysis';
 
 const Timeline = lazy(() => import('./components/analysis/Timeline').then(m => ({ default: m.Timeline })));
 
+const AnalysisLoading = () => (
+  <div className="results-scrim space-y-4">
+    <div className="label-comment">LOADING ANALYSIS…</div>
+    <div className="log">
+      <div className="log-top">
+        <span>RECOGNITION_LOG</span>
+        <span>… / …</span>
+      </div>
+      <div className="log-body p-2 space-y-2">
+        {[1, 2, 3, 4, 5].map(i => (
+          <div key={i} className="log-row" style={{ display: 'block', height: '3.5rem', opacity: 0.5 - i * 0.05 }} />
+        ))}
+      </div>
+    </div>
+  </div>
+);
+
 import { MixCompare } from './components/dashboard';
 import { ManualTracklist } from './components/upload';
 
@@ -217,18 +234,7 @@ const MainApp = () => {
                 <ManualTracklist onCreated={handleSelectAnalysis} onBack={() => setView(VIEW.HOME)} />
               )}
 
-              {phase === PHASE.LOADING && (
-                <div className="space-y-4 animate-pulse">
-                  <div className="h-8 bg-muted rounded-lg w-2/3" />
-                  <div className="h-4 bg-muted/50 rounded w-1/3" />
-                  <div className="h-20 bg-muted/30 rounded-2xl" />
-                  <div className="space-y-2">
-                    {[1, 2, 3, 4].map(i => (
-                      <div key={i} className="h-16 bg-muted/30 rounded-xl" />
-                    ))}
-                  </div>
-                </div>
-              )}
+              {phase === PHASE.LOADING && <AnalysisLoading />}
 
               {isProcessing && (
                 <>
@@ -243,7 +249,7 @@ const MainApp = () => {
 
                   {phase === PHASE.PROCESSING && segments.length > 0 && (
                     <div className="mt-6">
-                      <Suspense fallback={null}>
+                      <Suspense fallback={<AnalysisLoading />}>
                         <Timeline
                           segments={segments}
                           chunksAvailable={false}
@@ -262,7 +268,7 @@ const MainApp = () => {
               )}
 
               {phase === PHASE.COMPLETED && segments.length > 0 && (
-                <Suspense fallback={null}>
+                <Suspense fallback={<AnalysisLoading />}>
                   <Timeline
                     segments={segments}
                     chunksAvailable={chunksAvailable}
