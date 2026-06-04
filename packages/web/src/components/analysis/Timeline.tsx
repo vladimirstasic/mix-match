@@ -321,6 +321,9 @@ export function Timeline({
 
   return (
     <div className="results-scrim space-y-6">
+      <button type="button" className="ctrl" onClick={onReset}>
+        ← BACK TO HISTORY
+      </button>
       {filename && (
         <div className="space-y-3">
           {sourceUrl ? (
