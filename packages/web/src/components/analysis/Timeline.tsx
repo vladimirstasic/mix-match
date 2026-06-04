@@ -468,7 +468,7 @@ export function Timeline({
                     )}
 
                     {seg.status === 'identified' && editingId !== seg.id && (
-                      <>
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className="w-4 h-4 bg-primary/15 flex items-center justify-center shrink-0">
                           <Check className="w-2.5 h-2.5 text-primary" />
                         </div>
@@ -479,7 +479,7 @@ export function Timeline({
                           </span>
                         )}
                         {seg.bpm && (
-                          <span className="text-[10px] font-mono uppercase tracking-[0.08em] text-muted-foreground border border-border px-1.5 py-0.5 shrink-0">
+                          <span className="text-[10px] font-mono uppercase tracking-[0.08em] text-muted-foreground border border-border px-1.5 py-0.5 shrink-0 hidden sm:inline">
                             {seg.bpm} BPM
                           </span>
                         )}
@@ -493,12 +493,12 @@ export function Timeline({
                             {seg.musicalKey}
                           </span>
                         )}
-                      </>
+                      </div>
                     )}
                   </div>
 
                   {seg.status === 'identified' && editingId !== seg.id && (
-                    <div className="flex items-center gap-1.5 ml-[100px] sm:ml-[110px] flex-wrap">
+                    <div className="flex items-center gap-1.5 sm:ml-[110px] flex-wrap">
                       {seg.externalLinks && (
                         <StreamingLinks
                           links={seg.externalLinks}
