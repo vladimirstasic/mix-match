@@ -943,11 +943,11 @@
   padding: 1.4rem;
   margin-top: 1.5rem;
   border: 1px solid var(--line-strong);
-  background: rgba(5, 6, 8, 0.35);
+  background: var(--popover);
   font-family: var(--font-mono);
 }
 :root:not(.dark) .scope {
-  background: rgba(255, 255, 255, 0.5);
+  background: var(--card);
 }
 .scope .corner {
   opacity: 0.7;
