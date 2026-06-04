@@ -430,8 +430,8 @@ export function Timeline({
                 style={{ display: 'block' }}
               >
                 <div className="py-1 space-y-2">
-                  <div className="flex items-center gap-3">
-                    <span className="font-mono text-[11px] text-muted-foreground whitespace-nowrap min-w-[100px] sm:min-w-[110px]">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                    <span className="font-mono text-[11px] text-muted-foreground whitespace-nowrap sm:min-w-[110px]">
                       {formatTime(seg.startSec)} — {formatTime(seg.endSec)}
                     </span>
 

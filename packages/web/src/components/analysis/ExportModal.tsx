@@ -28,7 +28,7 @@ export function ExportModal({ title, content, onClose }: Props) {
           onChange={e => setText(e.target.value)}
           className="flex-1 min-h-[200px] p-3 rounded-md border border-input bg-background text-sm font-mono resize-none focus:outline-none focus:ring-2 focus:ring-ring"
         />
-        <div className="flex justify-end gap-2">
+        <div className="flex justify-end gap-4 mt-2">
           <Button variant="outline" size="sm" onClick={onClose}>
             Close
           </Button>
