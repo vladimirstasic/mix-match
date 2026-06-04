@@ -1008,6 +1008,7 @@
 .s-progress {
   height: 3px;
   background: var(--border);
+  overflow: hidden;
 }
 .s-progress i {
   display: block;
