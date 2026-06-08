@@ -188,7 +188,7 @@ export function useAnalysis() {
   );
 
   const loadAnalysis = useCallback(async (id: string) => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0 });
     setState(s => ({ ...s, phase: 'loading', analysisId: id }));
     try {
       const full = await getAnalysis(id);
