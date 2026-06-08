@@ -4,6 +4,9 @@
   "workspaces": [
     "packages/*"
   ],
+  "overrides": {
+    "ioredis": "^5.4.0"
+  },
   "scripts": {
     "dev:api": "npm run dev -w packages/api",
     "dev:web": "npm run dev -w packages/web",
