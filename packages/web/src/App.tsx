@@ -240,7 +240,7 @@ const MainApp = () => {
       </SignedOut>
 
       <SignedIn>
-        <div className="min-h-screen text-foreground text-[16px] overflow-x-hidden">
+        <div className="min-h-screen text-foreground text-[16px] overflow-x-clip">
           <PageChrome variant="full" />
           <Header credits={credits} betaMode={betaMode} onLogoClick={goHome} appRoute={appRoute} />
           <div className="mx-auto max-w-5xl px-6 pt-[80px] pb-8">
