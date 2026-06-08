@@ -329,15 +329,19 @@ export function Timeline({
           {sourceUrl ? (
             <a href={sourceUrl} target="_blank" rel="noopener noreferrer" className="r-title-link block">
               <div className="label-comment">SCAN COMPLETE</div>
-              <h1 className="r-title truncate">{filename}</h1>
+              <h1 className="r-title break-words">{filename}</h1>
             </a>
           ) : (
             <>
               <div className="label-comment">SCAN COMPLETE</div>
-              <h1 className="r-title truncate">{filename}</h1>
+              <h1 className="r-title break-words">{filename}</h1>
             </>
           )}
-          {sourceUrl && <SourceEmbed url={sourceUrl} />}
+          {sourceUrl && (
+            <div className="overflow-x-clip">
+              <SourceEmbed url={sourceUrl} />
+            </div>
+          )}
         </div>
       )}
 
