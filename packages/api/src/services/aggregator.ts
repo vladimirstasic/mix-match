@@ -40,92 +40,82 @@ export function isSameTrack(a: RawMatch, b: RawMatch): boolean {
 }
 
 function pickRepresentative(matches: RawMatch[]): RawMatch {
-  // Pick the match with the highest score; falls back to most-frequent acrid.
+  // Highest-scoring match in the group represents it. Falls back to first.
   return [...matches].sort((a, b) => (b.score ?? 0) - (a.score ?? 0))[0];
 }
 
-interface Span {
-  start: number;
-  end: number;
-}
-
 /**
- * Estimate where the track actually plays in the mix (inferred boundaries),
- * using ACRCloud's play_offset_ms + duration_ms. Falls back to a chunk-sized
- * window centered on the detection point if either is missing.
+ * Compute segment boundaries for an aggregated group of same-track matches.
+ *
+ * If we have play_offset_ms + duration_ms on at least one match, infer the
+ * track's actual playback span in the mix and use that. Otherwise fall back
+ * to the chunk-window range (first detection start → last detection end).
  */
-function inferSpan(match: RawMatch): Span {
-  const startSec = match.startSec;
-  if (match.playOffsetMs == null || match.durationMs == null) {
-    return { start: startSec, end: startSec + CHUNK_DURATION_SEC };
+function computeBounds(matches: RawMatch[]): { start: number; end: number } {
+  const withSpan = matches.find(m => m.playOffsetMs != null && m.durationMs != null);
+  if (withSpan) {
+    const playOffsetSec = withSpan.playOffsetMs! / 1000;
+    const durationSec = withSpan.durationMs! / 1000;
+    const start = Math.max(0, withSpan.startSec - playOffsetSec);
+    return { start, end: start + durationSec };
   }
-  const playOffsetSec = match.playOffsetMs / 1000;
-  const durationSec = match.durationMs / 1000;
-  const inferredStart = Math.max(0, startSec - playOffsetSec);
-  return { start: inferredStart, end: inferredStart + durationSec };
-}
-
-function spansOverlap(a: Span, b: Span, toleranceSec = 30): boolean {
-  return a.start <= b.end + toleranceSec && b.start <= a.end + toleranceSec;
-}
-
-interface Group {
-  matches: RawMatch[];
-  span: Span;
+  const first = matches[0];
+  const last = matches[matches.length - 1];
+  return {
+    start: first.startSec,
+    end: last.startSec + CHUNK_DURATION_SEC,
+  };
 }
 
 /**
  * Aggregate raw chunk-level matches into timeline segments.
  *
- * Two key improvements over plain consecutive grouping:
+ * Merge logic: classic consecutive-same-track grouping. Walk matches in time
+ * order; each new match either extends the current group (if it's the same
+ * track as anyone currently in the group) or flushes the current group and
+ * starts a new one. This is conservative — DJ playing track A, then B, then
+ * A again gives three segments, which is what we want.
  *
- * 1. Inferred playback span per match — uses ACRCloud's play_offset_ms +
- *    duration_ms so the segment shows the actual track duration in the mix,
- *    not just the detection window of a single chunk. Falls back to the
- *    chunk window if those fields are missing.
- *
- * 2. Same-track merge by overlap, not just consecutive position — if the
- *    same track was detected twice in the mix and the inferred spans
- *    overlap (or fall within a 30s tolerance), they're treated as the
- *    SAME play and merged. If the spans are far apart, they're kept as
- *    separate plays (DJ played the track twice).
+ * Segment timestamps come from computeBounds(): when ACRCloud returns
+ * play_offset_ms + duration_ms, we show the inferred playback span (e.g.
+ * 02:30 — 08:15 for a 5min track); otherwise we fall back to the detection
+ * window. The real-track-duration display is the headline UX win without
+ * the duplicate-explosion that span-based merging caused on noisy responses.
  */
 export function aggregateMatches(raw: RawMatch[]): TrackMatch[] {
   if (raw.length === 0) return [];
 
   const sorted = [...raw].sort((a, b) => a.startSec - b.startSec);
-  const groups: Group[] = [];
 
-  for (const m of sorted) {
-    const span = inferSpan(m);
+  const flushed: TrackMatch[] = [];
+  let groupMatches: RawMatch[] = [sorted[0]];
 
-    const idx = groups.findIndex(g => g.matches.some(gm => isSameTrack(gm, m)) && spansOverlap(g.span, span));
-
-    if (idx >= 0) {
-      groups[idx].matches.push(m);
-      groups[idx].span = {
-        start: Math.min(groups[idx].span.start, span.start),
-        end: Math.max(groups[idx].span.end, span.end),
-      };
-    } else {
-      groups.push({ matches: [m], span });
-    }
-  }
-
-  groups.sort((a, b) => a.span.start - b.span.start);
-
-  return groups.map(g => {
-    const rep = pickRepresentative(g.matches);
-    return {
+  function flush() {
+    const rep = pickRepresentative(groupMatches);
+    const bounds = computeBounds(groupMatches);
+    flushed.push({
       track: `${rep.artist} - ${rep.title}`,
-      start: formatTimestamp(g.span.start),
-      end: formatTimestamp(g.span.end),
+      start: formatTimestamp(bounds.start),
+      end: formatTimestamp(bounds.end),
       acrid: rep.acrid,
       bpm: rep.bpm ?? null,
       genre: rep.genre ?? null,
       musicalKey: rep.musicalKey ?? null,
       score: rep.score ?? null,
       externalLinks: rep.externalLinks,
-    };
-  });
+    });
+  }
+
+  for (let i = 1; i < sorted.length; i++) {
+    const next = sorted[i];
+    if (groupMatches.some(m => isSameTrack(m, next))) {
+      groupMatches.push(next);
+    } else {
+      flush();
+      groupMatches = [next];
+    }
+  }
+  flush();
+
+  return flushed;
 }
