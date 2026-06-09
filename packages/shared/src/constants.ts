@@ -100,8 +100,7 @@ export const BETA_SCANS_PER_MONTH = 5;
 export const BETA_SCANS_PER_DAY = 2;
 
 // Analysis modes — step between chunk starts. With CHUNK_DURATION_SEC=12 and
-// step 30s there's no overlap (effectively 18s gap between chunks); step 15s
-// gives 3s overlap. Tuned to balance recall against ACRCloud quota & noise.
-export const FAST_STEP_SEC = 30; // ~120 calls / hour mix
-export const DETAILED_STEP_SEC = 15; // ~240 calls / hour mix
+// step 10, consecutive chunks overlap by 2s. With step 5, they overlap by 7s.
+export const FAST_STEP_SEC = 10; // ~350 calls / hour mix, 2s overlap
+export const DETAILED_STEP_SEC = 5; // ~720 calls / hour mix, 7s overlap
 export const CHUNK_STEP_SEC = FAST_STEP_SEC; // default mode

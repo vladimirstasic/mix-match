@@ -72,18 +72,6 @@ export async function identifyChunk(chunkPath: string, startSec: number): Promis
 
         console.log(`[acr] @${startSec}s: "${artist} - ${title}" score=${score} ✓`);
 
-        // Diagnostic: confirm whether ACRCloud actually returns play_offset_ms +
-        // duration_ms for this match. Aggregator's inferred-span merge depends on
-        // both being present; if either is null we fall back to chunk-window
-        // segments which can leave duplicates in the final timeline.
-        const hasOffset = track.play_offset_ms != null;
-        const hasDuration = track.duration_ms != null;
-        if (!hasOffset || !hasDuration) {
-          console.log(
-            `[acr] @${startSec}s   span fields: play_offset_ms=${track.play_offset_ms ?? 'null'} duration_ms=${track.duration_ms ?? 'null'}`,
-          );
-        }
-
         const externalLinks: ExternalLinks = {};
         const ext = track.external_metadata;
         if (ext?.spotify?.track?.id) {
