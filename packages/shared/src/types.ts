@@ -30,7 +30,6 @@ export interface RawMatch {
   genre?: string;
   musicalKey?: string;
   durationMs?: number;
-  playOffsetMs?: number;
   startSec: number;
   externalLinks?: ExternalLinks;
 }
