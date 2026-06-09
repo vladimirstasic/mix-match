@@ -47,7 +47,22 @@ export async function splitIntoChunks(
 
   for (let i = 0; i < positions.length; i++) {
     const outFile = path.join(outputDir, `chunk_${String(i).padStart(4, '0')}.wav`);
-    await exec('ffmpeg', ['-i', wavPath, '-ss', String(positions[i]), '-t', String(CHUNK_DURATION_SEC), '-y', outFile]);
+    // 16kHz mono PCM — what ACRCloud's fingerprinter prefers; 8x smaller than
+    // 44.1kHz stereo source, faster upload, less wasted spectrum on high freq.
+    await exec('ffmpeg', [
+      '-i',
+      wavPath,
+      '-ss',
+      String(positions[i]),
+      '-t',
+      String(CHUNK_DURATION_SEC),
+      '-ar',
+      '16000',
+      '-ac',
+      '1',
+      '-y',
+      outFile,
+    ]);
     paths.push(outFile);
   }
 
