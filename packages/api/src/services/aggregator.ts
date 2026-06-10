@@ -137,17 +137,12 @@ function parseTimestamp(ts: string): number {
  * Post-aggregation pass: collapse adjacent segments that are the same track
  * and within `windowSec` of each other into a single segment.
  *
- * For each segment we search BACKWARDS through recently emitted segments
- * (stopping as soon as we cross the `windowSec` gap). If we find a same-track
- * candidate within that window, we merge into it — extending its end and
- * promoting higher-score metadata. The intervening segments (likely brief
- * false-positive matches that split one play of track A into [A, B, A])
- * remain in place but the two A's are now one entry. UI ordering by start
- * time keeps the timeline sensible.
+ * Catches the noise-interruption pattern where a brief false-positive match
+ * for track B between two long groups of track A causes the aggregator to
+ * emit [A, B, A] when reality is one continuous play of A.
  *
- * Legitimate DJ replays separated by more than `windowSec` between the
- * earlier track's END and the later track's START are kept as separate
- * segments (the lookback breaks out before reaching them).
+ * Legitimate DJ replays (gap > windowSec between two same-track segments)
+ * remain as separate segments.
  */
 export function squashAdjacentDuplicates(
   segments: TrackMatch[],
@@ -155,32 +150,19 @@ export function squashAdjacentDuplicates(
 ): TrackMatch[] {
   const out: TrackMatch[] = [];
   for (const seg of segments) {
-    const segStart = parseTimestamp(seg.start);
-
-    let mergedIdx = -1;
-    for (let i = out.length - 1; i >= 0; i--) {
-      const candidate = out[i];
-      const gap = segStart - parseTimestamp(candidate.end);
-      if (gap > windowSec) break; // beyond window — no point looking further back
-      if (segmentsAreSameTrack(candidate, seg)) {
-        mergedIdx = i;
-        break;
-      }
-    }
-
-    if (mergedIdx >= 0) {
-      const target = out[mergedIdx];
-      if (parseTimestamp(seg.end) > parseTimestamp(target.end)) {
-        target.end = seg.end;
-      }
-      if ((seg.score ?? 0) > (target.score ?? 0)) {
-        const start = target.start;
-        Object.assign(target, seg);
-        target.start = start;
+    const prev = out[out.length - 1];
+    if (prev && segmentsAreSameTrack(prev, seg) && parseTimestamp(seg.start) - parseTimestamp(prev.end) <= windowSec) {
+      prev.end = seg.end;
+      if ((seg.score ?? 0) > (prev.score ?? 0)) {
+        // Promote higher-confidence metadata onto the merged segment but keep
+        // the original start timestamp so the segment still anchors at the
+        // earlier detection.
+        const start = prev.start;
+        Object.assign(prev, seg);
+        prev.start = start;
       }
       continue;
     }
-
     out.push({ ...seg });
   }
   return out;
