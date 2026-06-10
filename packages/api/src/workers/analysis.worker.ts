@@ -26,7 +26,7 @@ import {
   generateWaveform,
 } from '../services/ffmpeg.js';
 import { processChunksOptimized } from '../services/optimizer.js';
-import { aggregateMatches } from '../services/aggregator.js';
+import { aggregateMatches, consolidateTimeline } from '../services/aggregator.js';
 import { buildSegments } from '../services/segments.js';
 
 const execFileAsync = promisify(execFile);
@@ -139,7 +139,14 @@ const worker = new Worker<AnalysisJobData>(
 
       const processingTimeMs = Date.now() - startTime;
 
-      const results = aggregateMatches(matches);
+      // Diagnostic: dump raw matches (with scores + offsets) when enabled, so a
+      // real fixture can be captured for offline tuning of the spurious-match
+      // filter without burning ACRCloud quota on repeated prod scans.
+      if (process.env.DEBUG_DUMP_MATCHES === '1') {
+        console.log(`[debug-dump:${analysisId}] ${JSON.stringify(matches)}`);
+      }
+
+      const results = consolidateTimeline(aggregateMatches(matches));
 
       const segmentData = buildSegments(results, Math.ceil(duration));
       await db.insert(segmentsTable).values(

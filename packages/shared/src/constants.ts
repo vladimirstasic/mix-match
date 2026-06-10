@@ -103,3 +103,11 @@ export const BETA_SCANS_PER_DAY = 2;
 export const FAST_STEP_SEC = 120; // 2 min — ~38 calls for 75min mix
 export const DETAILED_STEP_SEC = 30; // 30s — ~150 calls for 75min mix
 export const CHUNK_STEP_SEC = FAST_STEP_SEC; // default mode
+
+// Post-aggregation consolidation: merge two segments of the SAME track when
+// the gap between consecutive detections is <= this many seconds, even if
+// other (spurious) tracks were detected in between. DJ replays of the same
+// track are normally many minutes apart, so 150s safely collapses the
+// "track A split into 3-5 pieces by transition false-positives" case while
+// keeping a genuine later replay separate.
+export const CONSOLIDATE_GAP_WINDOW_SEC = 150;

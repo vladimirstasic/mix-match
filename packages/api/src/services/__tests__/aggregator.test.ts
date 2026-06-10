@@ -1,5 +1,7 @@
 import { describe, it, expect } from 'vitest';
-import { aggregateMatches, isSameTrack, normalizeString } from '../aggregator.js';
+import { aggregateMatches, isSameTrack, normalizeString, consolidateTimeline, looseTrackKey } from '../aggregator.js';
+import type { TrackMatch } from '@mix-match/shared';
+import kengardenOutput from '../__fixtures__/kengarden-015-output.json';
 
 describe('normalizeString', () => {
   it('removes parenthetical suffixes', () => {
@@ -207,5 +209,57 @@ describe('aggregateMatches', () => {
     expect(result).toHaveLength(1);
     expect(result[0].start).toBe('00:00');
     expect(result[0].end).toBe('06:15');
+  });
+});
+
+describe('looseTrackKey', () => {
+  it('treats comma and slash artist separators as equal', () => {
+    expect(looseTrackKey('Presi On, Spijker - What Remains')).toBe(looseTrackKey('Presi On/Spijker - What Remains'));
+  });
+
+  it('ignores extended/original mix suffixes', () => {
+    expect(looseTrackKey('Mosoo - Day After Day - Extended Mix')).toBe(looseTrackKey('Mosoo - Day After Day'));
+    expect(looseTrackKey('NICK ROBERTS - Mami (Extended Mix)')).toBe(
+      looseTrackKey('NICK ROBERTS - Mami (Original Mix)'),
+    );
+  });
+
+  it('keeps remix as a distinct track', () => {
+    expect(looseTrackKey('A - Song')).not.toBe(looseTrackKey('A - Song (Someone Remix)'));
+  });
+});
+
+describe('consolidateTimeline (K:ENGARDEN 015 real fixture)', () => {
+  const consolidated = consolidateTimeline(kengardenOutput as TrackMatch[]);
+  const count = (substr: string) =>
+    consolidated.filter(s => s.track.toLowerCase().includes(substr.toLowerCase())).length;
+
+  it('collapses each split track to a single segment', () => {
+    expect(count('Piero Farho - Time')).toBe(1);
+    expect(count('What Remains')).toBe(1); // Presi On x5 -> 1
+    expect(count('Journey')).toBe(1); // Palane x5 -> 1
+    expect(count('NICK ROBERTS')).toBe(1); // Mami x3 -> 1
+    expect(count('Day After Day')).toBe(1); // Mosoo x5 -> 1
+    expect(count('McFly - Silhouette')).toBe(1); // x3 -> 1
+    expect(count('HADi DANS')).toBe(1); // x2 -> 1
+    expect(count('Never Be Alone')).toBe(1); // x2 -> 1
+    expect(count('Your Love')).toBe(1); // Alessandro x2 -> 1
+    expect(count('No Hesitation')).toBe(1); // Sentin x2 -> 1
+    expect(count('THE FUTURE')).toBe(1); // Ankhoi x2 -> 1
+  });
+
+  it('keeps a genuine far-apart replay separate (OPERA at 0:00 and 104:00)', () => {
+    expect(count('OPERA')).toBe(2);
+  });
+
+  it('cuts the segment count well below the raw 71', () => {
+    expect(consolidated.length).toBeLessThan(50);
+    expect(consolidated.length).toBeGreaterThan(20);
+  });
+
+  it('extends a consolidated segment across its full span', () => {
+    const piero = consolidated.find(s => s.track.includes('Piero Farho'));
+    expect(piero?.start).toBe('21:30');
+    expect(piero?.end).toBe('27:45');
   });
 });
