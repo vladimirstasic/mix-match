@@ -1,6 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { aggregateMatches, isSameTrack, normalizeString, squashAdjacentDuplicates } from '../aggregator.js';
-import type { TrackMatch } from '@mix-match/shared';
+import { aggregateMatches, isSameTrack, normalizeString } from '../aggregator.js';
 
 describe('normalizeString', () => {
   it('removes parenthetical suffixes', () => {
@@ -208,102 +207,5 @@ describe('aggregateMatches', () => {
     expect(result).toHaveLength(1);
     expect(result[0].start).toBe('00:00');
     expect(result[0].end).toBe('06:15');
-  });
-});
-
-describe('squashAdjacentDuplicates', () => {
-  const seg = (track: string, start: string, end: string, extra: Partial<TrackMatch> = {}): TrackMatch => ({
-    track,
-    start,
-    end,
-    acrid: undefined,
-    bpm: null,
-    genre: null,
-    musicalKey: null,
-    score: null,
-    ...extra,
-  });
-
-  it('returns empty for empty input', () => {
-    expect(squashAdjacentDuplicates([])).toEqual([]);
-  });
-
-  it('returns single segment unchanged', () => {
-    const input = [seg('Daft Punk - Around the World', '00:00', '03:00')];
-    const result = squashAdjacentDuplicates(input);
-    expect(result).toHaveLength(1);
-    expect(result[0].track).toBe('Daft Punk - Around the World');
-  });
-
-  it('merges noise-interrupted same-track segments within window', () => {
-    // [A, B, A] with B sandwiched within 60s of both — collapses to one A
-    const input = [
-      seg('Daft Punk - Around the World', '00:00', '02:00', { acrid: 'a' }),
-      seg('Some - Other Track', '02:10', '02:25', { acrid: 'b' }),
-      seg('Daft Punk - Around the World', '02:30', '05:00', { acrid: 'a' }),
-    ];
-    const result = squashAdjacentDuplicates(input, 60);
-    // The 'B' segment between two A's is left in place (it's still a different
-    // track), but two A's separated only by B with small gaps don't auto-merge
-    // because squash only looks at immediate previous; B comes between.
-    // Realistic scenario: [A, A] adjacent same-track segments after aggregator
-    expect(result.map(s => s.track)).toEqual([
-      'Daft Punk - Around the World',
-      'Some - Other Track',
-      'Daft Punk - Around the World',
-    ]);
-  });
-
-  it('merges two consecutive same-track segments separated by short gap', () => {
-    const input = [
-      seg('Daft Punk - Around the World', '00:00', '02:00', { acrid: 'a' }),
-      seg('Daft Punk - Around the World (Extended)', '02:30', '04:00', { acrid: 'a' }),
-    ];
-    const result = squashAdjacentDuplicates(input, 60);
-    expect(result).toHaveLength(1);
-    expect(result[0].start).toBe('00:00');
-    expect(result[0].end).toBe('04:00');
-  });
-
-  it('keeps two same-track segments apart when gap exceeds window', () => {
-    // DJ legitimately replays the track 30 minutes later
-    const input = [
-      seg('Daft Punk - Around the World', '00:00', '03:00', { acrid: 'a' }),
-      seg('Daft Punk - Around the World', '30:00', '33:00', { acrid: 'a' }),
-    ];
-    const result = squashAdjacentDuplicates(input, 60);
-    expect(result).toHaveLength(2);
-  });
-
-  it('merges by Spotify ID even when titles differ slightly', () => {
-    const input = [
-      seg('Mwofly - Silhouette', '10:00', '12:00', {
-        externalLinks: { spotify: 'https://open.spotify.com/track/abc123' },
-      }),
-      seg('Mwofly - Silhouette (Extended Mix)', '12:15', '15:00', {
-        externalLinks: { spotify: 'https://open.spotify.com/track/abc123' },
-      }),
-    ];
-    const result = squashAdjacentDuplicates(input, 60);
-    expect(result).toHaveLength(1);
-    expect(result[0].end).toBe('15:00');
-  });
-
-  it('promotes higher-scoring metadata onto merged segment but keeps earlier start', () => {
-    const input = [seg('Track A', '00:00', '02:00', { score: 50 }), seg('Track A', '02:30', '04:00', { score: 90 })];
-    const result = squashAdjacentDuplicates(input, 60);
-    expect(result).toHaveLength(1);
-    expect(result[0].start).toBe('00:00');
-    expect(result[0].end).toBe('04:00');
-    expect(result[0].score).toBe(90);
-  });
-
-  it('does not merge different tracks even when adjacent', () => {
-    const input = [
-      seg('Daft Punk - Around the World', '00:00', '02:00', { acrid: 'a' }),
-      seg('Some - Other Track', '02:10', '04:00', { acrid: 'b' }),
-    ];
-    const result = squashAdjacentDuplicates(input, 60);
-    expect(result).toHaveLength(2);
   });
 });

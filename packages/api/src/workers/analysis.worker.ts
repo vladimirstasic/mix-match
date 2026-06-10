@@ -26,7 +26,7 @@ import {
   generateWaveform,
 } from '../services/ffmpeg.js';
 import { processChunksOptimized } from '../services/optimizer.js';
-import { aggregateMatches, squashAdjacentDuplicates } from '../services/aggregator.js';
+import { aggregateMatches } from '../services/aggregator.js';
 import { buildSegments } from '../services/segments.js';
 
 const execFileAsync = promisify(execFile);
@@ -139,7 +139,7 @@ const worker = new Worker<AnalysisJobData>(
 
       const processingTimeMs = Date.now() - startTime;
 
-      const results = squashAdjacentDuplicates(aggregateMatches(matches));
+      const results = aggregateMatches(matches);
 
       const segmentData = buildSegments(results, Math.ceil(duration));
       await db.insert(segmentsTable).values(

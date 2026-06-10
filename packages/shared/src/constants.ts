@@ -103,9 +103,3 @@ export const BETA_SCANS_PER_DAY = 2;
 export const FAST_STEP_SEC = 120; // 2 min — ~38 calls for 75min mix
 export const DETAILED_STEP_SEC = 30; // 30s — ~150 calls for 75min mix
 export const CHUNK_STEP_SEC = FAST_STEP_SEC; // default mode
-
-// Post-aggregation: two adjacent same-track segments separated by less than
-// this many seconds get merged into one. Catches the noise-interruption case
-// where a brief false-positive splits one play of track A into two segments.
-// Larger values risk merging legitimate DJ replays; 60s is conservative.
-export const SEGMENT_ADJACENCY_WINDOW_SEC = 60;

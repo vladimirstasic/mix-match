@@ -1,5 +1,5 @@
 import type { RawMatch, TrackMatch } from '@mix-match/shared';
-import { CHUNK_DURATION_SEC, SEGMENT_ADJACENCY_WINDOW_SEC } from '@mix-match/shared';
+import { CHUNK_DURATION_SEC } from '@mix-match/shared';
 import { formatTimestamp } from './ffmpeg.js';
 
 export function normalizeString(s: string): string {
@@ -104,66 +104,4 @@ export function aggregateMatches(raw: RawMatch[]): TrackMatch[] {
   });
 
   return timeline;
-}
-
-/**
- * Decide whether two timeline segments refer to the same track.
- *
- * Mirrors isSameTrack() but operates on the post-aggregation TrackMatch
- * shape (which carries acrid + externalLinks + the combined "artist - title"
- * string instead of separate fields). Same predicate priority:
- * acrid → Spotify ID → Deezer ID → normalized title fallback.
- */
-export function segmentsAreSameTrack(a: TrackMatch, b: TrackMatch): boolean {
-  if (a.acrid && b.acrid && a.acrid === b.acrid) return true;
-
-  const aSp = spotifyTrackId(a.externalLinks?.spotify);
-  const bSp = spotifyTrackId(b.externalLinks?.spotify);
-  if (aSp && bSp && aSp === bSp) return true;
-
-  const aDz = deezerTrackId(a.externalLinks?.deezer);
-  const bDz = deezerTrackId(b.externalLinks?.deezer);
-  if (aDz && bDz && aDz === bDz) return true;
-
-  return normalizeString(a.track) === normalizeString(b.track);
-}
-
-function parseTimestamp(ts: string): number {
-  const [m, s] = ts.split(':').map(Number);
-  return (m || 0) * 60 + (s || 0);
-}
-
-/**
- * Post-aggregation pass: collapse adjacent segments that are the same track
- * and within `windowSec` of each other into a single segment.
- *
- * Catches the noise-interruption pattern where a brief false-positive match
- * for track B between two long groups of track A causes the aggregator to
- * emit [A, B, A] when reality is one continuous play of A.
- *
- * Legitimate DJ replays (gap > windowSec between two same-track segments)
- * remain as separate segments.
- */
-export function squashAdjacentDuplicates(
-  segments: TrackMatch[],
-  windowSec: number = SEGMENT_ADJACENCY_WINDOW_SEC,
-): TrackMatch[] {
-  const out: TrackMatch[] = [];
-  for (const seg of segments) {
-    const prev = out[out.length - 1];
-    if (prev && segmentsAreSameTrack(prev, seg) && parseTimestamp(seg.start) - parseTimestamp(prev.end) <= windowSec) {
-      prev.end = seg.end;
-      if ((seg.score ?? 0) > (prev.score ?? 0)) {
-        // Promote higher-confidence metadata onto the merged segment but keep
-        // the original start timestamp so the segment still anchors at the
-        // earlier detection.
-        const start = prev.start;
-        Object.assign(prev, seg);
-        prev.start = start;
-      }
-      continue;
-    }
-    out.push({ ...seg });
-  }
-  return out;
 }
