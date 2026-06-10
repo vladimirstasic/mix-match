@@ -372,18 +372,19 @@
   letter-spacing: 0.1em;
   color: var(--muted-foreground);
   border: 1px solid var(--border);
-  background: transparent;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
   padding: 0.45rem 0.7rem;
   cursor: pointer;
   display: inline-flex;
   align-items: center;
   gap: 0.45rem;
   text-transform: uppercase;
-  transition: color 0.2s, border-color 0.2s;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
 }
 .ctrl:hover {
   color: var(--foreground);
   border-color: var(--line-strong);
+  background: var(--card);
 }
 .ctrl-dot {
   width: 7px;
@@ -685,6 +686,7 @@
 .log {
   border: 1px solid var(--line-strong);
   background: var(--popover);
+  overflow: hidden;
 }
 .log-top {
   display: flex;
