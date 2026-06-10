@@ -372,28 +372,26 @@ export function Timeline({
         </div>
       </div>
 
-      <div className="min-h-[140px]">
-        {summary && (
-          <Card>
-            <CardContent className="py-4">
-              <p className="text-sm text-muted-foreground">{summary.summary}</p>
-              <div className="flex flex-wrap gap-6 mt-4">
-                {[
-                  { value: summary.stats.totalTracks, label: 'Tracks' },
-                  { value: summary.stats.totalArtists, label: 'Artists' },
-                  { value: `${summary.stats.coveragePercent}%`, label: 'Coverage' },
-                  { value: `${summary.stats.durationMin}m`, label: 'Duration' },
-                ].map(stat => (
-                  <div key={stat.label} className="text-center">
-                    <p className="text-2xl font-bold">{stat.value}</p>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{stat.label}</p>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+      {summary && (
+        <Card>
+          <CardContent className="py-4">
+            <p className="text-sm text-muted-foreground">{summary.summary}</p>
+            <div className="flex flex-wrap gap-6 mt-4">
+              {[
+                { value: summary.stats.totalTracks, label: 'Tracks' },
+                { value: summary.stats.totalArtists, label: 'Artists' },
+                { value: `${summary.stats.coveragePercent}%`, label: 'Coverage' },
+                { value: `${summary.stats.durationMin}m`, label: 'Duration' },
+              ].map(stat => (
+                <div key={stat.label} className="text-center">
+                  <p className="text-2xl font-bold">{stat.value}</p>
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-wider mt-0.5">{stat.label}</p>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {totalDuration > 0 && (
         <Waveform

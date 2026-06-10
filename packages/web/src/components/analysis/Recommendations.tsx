@@ -23,11 +23,7 @@ export function Recommendations({ analysisId }: Props) {
       .catch(() => {});
   }, [analysisId]);
 
-  if (!data || data.topArtists.length === 0) {
-    // Reserve space until the async fetch resolves so the page doesn't
-    // grow after first paint (avoids scroll-clamping on first scroll).
-    return <div className="min-h-[160px] mt-6" />;
-  }
+  if (!data || data.topArtists.length === 0) return null;
 
   return (
     <div className="space-y-4 mt-6 border-t pt-6">
