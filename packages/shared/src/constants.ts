@@ -1,4 +1,4 @@
-export const CHUNK_DURATION_SEC = 12;
+export const CHUNK_DURATION_SEC = 15;
 export const MAX_FILE_SIZE = 300 * 1024 * 1024; // 300MB
 export const SILENCE_THRESHOLD_DB = -50;
 export const COAST_MODE_CONFIRM_COUNT = 3;
@@ -99,8 +99,7 @@ export const BETA_END_NOTICE_DAYS = 7;
 export const BETA_SCANS_PER_MONTH = 5;
 export const BETA_SCANS_PER_DAY = 2;
 
-// Analysis modes — step between chunk starts. With CHUNK_DURATION_SEC=12 and
-// step 10, consecutive chunks overlap by 2s. With step 5, they overlap by 7s.
-export const FAST_STEP_SEC = 10; // ~350 calls / hour mix, 2s overlap
-export const DETAILED_STEP_SEC = 5; // ~720 calls / hour mix, 7s overlap
+// Analysis modes — step between chunks (chunk is always 10s, ACRCloud uses first 10s)
+export const FAST_STEP_SEC = 120; // 2 min — ~38 calls for 75min mix
+export const DETAILED_STEP_SEC = 30; // 30s — ~150 calls for 75min mix
 export const CHUNK_STEP_SEC = FAST_STEP_SEC; // default mode

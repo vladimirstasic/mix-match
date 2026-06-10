@@ -43,24 +43,7 @@ export async function identifyChunk(chunkPath: string, startSec: number): Promis
       const data = await response.json();
 
       if (data.status?.code === 0 && data.metadata?.music?.length > 0) {
-        // ACRCloud may return multiple candidate matches — pick highest score,
-        // not whatever happens to be first in the array.
-        const candidates = [...data.metadata.music].sort(
-          (a: { score?: number }, b: { score?: number }) => (b.score ?? 0) - (a.score ?? 0),
-        );
-
-        // Log all candidates for diagnostics during recall tuning.
-        if (candidates.length > 1) {
-          const summary = candidates
-            .map(
-              (m: { title?: string; artists?: { name: string }[]; score?: number }) =>
-                `${m.score ?? 0}:${m.artists?.[0]?.name ?? '?'}-${m.title ?? '?'}`,
-            )
-            .join(' | ');
-          console.log(`[acr] @${startSec}s candidates(${candidates.length}): ${summary}`);
-        }
-
-        const track = candidates[0];
+        const track = data.metadata.music[0];
         const score = track.score ?? 0;
         const artist = track.artists?.map((a: { name: string }) => a.name).join(', ') || 'Unknown';
         const title = track.title || 'Unknown';
