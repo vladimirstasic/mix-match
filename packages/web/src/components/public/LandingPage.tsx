@@ -65,6 +65,7 @@ const PLANS = [
     features: ['5 scans / month', '2 scans / day', 'Fast mode', 'Text export', 'Public share pages'],
     cta: 'GET STARTED',
     featured: false,
+    soon: false,
   },
   {
     name: 'Pro',
@@ -78,23 +79,9 @@ const PLANS = [
       'Streaming links',
       'Manual editing',
     ],
-    cta: 'START FREE TRIAL',
+    cta: 'COMING SOON',
     featured: true,
-  },
-  {
-    name: 'Studio',
-    num: '$29.99',
-    per: '/ month',
-    features: [
-      'Unlimited mixes',
-      'Everything in Pro',
-      'URL scanning',
-      'DJ profile page',
-      'Community features',
-      'Custom URL',
-    ],
-    cta: 'CONTACT US',
-    featured: false,
+    soon: true,
   },
 ];
 
@@ -249,10 +236,10 @@ export function LandingPage() {
             <h2 className="head">
               <i>[04]</i> Plans
             </h2>
-            <div className="pricing-rows">
+            <div className="pricing-rows pricing-rows-2">
               {PLANS.map(p => (
                 <div key={p.name} className={`price ${p.featured ? 'featured' : ''}`}>
-                  {p.featured && <span className="ptag">POPULAR</span>}
+                  {p.featured && <span className="ptag">{p.soon ? 'SOON' : 'POPULAR'}</span>}
                   <h3>{p.name}</h3>
                   <div className="pamt">
                     <span className="num">{p.num}</span>
@@ -263,17 +250,22 @@ export function LandingPage() {
                       <li key={f}>{f}</li>
                     ))}
                   </ul>
-                  <SignInButton mode="modal">
-                    {p.featured ? (
-                      <button className="btn-demo" type="button" style={{ width: '100%', justifyContent: 'center' }}>
-                        {p.cta}
-                      </button>
-                    ) : (
+                  {p.soon ? (
+                    <button
+                      className="btn-demo"
+                      type="button"
+                      disabled
+                      style={{ width: '100%', justifyContent: 'center', opacity: 0.55, cursor: 'not-allowed' }}
+                    >
+                      {p.cta}
+                    </button>
+                  ) : (
+                    <SignInButton mode="modal">
                       <button className="ctrl" type="button" style={{ width: '100%', justifyContent: 'center' }}>
                         {p.cta}
                       </button>
-                    )}
-                  </SignInButton>
+                    </SignInButton>
+                  )}
                 </div>
               ))}
             </div>

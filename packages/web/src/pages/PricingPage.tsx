@@ -4,7 +4,7 @@ import { SignedIn, SignedOut, SignInButton } from '@clerk/clerk-react';
 import { PLANS, PLAN_LIMITS, PLAN_PRICES, PLAN_FULL_PRICES, type Plan } from '@mix-match/shared';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Check, Zap, Crown, Star, ArrowLeft, Loader2, Sparkles, Rocket } from 'lucide-react';
+import { Check, Zap, Crown, ArrowLeft, Loader2, Sparkles, Rocket } from 'lucide-react';
 import { createCheckout, getFoundingStatus, type FoundingStatus } from '../api/billing';
 import { getUserProfile } from '../api/client';
 
@@ -14,6 +14,7 @@ interface TierConfig {
   tagline: string;
   icon: typeof Zap;
   highlight?: boolean;
+  comingSoon?: boolean;
   features: string[];
 }
 
@@ -36,6 +37,7 @@ const TIERS: TierConfig[] = [
     tagline: 'For DJs and crate diggers',
     icon: Crown,
     highlight: true,
+    comingSoon: true,
     features: [
       `${PLAN_LIMITS.pro.scans} scans per month`,
       'SoundCloud, Mixcloud, upload',
@@ -44,18 +46,21 @@ const TIERS: TierConfig[] = [
       'Spotify playlist export',
     ],
   },
-  {
-    plan: PLANS.STUDIO,
-    name: 'Studio',
-    tagline: 'Power users & small studios',
-    icon: Star,
-    features: [
-      `${PLAN_LIMITS.studio.scans} scans per month`,
-      'Everything in Pro',
-      `Up to ${Math.round(PLAN_LIMITS.studio.maxFileBytes / 1024 / 1024)} MB uploads`,
-      'Priority queue (faster results)',
-    ],
-  },
+  // Studio plan temporarily hidden until pricing is finalised. Plan
+  // definitions remain in @mix-match/shared so this can be restored by
+  // re-adding the tier object below.
+  // {
+  //   plan: PLANS.STUDIO,
+  //   name: 'Studio',
+  //   tagline: 'Power users & small studios',
+  //   icon: Star,
+  //   features: [
+  //     `${PLAN_LIMITS.studio.scans} scans per month`,
+  //     'Everything in Pro',
+  //     `Up to ${Math.round(PLAN_LIMITS.studio.maxFileBytes / 1024 / 1024)} MB uploads`,
+  //     'Priority queue (faster results)',
+  //   ],
+  // },
 ];
 
 export function PricingPage() {
@@ -120,9 +125,8 @@ export function PricingPage() {
                   <p className="font-semibold text-primary mb-1">Founding Member reward</p>
                   <p className="text-muted-foreground">
                     First 100 users to subscribe when Beta ends lock in lifetime pricing —{' '}
-                    <span className="font-semibold text-foreground">$6/mo Pro</span> or{' '}
-                    <span className="font-semibold text-foreground">$12/mo Studio</span>. Use Beta to test, give
-                    feedback, and claim your seat.
+                    <span className="font-semibold text-foreground">$6/mo Pro</span>. Use Beta to test, give feedback,
+                    and claim your seat.
                   </p>
                 </div>
                 <Link to="/" className="w-full">
@@ -158,7 +162,7 @@ export function PricingPage() {
 
             {error && <p className="text-center text-destructive mb-6">{error}</p>}
 
-            <div className="grid md:grid-cols-3 gap-6">
+            <div className="grid md:grid-cols-2 gap-6 max-w-3xl mx-auto">
               {TIERS.map(tier => {
                 const Icon = tier.icon;
                 const price = PLAN_PRICES[tier.plan];
@@ -206,31 +210,39 @@ export function PricingPage() {
                         ))}
                       </ul>
 
-                      <SignedIn>
-                        <Button
-                          className="w-full mt-auto"
-                          variant={tier.highlight ? 'default' : 'outline'}
-                          onClick={() => handleChoose(tier.plan)}
-                          disabled={pendingPlan !== null || (isSoldOut && tier.plan !== PLANS.FREE)}
-                        >
-                          {isPending ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : tier.plan === PLANS.FREE ? (
-                            'Start free'
-                          ) : isSoldOut ? (
-                            'Sold out'
-                          ) : (
-                            `Choose ${tier.name}`
-                          )}
+                      {tier.comingSoon ? (
+                        <Button className="w-full mt-auto" variant="outline" disabled>
+                          Coming soon
                         </Button>
-                      </SignedIn>
-                      <SignedOut>
-                        <SignInButton mode="modal">
-                          <Button className="w-full mt-auto" variant={tier.highlight ? 'default' : 'outline'}>
-                            Sign in to choose
-                          </Button>
-                        </SignInButton>
-                      </SignedOut>
+                      ) : (
+                        <>
+                          <SignedIn>
+                            <Button
+                              className="w-full mt-auto"
+                              variant={tier.highlight ? 'default' : 'outline'}
+                              onClick={() => handleChoose(tier.plan)}
+                              disabled={pendingPlan !== null || (isSoldOut && tier.plan !== PLANS.FREE)}
+                            >
+                              {isPending ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : tier.plan === PLANS.FREE ? (
+                                'Start free'
+                              ) : isSoldOut ? (
+                                'Sold out'
+                              ) : (
+                                `Choose ${tier.name}`
+                              )}
+                            </Button>
+                          </SignedIn>
+                          <SignedOut>
+                            <SignInButton mode="modal">
+                              <Button className="w-full mt-auto" variant={tier.highlight ? 'default' : 'outline'}>
+                                Sign in to choose
+                              </Button>
+                            </SignInButton>
+                          </SignedOut>
+                        </>
+                      )}
                     </CardContent>
                   </Card>
                 );

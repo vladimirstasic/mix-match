@@ -632,6 +632,12 @@
   grid-template-columns: repeat(3, 1fr);
   align-items: start;
 }
+/* Two-plan layout (Studio temporarily hidden) — centered pair */
+.pricing-rows-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  max-width: 720px;
+  margin: 0 auto;
+}
 @media (max-width: 880px) {
   .steps, .features, .pricing-rows {
     grid-template-columns: 1fr;
