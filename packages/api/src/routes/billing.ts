@@ -5,7 +5,7 @@ import { PLANS, PLAN_LIMITS, FOUNDING_MEMBER_SEATS, type Plan } from '@mix-match
 import { requireUser, getUserId } from '../middleware/auth.js';
 import { db } from '../db/client.js';
 import { users } from '../db/schema.js';
-import { findUser } from '../db/helpers.js';
+import { findUser, ensureUser } from '../db/helpers.js';
 import { config } from '../config.js';
 import { polar, productIdForPlan, planForProductId } from '../services/polar.js';
 
@@ -43,7 +43,7 @@ billingRouter.post('/billing/checkout', requireUser, async (req, res) => {
     return;
   }
 
-  await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
+  await ensureUser(userId);
   const user = await findUser(userId);
 
   const isAlreadyFounding = user?.isFoundingMember === true;

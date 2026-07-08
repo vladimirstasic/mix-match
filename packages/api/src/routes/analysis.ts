@@ -4,8 +4,8 @@ import { eq, and, sql } from 'drizzle-orm';
 import { requireUser, getUserId } from '../middleware/auth.js';
 import { normalizeString } from '../services/aggregator.js';
 import { db } from '../db/client.js';
-import { analyses, segments, users } from '../db/schema.js';
-import { findAnalysis, findSegment, getAnalysisSegments } from '../db/helpers.js';
+import { analyses, segments } from '../db/schema.js';
+import { findAnalysis, findSegment, getAnalysisSegments, ensureUser } from '../db/helpers.js';
 import fs from 'fs/promises';
 import path from 'path';
 import { queueEvents, analysisQueue } from '../queue/index.js';
@@ -110,7 +110,7 @@ analysisRouter.post('/analysis/manual', requireUser, async (req, res) => {
     return;
   }
 
-  await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
+  await ensureUser(userId);
 
   const [analysis] = await db
     .insert(analyses)

@@ -19,7 +19,7 @@ import {
 } from '@mix-match/shared';
 import { db } from '../db/client.js';
 import { analyses, users } from '../db/schema.js';
-import { findUser } from '../db/helpers.js';
+import { findUser, ensureUser } from '../db/helpers.js';
 import { analysisQueue } from '../queue/index.js';
 import { redis } from '../queue/index.js';
 import { filescanPollQueue } from '../queue/filescan-poll.js';
@@ -182,7 +182,7 @@ uploadRouter.post('/upload', upload.single('file'), requireUser, async (req, res
 
   try {
     if (userId) {
-      await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
+      await ensureUser(userId);
     }
 
     const mode = req.body?.mode === ANALYSIS_MODES.DETAILED ? ANALYSIS_MODES.DETAILED : ANALYSIS_MODES.FAST;
@@ -318,7 +318,7 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
 
   cleanupExpiredChunks().catch(err => console.error('[cleanup]', err));
 
-  await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
+  await ensureUser(userId);
 
   const isYouTube = /(?:youtube\.com|youtu\.be)/i.test(url);
 

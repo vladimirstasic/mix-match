@@ -2,7 +2,8 @@ import { Router } from 'express';
 import { eq, and, sql } from 'drizzle-orm';
 import { requireUser, getUserId } from '../middleware/auth.js';
 import { db } from '../db/client.js';
-import { votes, comments, segments, users } from '../db/schema.js';
+import { votes, comments, segments } from '../db/schema.js';
+import { ensureUser } from '../db/helpers.js';
 
 export const communityRouter = Router();
 
@@ -10,7 +11,7 @@ export const communityRouter = Router();
 communityRouter.post('/segments/:id/vote', requireUser, async (req, res) => {
   const userId = getUserId(req);
 
-  await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
+  await ensureUser(userId);
 
   const segmentId = req.params.id as string;
   const { value } = req.body; // 1 or -1
@@ -58,7 +59,7 @@ communityRouter.get('/segments/:id/comments', async (req, res) => {
 communityRouter.post('/segments/:id/comments', requireUser, async (req, res) => {
   const userId = getUserId(req);
 
-  await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
+  await ensureUser(userId);
 
   const segmentId = req.params.id as string;
   const { text } = req.body;

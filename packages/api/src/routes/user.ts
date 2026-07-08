@@ -3,7 +3,7 @@ import { eq, desc, and, sql } from 'drizzle-orm';
 import { requireUser, getUserId } from '../middleware/auth.js';
 import { db } from '../db/client.js';
 import { analyses, users, segments, follows } from '../db/schema.js';
-import { findAnalysis, findSegment, findUser } from '../db/helpers.js';
+import { findAnalysis, findSegment, findUser, ensureUser } from '../db/helpers.js';
 import { config } from '../config.js';
 
 export const userRouter = Router();
@@ -218,7 +218,7 @@ userRouter.post('/analysis/:id/reprocess', requireUser, async (req, res) => {
 userRouter.post('/dj/:username/follow', requireUser, async (req, res) => {
   const userId = getUserId(req);
 
-  await db.insert(users).values({ clerkId: userId }).onConflictDoNothing();
+  await ensureUser(userId);
 
   const username = req.params.username as string;
   const existing = await db
