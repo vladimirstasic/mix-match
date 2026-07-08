@@ -22,6 +22,8 @@ import {
 import { Waveform } from './Waveform';
 import { Recommendations } from './Recommendations';
 import { SpotifyPlaylistModal } from './SpotifyPlaylistModal';
+import { BuyLinks } from './BuyLinks';
+import { AffiliateDisclosure } from '../AffiliateDisclosure';
 import { toggleBookmark, voteSegment } from '../../api/client';
 
 interface Props {
@@ -520,6 +522,7 @@ export function Timeline({
                           }
                         />
                       )}
+                      {seg.trackName && <BuyLinks trackName={seg.trackName} />}
                       <div className="flex items-center gap-0.5 ml-auto opacity-60 hover:opacity-100 transition-opacity">
                         <Button
                           variant="ghost"
@@ -732,6 +735,8 @@ export function Timeline({
       )}
 
       <Recommendations analysisId={analysisId} />
+
+      <AffiliateDisclosure className="mt-2" />
 
       {exportModal && (
         <ExportModal title={exportModal.title} content={exportModal.content} onClose={() => setExportModal(null)} />

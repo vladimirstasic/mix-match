@@ -52,11 +52,26 @@ export function Dashboard({ onSelectAnalysis }: Props) {
   };
 
   if (loading) {
-    return <div className="rl-empty">LOADING…</div>;
+    return (
+      <div className="rl-state" aria-live="polite" aria-busy="true">
+        <span className="eq" aria-hidden>
+          <i />
+          <i />
+          <i />
+          <i />
+          <i />
+        </span>
+        <span className="rl-state-label">LOADING SCANS…</span>
+      </div>
+    );
   }
 
   if (analyses.length === 0) {
-    return <div className="rl-empty">NO SCANS YET</div>;
+    return (
+      <div className="rl-state">
+        <span className="rl-state-label">NO SCANS YET</span>
+      </div>
+    );
   }
 
   return (

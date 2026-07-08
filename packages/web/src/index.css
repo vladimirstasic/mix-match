@@ -897,12 +897,24 @@
   font-size: 0.66rem;
   color: var(--ink-faint);
 }
-.recent-list .rl-empty {
-  padding: 1.5rem 1rem;
+.rl-state {
+  min-height: 160px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+.rl-state .eq {
+  transform: scale(2);
+  transform-origin: center bottom;
+}
+.rl-state-label {
   font-family: var(--font-mono);
   font-size: 0.72rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
   color: var(--ink-faint);
-  text-align: center;
 }
 
 /* ---- results head + log (analysis page, ported from demo) ---- */

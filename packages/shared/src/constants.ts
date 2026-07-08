@@ -6,7 +6,10 @@ export const COAST_MODE_CHECK_INTERVAL = 4;
 export const FINGERPRINT_SIMILARITY_THRESHOLD = 0.85;
 export const ACRCLOUD_RETRY_COUNT = 3;
 export const ACRCLOUD_RETRY_BASE_DELAY_MS = 1000;
-export const ACRCLOUD_MIN_SCORE = 20;
+// Real ACRCloud matches score ~70-100; spurious "nearest noise" matches on
+// tracks missing from the DB score ~28 (and vary per call). 70 keeps only
+// confident matches so we show "unknown" instead of a shaky guess.
+export const ACRCLOUD_MIN_SCORE = 60;
 export const REDIS_FINGERPRINT_TTL = 30 * 24 * 60 * 60;
 export const REDIS_FILE_CACHE_TTL = 90 * 24 * 60 * 60;
 export const ALLOWED_MIMETYPES = [

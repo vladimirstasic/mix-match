@@ -5,6 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Check, Loader2, Disc3 } from 'lucide-react';
 import { formatTime } from '@mix-match/shared';
 import { PageChrome } from '../layout';
+import { BuyLinks } from '../analysis/BuyLinks';
+import { AffiliateDisclosure } from '../AffiliateDisclosure';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
@@ -96,16 +98,19 @@ export function PublicTracklist() {
                     <Check className="w-3 h-3 text-green-400" />
                   </div>
                   <span className="font-medium text-sm truncate">{seg.trackName}</span>
-                  {seg.externalLinks?.spotify && (
-                    <a
-                      href={seg.externalLinks.spotify}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="ml-auto text-[10px] text-green-400 bg-green-500/10 rounded-md px-2 py-0.5 hover:bg-green-500/20 shrink-0 border border-green-500/20 transition-colors"
-                    >
-                      Spotify
-                    </a>
-                  )}
+                  <div className="ml-auto flex items-center gap-1 shrink-0">
+                    {seg.externalLinks?.spotify && (
+                      <a
+                        href={seg.externalLinks.spotify}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-[10px] text-green-400 bg-green-500/10 rounded-md px-2 py-0.5 hover:bg-green-500/20 border border-green-500/20 transition-colors"
+                      >
+                        Spotify
+                      </a>
+                    )}
+                    {seg.trackName && <BuyLinks trackName={seg.trackName} />}
+                  </div>
                 </CardContent>
               </Card>
             </React.Fragment>
@@ -117,6 +122,7 @@ export function PublicTracklist() {
           <Link to="/">
             <Button variant="outline">Analyze your own mix</Button>
           </Link>
+          <AffiliateDisclosure className="mt-6" />
         </div>
       </div>
     </div>
