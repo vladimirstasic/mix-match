@@ -16,12 +16,14 @@ import { userRouter } from './routes/user.js';
 import { spotifyRouter } from './routes/spotify.js';
 import { communityRouter } from './routes/community.js';
 import { billingRouter, billingWebhookHandler } from './routes/billing.js';
+import { acrcloudFilescanWebhookHandler } from './routes/webhooks.js';
 
 const app = express();
 
 app.use(cors({ origin: true, credentials: true }));
 
 app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), billingWebhookHandler);
+app.post('/api/webhooks/acrcloud-filescan', express.raw({ type: 'application/json' }), acrcloudFilescanWebhookHandler);
 
 app.use(express.json());
 app.use(clerkMiddleware());
@@ -39,6 +41,7 @@ app.use(errorHandler);
 
 import './workers/analysis.worker.js';
 import './workers/retry.worker.js';
+import './workers/filescan-poll.worker.js';
 
 import { eq, and, lt, inArray } from 'drizzle-orm';
 import { analyses, segments as segmentsTable } from './db/schema.js';

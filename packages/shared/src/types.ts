@@ -1,4 +1,5 @@
 export type AnalysisStatus = 'pending' | 'processing' | 'completed' | 'failed';
+export type AnalysisEngine = 'realtime' | 'filescan';
 
 export interface TrackMatch {
   track: string;
@@ -46,6 +47,8 @@ export interface AnalysisResult {
   metrics: AnalysisMetrics | null;
   error: string | null;
   createdAt: string;
+  engine?: AnalysisEngine;
+  scanState?: number | null;
 }
 
 export interface AnalysisMetrics {

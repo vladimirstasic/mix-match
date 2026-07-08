@@ -10,6 +10,11 @@ export const ACRCLOUD_RETRY_BASE_DELAY_MS = 1000;
 // tracks missing from the DB score ~28 (and vary per call). 70 keeps only
 // confident matches so we show "unknown" instead of a shaky guess.
 export const ACRCLOUD_MIN_SCORE = 60;
+// File Scanning (batch/Derivative Works Detection) API has its own score distribution —
+// live testing showed correct matches at 98-100 there, distinct from the real-time API above.
+export const ACRCLOUD_FILESCAN_MIN_SCORE = 75;
+export const FILESCAN_POLL_FALLBACK_DELAY_MS = 10 * 60 * 1000;
+export const FILESCAN_POLL_MAX_ATTEMPTS = 3;
 export const REDIS_FINGERPRINT_TTL = 30 * 24 * 60 * 60;
 export const REDIS_FILE_CACHE_TTL = 90 * 24 * 60 * 60;
 export const ALLOWED_MIMETYPES = [

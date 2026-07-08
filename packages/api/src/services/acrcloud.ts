@@ -16,6 +16,43 @@ export class RateLimitError extends Error {
   }
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function extractExternalLinks(ext: any): ExternalLinks {
+  const externalLinks: ExternalLinks = {};
+  if (ext?.spotify?.track?.id) {
+    externalLinks.spotify = `https://open.spotify.com/track/${ext.spotify.track.id}`;
+  }
+  if (ext?.youtube?.vid) {
+    externalLinks.youtube = `https://youtube.com/watch?v=${ext.youtube.vid}`;
+  }
+  if (ext?.deezer?.track?.id) {
+    externalLinks.deezer = `https://www.deezer.com/track/${ext.deezer.track.id}`;
+  }
+  return externalLinks;
+}
+
+export async function enrichExternalLinks(
+  artist: string,
+  title: string,
+  externalLinks: ExternalLinks,
+): Promise<{ externalLinks: ExternalLinks; musicalKey?: string }> {
+  // Spotify fallback: if ACRCloud didn't return a Spotify link, search for it
+  if (!externalLinks.spotify) {
+    const spotifyUrl = await searchSpotifyTrack(artist, title);
+    if (spotifyUrl) {
+      externalLinks.spotify = spotifyUrl;
+    }
+  }
+
+  // Key detection from Spotify audio features
+  let musicalKey: string | undefined;
+  if (externalLinks.spotify) {
+    musicalKey = (await getTrackKey(externalLinks.spotify)) ?? undefined;
+  }
+
+  return { externalLinks, musicalKey };
+}
+
 export async function identifyChunk(chunkPath: string, startSec: number): Promise<RawMatch | null> {
   const fileBuffer = await fs.readFile(chunkPath);
   const timestamp = Math.floor(Date.now() / 1000);
@@ -55,31 +92,11 @@ export async function identifyChunk(chunkPath: string, startSec: number): Promis
 
         console.log(`[acr] @${startSec}s: "${artist} - ${title}" score=${score} ✓`);
 
-        const externalLinks: ExternalLinks = {};
-        const ext = track.external_metadata;
-        if (ext?.spotify?.track?.id) {
-          externalLinks.spotify = `https://open.spotify.com/track/${ext.spotify.track.id}`;
-        }
-        if (ext?.youtube?.vid) {
-          externalLinks.youtube = `https://youtube.com/watch?v=${ext.youtube.vid}`;
-        }
-        if (ext?.deezer?.track?.id) {
-          externalLinks.deezer = `https://www.deezer.com/track/${ext.deezer.track.id}`;
-        }
-
-        // Spotify fallback: if ACRCloud didn't return a Spotify link, search for it
-        if (!externalLinks.spotify) {
-          const spotifyUrl = await searchSpotifyTrack(artist, title);
-          if (spotifyUrl) {
-            externalLinks.spotify = spotifyUrl;
-          }
-        }
-
-        // Key detection from Spotify audio features
-        let musicalKey: string | undefined;
-        if (externalLinks.spotify) {
-          musicalKey = (await getTrackKey(externalLinks.spotify)) ?? undefined;
-        }
+        const { externalLinks, musicalKey } = await enrichExternalLinks(
+          artist,
+          title,
+          extractExternalLinks(track.external_metadata),
+        );
 
         return {
           artist,

@@ -15,13 +15,17 @@ import {
   ANALYSIS_MODES,
   BETA_SCANS_PER_MONTH,
   BETA_SCANS_PER_DAY,
+  FILESCAN_POLL_FALLBACK_DELAY_MS,
 } from '@mix-match/shared';
 import { db } from '../db/client.js';
 import { analyses, users } from '../db/schema.js';
 import { findUser } from '../db/helpers.js';
 import { analysisQueue } from '../queue/index.js';
 import { redis } from '../queue/index.js';
+import { filescanPollQueue } from '../queue/filescan-poll.js';
 import { config } from '../config.js';
+import { normalizeAudio, generateWaveform } from '../services/ffmpeg.js';
+import { uploadToFileScan } from '../services/acrcloud-filescan.js';
 
 const upload = multer({
   dest: config.uploadDir,
@@ -200,6 +204,71 @@ uploadRouter.post('/upload', upload.single('file'), requireUser, async (req, res
     if (cachedAnalysisId) {
       await fs.unlink(file.path);
       res.json({ analysisId: cachedAnalysisId });
+      return;
+    }
+
+    const requestedEngine = req.query.engine === 'filescan' ? 'filescan' : 'realtime';
+    const isAdmin = userId ? (await findUser(userId))?.isAdmin : false;
+    const engine = requestedEngine === 'filescan' && isAdmin ? 'filescan' : 'realtime';
+
+    if (engine === 'filescan') {
+      if (!config.acrcloud.filescan.bearerToken) {
+        await fs.unlink(file.path).catch(() => {});
+        res.status(400).json({ error: 'File Scanning engine is not configured (missing ACRCLOUD_CONSOLE_TOKEN).' });
+        return;
+      }
+
+      const [analysis] = await db
+        .insert(analyses)
+        .values({
+          filename: file.originalname,
+          fileSize: file.size,
+          fileHash,
+          status: 'pending',
+          userId,
+          engine: 'filescan',
+        })
+        .returning({ id: analyses.id });
+
+      try {
+        const workDir = path.join(config.uploadDir, analysis.id);
+        const wavPath = path.join(workDir, 'normalized.wav');
+        await fs.mkdir(workDir, { recursive: true });
+        await normalizeAudio(file.path, wavPath);
+        const waveformData = await generateWaveform(wavPath);
+        await fs.unlink(wavPath).catch(() => {});
+
+        const { fileId, state } = await uploadToFileScan(file.path, file.originalname);
+
+        await db
+          .update(analyses)
+          .set({
+            status: 'processing',
+            waveformData,
+            filescanFileId: fileId,
+            scanState: state,
+            updatedAt: new Date(),
+          })
+          .where(eq(analyses.id, analysis.id));
+
+        await filescanPollQueue.add(
+          'poll-filescan',
+          { analysisId: analysis.id, attempt: 1 },
+          { delay: FILESCAN_POLL_FALLBACK_DELAY_MS },
+        );
+
+        await fs.rm(workDir, { recursive: true, force: true }).catch(() => {});
+        await fs.unlink(file.path).catch(() => {});
+
+        res.json({ analysisId: analysis.id });
+      } catch (err) {
+        await db
+          .update(analyses)
+          .set({ status: 'failed', error: err instanceof Error ? err.message : String(err), updatedAt: new Date() })
+          .where(eq(analyses.id, analysis.id));
+        await fs.unlink(file.path).catch(() => {});
+        res.json({ analysisId: analysis.id });
+      }
       return;
     }
 

@@ -36,10 +36,17 @@ export const analyses = pgTable(
     slug: varchar('slug', { length: 50 }).unique(),
     viewCount: integer('view_count').default(0),
     tags: jsonb('tags').$type<string[]>().default([]),
+    engine: varchar('engine', { length: 20 }).notNull().default('realtime'),
+    filescanFileId: varchar('filescan_file_id', { length: 100 }),
+    scanState: integer('scan_state'),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
   },
-  table => [index('analyses_user_id_idx').on(table.userId), index('analyses_slug_idx').on(table.slug)],
+  table => [
+    index('analyses_user_id_idx').on(table.userId),
+    index('analyses_slug_idx').on(table.slug),
+    index('analyses_filescan_file_id_idx').on(table.filescanFileId),
+  ],
 );
 
 export const segments = pgTable(

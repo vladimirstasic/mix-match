@@ -260,6 +260,25 @@ analysisRouter.get('/analysis/:id/progress', async (req, res) => {
     res.write(`data: ${JSON.stringify(data)}\n\n`);
   };
 
+  if (analysis.engine === 'filescan') {
+    // No BullMQ job exists for this engine (see routes/upload.ts), so queueEvents never fires —
+    // bridge completion by polling the DB row instead.
+    const interval = setInterval(async () => {
+      const updated = await findAnalysis(req.params.id as string);
+      if (updated?.status === 'completed') {
+        send({ type: 'completed', results: updated.results });
+        clearInterval(interval);
+        res.end();
+      } else if (updated?.status === 'failed') {
+        send({ type: 'failed', error: updated.error });
+        clearInterval(interval);
+        res.end();
+      }
+    }, 2000);
+    req.on('close', () => clearInterval(interval));
+    return;
+  }
+
   const onProgress = ({ jobId, data }: { jobId: string; data: unknown }) => {
     const progress = data as Record<string, unknown>;
     if (progress.analysisId === req.params.id) {
