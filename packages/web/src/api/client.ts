@@ -36,11 +36,13 @@ export async function uploadFile(
   file: File,
   onProgress?: (pct: number) => void,
   mode: AnalysisMode = 'fast',
+  engine?: 'filescan',
 ): Promise<UploadResponse> {
   const token = getTokenFn ? await getTokenFn() : null;
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `${API_BASE}/upload`);
+    const url = engine ? `${API_BASE}/upload?engine=${engine}` : `${API_BASE}/upload`;
+    xhr.open('POST', url);
     if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
 
     xhr.upload.onprogress = e => {
@@ -150,6 +152,7 @@ export async function getUserProfile(): Promise<{
   creditsRemaining: number;
   creditsResetAt: string | null;
   isFoundingMember: boolean;
+  isAdmin: boolean;
   betaMode: boolean;
   badges: string[];
 } | null> {

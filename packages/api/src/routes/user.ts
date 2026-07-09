@@ -32,6 +32,7 @@ userRouter.get('/user/profile', requireUser, async (req, res) => {
     creditsRemaining: user.creditsRemaining,
     creditsResetAt: user.creditsResetAt,
     isFoundingMember: user.isFoundingMember,
+    isAdmin: user.isAdmin,
     betaMode: config.betaMode,
     badges,
   });

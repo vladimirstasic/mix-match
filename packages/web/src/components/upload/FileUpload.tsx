@@ -4,16 +4,18 @@ import { MAX_FILE_SIZE, ALLOWED_MIMETYPES } from '@mix-match/shared';
 import { Button } from '@/components/ui/button';
 
 interface Props {
-  onFileSelected: (file: File, mode: AnalysisMode) => void;
+  onFileSelected: (file: File, mode: AnalysisMode, engine?: 'filescan') => void;
   onUrlSubmitted: (url: string, mode: AnalysisMode) => void;
   disabled?: boolean;
+  isAdmin?: boolean;
 }
 
 type Tab = 'file' | 'url';
 
-export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) {
+export function FileUpload({ onFileSelected, onUrlSubmitted, disabled, isAdmin }: Props) {
   const [tab, setTab] = useState<Tab>('file');
   const [mode, setMode] = useState<AnalysisMode>('fast');
+  const [useFileScan, setUseFileScan] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
@@ -64,7 +66,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
         setError('Drop or select a file first');
         return;
       }
-      onFileSelected(pendingFile, mode);
+      onFileSelected(pendingFile, mode, isAdmin && useFileScan ? 'filescan' : undefined);
       setPendingFile(null);
     } else {
       const err = validateUrl(urlInput);
@@ -176,6 +178,13 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled }: Props) 
             Detailed <i className={`not-italic ${mode === 'detailed' ? 'opacity-70' : 'opacity-50'}`}>~2min</i>
           </button>
         </div>
+
+        {isAdmin && tab === 'file' && (
+          <label className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground cursor-pointer">
+            <input type="checkbox" checked={useFileScan} onChange={e => setUseFileScan(e.target.checked)} />
+            File Scanning engine (admin, beta)
+          </label>
+        )}
 
         <Button className="clip-bevel w-full" size="lg" disabled={!canRun} onClick={run}>
           Run Analysis

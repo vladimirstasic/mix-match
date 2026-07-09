@@ -116,6 +116,7 @@ const MainApp = () => {
   const [view, setView] = useState<ViewMode>(VIEW.HOME);
   const [credits, setCredits] = useState<number | null>(null);
   const [betaMode, setBetaMode] = useState<boolean>(false);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
 
   const previousPhase = useRef(phase);
 
@@ -200,6 +201,7 @@ const MainApp = () => {
       if (data?.betaMode != null) {
         setBetaMode(data.betaMode);
       }
+      setIsAdmin(!!data?.isAdmin);
     });
   }, [isSignedIn]);
 
@@ -251,6 +253,7 @@ const MainApp = () => {
                   onSelectAnalysis={loadAnalysis}
                   onFileSelected={startAnalysis}
                   onUrlSubmitted={startAnalysisFromUrl}
+                  isAdmin={isAdmin}
                 />
               )}
 

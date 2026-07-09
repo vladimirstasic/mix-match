@@ -135,7 +135,7 @@ export function useAnalysis() {
   );
 
   const startAnalysis = useCallback(
-    async (file: File, mode: AnalysisMode = 'fast') => {
+    async (file: File, mode: AnalysisMode = 'fast', engine?: 'filescan') => {
       setState(s => ({ ...s, phase: 'uploading', uploadProgress: 0, error: null, results: null }));
 
       try {
@@ -145,6 +145,7 @@ export function useAnalysis() {
             setState(s => ({ ...s, uploadProgress: pct }));
           },
           mode,
+          engine,
         );
 
         localStorage.setItem('mixmatch_active_analysis', analysisId);

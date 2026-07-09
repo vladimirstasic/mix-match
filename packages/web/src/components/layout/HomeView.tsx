@@ -9,11 +9,12 @@ type Tab = 'home' | 'feed' | 'profile';
 interface HomeViewProps {
   credits: number | null;
   onSelectAnalysis: (id: string) => void;
-  onFileSelected: (file: File, mode: AnalysisMode) => void;
+  onFileSelected: (file: File, mode: AnalysisMode, engine?: 'filescan') => void;
   onUrlSubmitted: (url: string, mode: AnalysisMode) => void;
+  isAdmin?: boolean;
 }
 
-export const HomeView = ({ credits, onSelectAnalysis, onFileSelected, onUrlSubmitted }: HomeViewProps) => {
+export const HomeView = ({ credits, onSelectAnalysis, onFileSelected, onUrlSubmitted, isAdmin }: HomeViewProps) => {
   const [tab, setTab] = useState<Tab>('home');
 
   const TABS: { id: Tab; label: string }[] = [
@@ -52,7 +53,7 @@ export const HomeView = ({ credits, onSelectAnalysis, onFileSelected, onUrlSubmi
                 <p className="text-sm text-muted-foreground mt-2">Credits reset monthly. Upgrade for more.</p>
               </div>
             ) : (
-              <FileUpload onFileSelected={onFileSelected} onUrlSubmitted={onUrlSubmitted} />
+              <FileUpload onFileSelected={onFileSelected} onUrlSubmitted={onUrlSubmitted} isAdmin={isAdmin} />
             )}
             <aside className="recent">
               <div className="console-head">
