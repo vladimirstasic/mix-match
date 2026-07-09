@@ -267,6 +267,12 @@ const MainApp = () => {
 
               {isProcessing && (
                 <>
+                  {segments.length === 0 && (
+                    <button type="button" className="ctrl mb-4" onClick={goHome}>
+                      ← BACK TO HISTORY
+                    </button>
+                  )}
+
                   <ProgressBar
                     phase={phase as 'uploading' | 'processing'}
                     uploadProgress={uploadProgress}
@@ -286,7 +292,7 @@ const MainApp = () => {
                           waveformData={null}
                           onRetrySegment={() => {}}
                           onRetryAll={() => {}}
-                          onReset={() => {}}
+                          onReset={goHome}
                           onEditSegment={() => {}}
                           onShare={async () => null}
                         />
