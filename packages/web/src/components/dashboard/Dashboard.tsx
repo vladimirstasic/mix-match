@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
+import { ANALYSIS_STATUS } from '../../constants';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
+import { EqualizerLoader } from '@/components/ui/equalizer-loader';
 import { getUserAnalyses, deleteAnalysis, type AnalysisSummary } from '../../api/client';
 import { Loader2 } from 'lucide-react';
 
@@ -16,14 +18,17 @@ const formatDate = (iso: string) => {
   return `${dd}/${mm}/${yyyy}`;
 };
 
+const isActive = (a: AnalysisSummary) =>
+  a.status === ANALYSIS_STATUS.PROCESSING || a.status === ANALYSIS_STATUS.PENDING;
+
 const statusLabel = (a: AnalysisSummary) => {
   switch (a.status) {
-    case 'completed':
+    case ANALYSIS_STATUS.COMPLETED:
       return 'OK';
-    case 'processing':
-    case 'pending':
+    case ANALYSIS_STATUS.PROCESSING:
+    case ANALYSIS_STATUS.PENDING:
       return 'SCAN…';
-    case 'failed':
+    case ANALYSIS_STATUS.FAILED:
       return 'ERR';
     default:
       return a.status.toUpperCase();
@@ -54,13 +59,7 @@ export function Dashboard({ onSelectAnalysis }: Props) {
   if (loading) {
     return (
       <div className="rl-state" aria-live="polite" aria-busy="true">
-        <span className="eq" aria-hidden>
-          <i />
-          <i />
-          <i />
-          <i />
-          <i />
-        </span>
+        <EqualizerLoader />
         <span className="rl-state-label">LOADING SCANS…</span>
       </div>
     );
@@ -80,7 +79,7 @@ export function Dashboard({ onSelectAnalysis }: Props) {
         {analyses.slice(0, 12).map(a => (
           <li key={a.id} onClick={() => onSelectAnalysis(a.id)}>
             <span className="rl-name">{a.filename}</span>
-            <span className="rl-stat">{statusLabel(a)}</span>
+            <span className="rl-stat">{isActive(a) ? <EqualizerLoader label="Scanning" /> : statusLabel(a)}</span>
             <span className="rl-date">{formatDate(a.createdAt)}</span>
           </li>
         ))}

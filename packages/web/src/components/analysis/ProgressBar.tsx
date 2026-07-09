@@ -1,3 +1,5 @@
+import { EqualizerLoader } from '@/components/ui/equalizer-loader';
+
 interface Props {
   phase: 'uploading' | 'processing';
   uploadProgress: number;
@@ -38,13 +40,7 @@ export function ProgressBar({ phase, uploadProgress, chunksProcessed, totalChunk
       <span className="corner br" aria-hidden />
 
       <div className="scope-hud">
-        <span className="eq" aria-hidden>
-          <i />
-          <i />
-          <i />
-          <i />
-          <i />
-        </span>
+        <EqualizerLoader />
         <span>
           SEGMENT{' '}
           <b>

@@ -23,10 +23,11 @@ export const config = {
     accessKey: process.env.ACRCLOUD_ACCESS_KEY!,
     accessSecret: process.env.ACRCLOUD_ACCESS_SECRET!,
     filescan: {
-      bearerToken: process.env.ACRCLOUD_CONSOLE_TOKEN || '',
+      // JWTs never contain whitespace; strip any accidental newlines from copy/paste into env vars.
+      bearerToken: (process.env.ACRCLOUD_CONSOLE_TOKEN || '').replace(/\s+/g, ''),
       containerId: process.env.ACRCLOUD_FILESCAN_CONTAINER_ID || '30969',
       region: process.env.ACRCLOUD_FILESCAN_REGION || 'eu-west-1',
-      webhookSecret: process.env.ACRCLOUD_FILESCAN_WEBHOOK_SECRET || '',
+      webhookSecret: (process.env.ACRCLOUD_FILESCAN_WEBHOOK_SECRET || '').replace(/\s+/g, ''),
     },
   },
   publicApiUrl: process.env.PUBLIC_API_URL || '',

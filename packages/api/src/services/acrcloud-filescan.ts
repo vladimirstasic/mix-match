@@ -56,28 +56,20 @@ export async function uploadToFileScan(filePath: string, filename: string): Prom
   return { fileId: file.id, state: file.state };
 }
 
-// TODO(verify): exact per-file GET path against live ACRCloud docs — try direct file lookup
-// first, fall back to filtering the list endpoint by id.
+// Confirmed against a live response: this endpoint wraps the result in `data` as a one-element
+// array, same shape as the list endpoint — not a bare object.
 export async function fetchFileScanFile(fileId: string): Promise<FileScanFile | null> {
   const token = requireBearerToken();
 
-  const direct = await fetch(`${baseUrl()}/files/${fileId}?with_result=1`, {
+  const response = await fetch(`${baseUrl()}/files/${fileId}?with_result=1`, {
     headers: { Authorization: `Bearer ${token}` },
   });
-  if (direct.ok) {
-    const data = await direct.json();
-    return data.data ?? data;
+  if (!response.ok) {
+    throw new Error(`ACRCloud File Scanning status check failed: ${response.status} ${response.statusText}`);
   }
-
-  const list = await fetch(`${baseUrl()}/files?with_result=1&per_page=100`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
-  if (!list.ok) {
-    throw new Error(`ACRCloud File Scanning status check failed: ${list.status} ${list.statusText}`);
-  }
-  const listData = await list.json();
-  const files: FileScanFile[] = listData.data ?? [];
-  return files.find(f => f.id === fileId) ?? null;
+  const data = await response.json();
+  const files: FileScanFile[] = Array.isArray(data.data) ? data.data : [data.data];
+  return files.find(f => f.id === fileId) ?? files[0] ?? null;
 }
 
 // One-time container setup — not called from any request path.

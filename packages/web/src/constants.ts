@@ -27,3 +27,10 @@ export const SEGMENT_STATUS = {
   UNKNOWN: 'unknown',
   RETRYING: 'retrying',
 } as const;
+
+export const ANALYSIS_STATUS = {
+  PENDING: 'pending',
+  PROCESSING: 'processing',
+  COMPLETED: 'completed',
+  FAILED: 'failed',
+} as const;

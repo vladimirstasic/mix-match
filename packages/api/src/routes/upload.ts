@@ -200,16 +200,21 @@ uploadRouter.post('/upload', upload.single('file'), requireUser, async (req, res
       stream.on('error', reject);
     });
 
-    const cachedAnalysisId = await redis.get(`acr:file:${fileHash}`);
-    if (cachedAnalysisId) {
-      await fs.unlink(file.path);
-      res.json({ analysisId: cachedAnalysisId });
-      return;
-    }
-
     const requestedEngine = req.query.engine === 'filescan' ? 'filescan' : 'realtime';
     const isAdmin = userId ? (await findUser(userId))?.isAdmin : false;
     const engine = requestedEngine === 'filescan' && isAdmin ? 'filescan' : 'realtime';
+
+    // Cache dedup only applies to the realtime engine, whose worker populates this key on
+    // completion. File Scanning never writes it, so a prior realtime (or filescan) scan of the
+    // same file must not short-circuit a fresh filescan request.
+    if (engine === 'realtime') {
+      const cachedAnalysisId = await redis.get(`acr:file:${fileHash}`);
+      if (cachedAnalysisId) {
+        await fs.unlink(file.path);
+        res.json({ analysisId: cachedAnalysisId });
+        return;
+      }
+    }
 
     if (engine === 'filescan') {
       if (!config.acrcloud.filescan.bearerToken) {
