@@ -13,8 +13,11 @@ export const ACRCLOUD_MIN_SCORE = 60;
 // File Scanning (batch/Derivative Works Detection) API has its own score distribution —
 // live testing showed correct matches at 98-100 there, distinct from the real-time API above.
 export const ACRCLOUD_FILESCAN_MIN_SCORE = 75;
-export const FILESCAN_POLL_FALLBACK_DELAY_MS = 10 * 60 * 1000;
-export const FILESCAN_POLL_MAX_ATTEMPTS = 3;
+// Live testing showed ACRCloud itself taking ~17-25 min to fully process a 67-min mix — the
+// original 3×10min=30min ceiling was too close to that. 12×5min=60min gives real headroom while
+// still checking sooner for shorter files.
+export const FILESCAN_POLL_FALLBACK_DELAY_MS = 5 * 60 * 1000;
+export const FILESCAN_POLL_MAX_ATTEMPTS = 12;
 export const REDIS_FINGERPRINT_TTL = 30 * 24 * 60 * 60;
 export const REDIS_FILE_CACHE_TTL = 90 * 24 * 60 * 60;
 export const ALLOWED_MIMETYPES = [

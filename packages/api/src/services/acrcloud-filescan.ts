@@ -36,6 +36,7 @@ export interface FileScanFile {
 export async function uploadToFileScan(filePath: string, filename: string): Promise<{ fileId: string; state: number }> {
   const token = requireBearerToken();
   const fileBuffer = await fs.readFile(filePath);
+  console.log(`[acrcloud-filescan] uploading "${filename}", read ${fileBuffer.length} bytes from disk`);
 
   const formData = new FormData();
   formData.append('file', new Blob([fileBuffer]), filename);
@@ -53,6 +54,7 @@ export async function uploadToFileScan(filePath: string, filename: string): Prom
 
   const data = await response.json();
   const file = data.data ?? data;
+  console.log(`[acrcloud-filescan] ACRCloud accepted upload: id=${file.id} duration=${file.duration} state=${file.state}`);
   return { fileId: file.id, state: file.state };
 }
 

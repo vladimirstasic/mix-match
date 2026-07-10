@@ -243,6 +243,7 @@ uploadRouter.post('/upload', upload.single('file'), requireUser, async (req, res
         const waveformData = await generateWaveform(wavPath);
         await fs.unlink(wavPath).catch(() => {});
 
+        console.log(`[upload:filescan] multer reported file.size=${file.size} for "${file.originalname}"`);
         const { fileId, state } = await uploadToFileScan(file.path, file.originalname);
 
         await db
