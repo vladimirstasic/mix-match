@@ -12,7 +12,6 @@ import {
   ALLOWED_MIMETYPES,
   PLANS,
   PLAN_LIMITS,
-  ANALYSIS_MODES,
   BETA_SCANS_PER_MONTH,
   BETA_SCANS_PER_DAY,
   FILESCAN_POLL_FALLBACK_DELAY_MS,
@@ -25,7 +24,7 @@ import { redis } from '../queue/index.js';
 import { filescanPollQueue } from '../queue/filescan-poll.js';
 import { config } from '../config.js';
 import { normalizeAudio, generateWaveform } from '../services/ffmpeg.js';
-import { uploadToFileScan } from '../services/acrcloud-filescan.js';
+import { uploadToFileScan, uploadPlatformUrlToFileScan } from '../services/acrcloud-filescan.js';
 
 const upload = multer({
   dest: config.uploadDir,
@@ -57,7 +56,6 @@ async function cleanupExpiredChunks() {
 
 interface PlanCheckInput {
   fileSize?: number;
-  mode?: string;
   isYouTube?: boolean;
 }
 
@@ -126,14 +124,6 @@ async function checkPlanLimits(
     return false;
   }
 
-  if (input.mode && !limits.modes.includes(input.mode as 'fast' | 'detailed')) {
-    res.status(403).json({
-      error: `Detailed mode requires Pro plan or higher.`,
-      code: 'PLAN_MODE',
-    });
-    return false;
-  }
-
   if (input.isYouTube && !limits.youtube) {
     res.status(403).json({
       error: `YouTube links require Pro plan or higher. Use SoundCloud, Mixcloud, or upload a file instead.`,
@@ -185,9 +175,7 @@ uploadRouter.post('/upload', upload.single('file'), requireUser, async (req, res
       await ensureUser(userId);
     }
 
-    const mode = req.body?.mode === ANALYSIS_MODES.DETAILED ? ANALYSIS_MODES.DETAILED : ANALYSIS_MODES.FAST;
-
-    if (!(await checkPlanLimits(userId, res, { fileSize: file.size, mode }))) {
+    if (!(await checkPlanLimits(userId, res, { fileSize: file.size }))) {
       await fs.unlink(file.path).catch(() => {});
       return;
     }
@@ -293,7 +281,6 @@ uploadRouter.post('/upload', upload.single('file'), requireUser, async (req, res
       analysisId: analysis.id,
       filePath: file.path,
       fileHash,
-      mode,
     });
 
     res.json({ analysisId: analysis.id });
@@ -306,15 +293,22 @@ uploadRouter.post('/upload', upload.single('file'), requireUser, async (req, res
 uploadRouter.post('/upload-url', requireUser, async (req, res) => {
   const userId = getUserId(req);
 
-  const { url, mode: rawMode } = req.body ?? {};
-  const mode = rawMode === ANALYSIS_MODES.DETAILED ? ANALYSIS_MODES.DETAILED : ANALYSIS_MODES.FAST;
+  const { url } = req.body ?? {};
 
   if (typeof url !== 'string' || !(url.startsWith('http://') || url.startsWith('https://'))) {
     res.status(400).json({ error: 'Invalid URL. Must start with http:// or https://' });
     return;
   }
 
-  if (/(?:youtube\.com|youtu\.be)/i.test(url)) {
+  const requestedEngine = req.query.engine === 'filescan' ? 'filescan' : 'realtime';
+  const isAdmin = (await findUser(userId))?.isAdmin;
+  const engine = requestedEngine === 'filescan' && isAdmin ? 'filescan' : 'realtime';
+  const isPlatformUrl = /(?:youtube\.com|youtu\.be|twitter\.com|x\.com|tiktok\.com|vimeo\.com)/i.test(url);
+  const isYouTube = /(?:youtube\.com|youtu\.be)/i.test(url);
+
+  // Realtime YouTube stays blocked (yt-dlp path is Beta-gated); File Scanning's own YouTube
+  // support goes through ACRCloud's platforms API instead, so it's exempt from this block.
+  if (isYouTube && engine !== 'filescan') {
     res.status(400).json({
       error: 'YouTube is still in Beta. Try SoundCloud, Mixcloud, or upload an MP3 directly.',
       code: 'YOUTUBE_NOT_SUPPORTED',
@@ -326,9 +320,42 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
 
   await ensureUser(userId);
 
-  const isYouTube = /(?:youtube\.com|youtu\.be)/i.test(url);
+  if (!(await checkPlanLimits(userId, res, { isYouTube }))) return;
 
-  if (!(await checkPlanLimits(userId, res, { mode, isYouTube }))) return;
+  if (engine === 'filescan' && isPlatformUrl) {
+    if (!config.acrcloud.filescan.bearerToken) {
+      res.status(400).json({ error: 'File Scanning engine is not configured (missing ACRCLOUD_CONSOLE_TOKEN).' });
+      return;
+    }
+
+    const [analysis] = await db
+      .insert(analyses)
+      .values({ filename: url, fileSize: 0, sourceUrl: url, status: 'pending', userId, engine: 'filescan' })
+      .returning({ id: analyses.id });
+
+    try {
+      const { fileId, state } = await uploadPlatformUrlToFileScan(url);
+
+      await db
+        .update(analyses)
+        .set({ status: 'processing', filescanFileId: fileId, scanState: state, updatedAt: new Date() })
+        .where(eq(analyses.id, analysis.id));
+
+      await filescanPollQueue.add(
+        'poll-filescan',
+        { analysisId: analysis.id, attempt: 1 },
+        { delay: FILESCAN_POLL_FALLBACK_DELAY_MS },
+      );
+    } catch (err) {
+      await db
+        .update(analyses)
+        .set({ status: 'failed', error: err instanceof Error ? err.message : String(err), updatedAt: new Date() })
+        .where(eq(analyses.id, analysis.id));
+    }
+
+    res.json({ analysisId: analysis.id });
+    return;
+  }
 
   const [analysis] = await db
     .insert(analyses)
@@ -344,7 +371,6 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
   await analysisQueue.add('download-and-analyze', {
     analysisId: analysis.id,
     url,
-    mode,
   });
 
   res.json({ analysisId: analysis.id });

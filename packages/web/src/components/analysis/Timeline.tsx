@@ -24,6 +24,7 @@ import { Recommendations } from './Recommendations';
 import { SpotifyPlaylistModal } from './SpotifyPlaylistModal';
 import { BuyLinks } from './BuyLinks';
 import { AffiliateDisclosure } from '../AffiliateDisclosure';
+import { AcrcloudAttribution } from '../AcrcloudAttribution';
 import { toggleBookmark, voteSegment } from '../../api/client';
 
 interface Props {
@@ -736,7 +737,10 @@ export function Timeline({
 
       <Recommendations analysisId={analysisId} />
 
-      <AffiliateDisclosure className="mt-2" />
+      <div className="flex items-center justify-between mt-2">
+        <AffiliateDisclosure />
+        <AcrcloudAttribution />
+      </div>
 
       {exportModal && (
         <ExportModal title={exportModal.title} content={exportModal.content} onClose={() => setExportModal(null)} />

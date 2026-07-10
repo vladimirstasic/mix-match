@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import type { AnalysisMode } from '@mix-match/shared';
 import { Dashboard, Analytics, Feed } from '../dashboard';
 import { FileUpload } from '../upload';
 import { ProfileSettings } from '../profile';
@@ -9,8 +8,8 @@ type Tab = 'home' | 'feed' | 'profile';
 interface HomeViewProps {
   credits: number | null;
   onSelectAnalysis: (id: string) => void;
-  onFileSelected: (file: File, mode: AnalysisMode, engine?: 'filescan') => void;
-  onUrlSubmitted: (url: string, mode: AnalysisMode) => void;
+  onFileSelected: (file: File, engine?: 'filescan') => void;
+  onUrlSubmitted: (url: string, engine?: 'filescan') => void;
   isAdmin?: boolean;
 }
 

@@ -73,8 +73,6 @@ export interface ProgressEvent {
   error?: string;
 }
 
-export type AnalysisMode = 'fast' | 'detailed';
-
 export interface UploadResponse {
   analysisId: string;
 }

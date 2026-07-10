@@ -46,7 +46,6 @@ userRouter.get('/user/analyses', requireUser, async (req, res) => {
       id: analyses.id,
       filename: analyses.filename,
       status: analyses.status,
-      mode: analyses.mode,
       createdAt: analyses.createdAt,
       isPublic: analyses.isPublic,
       isFavorite: analyses.isFavorite,

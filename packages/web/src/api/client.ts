@@ -1,4 +1,4 @@
-import type { UploadResponse, AnalysisResult, Segment, AnalysisMode } from '@mix-match/shared';
+import type { UploadResponse, AnalysisResult, Segment } from '@mix-match/shared';
 
 export interface AnalysisResponse extends AnalysisResult {
   segments: Segment[];
@@ -35,7 +35,6 @@ export async function apiFetch(path: string, options: RequestInit = {}): Promise
 export async function uploadFile(
   file: File,
   onProgress?: (pct: number) => void,
-  mode: AnalysisMode = 'fast',
   engine?: 'filescan',
 ): Promise<UploadResponse> {
   const token = getTokenFn ? await getTokenFn() : null;
@@ -63,15 +62,15 @@ export async function uploadFile(
 
     const formData = new FormData();
     formData.append('file', file);
-    formData.append('mode', mode);
     xhr.send(formData);
   });
 }
 
-export async function uploadUrl(url: string, mode: AnalysisMode = 'fast'): Promise<UploadResponse> {
-  const res = await apiFetch('/upload-url', {
+export async function uploadUrl(url: string, engine?: 'filescan'): Promise<UploadResponse> {
+  const path = engine ? `/upload-url?engine=${engine}` : '/upload-url';
+  const res = await apiFetch(path, {
     method: 'POST',
-    body: JSON.stringify({ url, mode }),
+    body: JSON.stringify({ url }),
   });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: 'Download failed' }));
@@ -132,7 +131,6 @@ export interface AnalysisSummary {
   id: string;
   filename: string;
   status: string;
-  mode: string | null;
   createdAt: string;
   isPublic: boolean | null;
   isFavorite: boolean | null;

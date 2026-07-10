@@ -7,6 +7,7 @@ import { formatTime } from '@mix-match/shared';
 import { PageChrome } from '../layout';
 import { BuyLinks } from '../analysis/BuyLinks';
 import { AffiliateDisclosure } from '../AffiliateDisclosure';
+import { AcrcloudAttribution } from '../AcrcloudAttribution';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
@@ -123,6 +124,7 @@ export function PublicTracklist() {
             <Button variant="outline">Analyze your own mix</Button>
           </Link>
           <AffiliateDisclosure className="mt-6" />
+          <AcrcloudAttribution className="mt-2" />
         </div>
       </div>
     </div>

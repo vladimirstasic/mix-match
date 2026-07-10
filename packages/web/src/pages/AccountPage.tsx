@@ -197,10 +197,6 @@ export function AccountPage() {
                       </li>
                       <li className="flex items-center gap-2">
                         <CheckCircle2 className="w-4 h-4 text-primary" />
-                        {limits.modes.includes('detailed') ? 'Fast + detailed scan modes' : 'Fast scan mode only'}
-                      </li>
-                      <li className="flex items-center gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-primary" />
                         SoundCloud, Mixcloud, upload
                       </li>
                       <li className="flex items-center gap-2">

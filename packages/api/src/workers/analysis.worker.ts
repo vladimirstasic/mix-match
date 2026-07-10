@@ -11,8 +11,7 @@ import {
   REDIS_FILE_CACHE_TTL,
   CHUNK_DURATION_SEC,
   CHUNKS_TTL_HOURS,
-  FAST_STEP_SEC,
-  DETAILED_STEP_SEC,
+  CHUNK_STEP_SEC,
 } from '@mix-match/shared';
 import { config } from '../config.js';
 import { redis } from '../queue';
@@ -36,7 +35,6 @@ interface AnalysisJobData {
   filePath?: string;
   fileHash?: string;
   url?: string;
-  mode?: 'fast' | 'detailed';
 }
 
 async function downloadUrl(
@@ -82,7 +80,7 @@ async function downloadUrl(
 const worker = new Worker<AnalysisJobData>(
   'analysis',
   async (job: Job<AnalysisJobData>) => {
-    let { analysisId, filePath, fileHash, mode } = job.data;
+    let { analysisId, filePath, fileHash } = job.data;
 
     if (job.name === 'download-and-analyze' && job.data.url) {
       const result = await downloadUrl(analysisId, job.data.url);
@@ -94,7 +92,6 @@ const worker = new Worker<AnalysisJobData>(
       throw new Error('Missing filePath or fileHash');
     }
 
-    const stepSec = mode === 'detailed' ? DETAILED_STEP_SEC : FAST_STEP_SEC;
     const workDir = path.join(config.uploadDir, analysisId);
     const wavPath = path.join(workDir, 'normalized.wav');
 
@@ -117,7 +114,11 @@ const worker = new Worker<AnalysisJobData>(
         .set({ totalChunks, chunksDir, chunksExpireAt, waveformData, updatedAt: new Date() })
         .where(eq(analyses.id, analysisId));
 
-      const { paths: chunkPaths, positions: chunkPositions } = await splitIntoChunks(wavPath, chunksDir, stepSec);
+      const { paths: chunkPaths, positions: chunkPositions } = await splitIntoChunks(
+        wavPath,
+        chunksDir,
+        CHUNK_STEP_SEC,
+      );
 
       const rmsLevels = await extractRmsLevels(chunkPaths);
 

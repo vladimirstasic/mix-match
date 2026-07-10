@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import type { TrackMatch, Segment, AnalysisMode } from '@mix-match/shared';
+import type { TrackMatch, Segment } from '@mix-match/shared';
 import {
   getAnalysis,
   subscribeProgress,
@@ -135,7 +135,7 @@ export function useAnalysis() {
   );
 
   const startAnalysis = useCallback(
-    async (file: File, mode: AnalysisMode = 'fast', engine?: 'filescan') => {
+    async (file: File, engine?: 'filescan') => {
       setState(s => ({ ...s, phase: 'uploading', uploadProgress: 0, error: null, results: null }));
 
       try {
@@ -144,7 +144,6 @@ export function useAnalysis() {
           pct => {
             setState(s => ({ ...s, uploadProgress: pct }));
           },
-          mode,
           engine,
         );
 
@@ -164,14 +163,14 @@ export function useAnalysis() {
   );
 
   const startAnalysisFromUrl = useCallback(
-    async (url: string, mode: AnalysisMode = 'fast') => {
+    async (url: string, engine?: 'filescan') => {
       setState(s => ({ ...s, phase: 'uploading', uploadProgress: 0, error: null, results: null }));
 
       try {
         // No progress tracking for URL download — just show indeterminate
         setState(s => ({ ...s, uploadProgress: -1 })); // -1 = indeterminate
 
-        const { analysisId } = await uploadUrl(url, mode);
+        const { analysisId } = await uploadUrl(url, engine);
 
         localStorage.setItem('mixmatch_active_analysis', analysisId);
         setState(s => ({ ...s, phase: 'processing', analysisId, uploadProgress: 100 }));

@@ -58,6 +58,30 @@ export async function uploadToFileScan(filePath: string, filename: string): Prom
   return { fileId: file.id, state: file.state };
 }
 
+// ACRCloud fetches the media itself for these platforms — no local download/re-upload, so the
+// truncation risk we've seen with large manually-downloaded files doesn't apply here.
+export async function uploadPlatformUrlToFileScan(url: string): Promise<{ fileId: string; state: number }> {
+  const token = requireBearerToken();
+  console.log(`[acrcloud-filescan] submitting platform url "${url}"`);
+
+  const response = await fetch(`${baseUrl()}/files`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ data_type: 'platforms', url }),
+  });
+
+  if (!response.ok) {
+    throw new Error(`ACRCloud File Scanning platform submission failed: ${response.status} ${response.statusText}`);
+  }
+
+  const data = await response.json();
+  const file = data.data ?? data;
+  console.log(
+    `[acrcloud-filescan] ACRCloud accepted platform url: id=${file.id} duration=${file.duration} state=${file.state}`,
+  );
+  return { fileId: file.id, state: file.state };
+}
+
 // Confirmed against a live response: this endpoint wraps the result in `data` as a one-element
 // array, same shape as the list endpoint — not a bare object.
 export async function fetchFileScanFile(fileId: string): Promise<FileScanFile | null> {

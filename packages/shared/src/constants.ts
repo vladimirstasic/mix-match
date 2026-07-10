@@ -39,11 +39,6 @@ export function formatTime(totalSeconds: number): string {
 export const CHUNKS_TTL_HOURS = 24;
 export const CHUNK_OVERLAP_SEC = 0;
 
-export const ANALYSIS_MODES = {
-  FAST: 'fast',
-  DETAILED: 'detailed',
-} as const;
-
 export const PLANS = {
   FREE: 'free',
   PRO: 'pro',
@@ -56,7 +51,6 @@ export interface PlanLimits {
   scans: number;
   maxFileBytes: number;
   maxDurationSec: number;
-  modes: readonly ('fast' | 'detailed')[];
   youtube: boolean;
   spotifyExport: boolean;
   priorityQueue: boolean;
@@ -67,7 +61,6 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
     scans: 3,
     maxFileBytes: 100 * 1024 * 1024,
     maxDurationSec: 5400,
-    modes: ['fast'],
     youtube: false,
     spotifyExport: false,
     priorityQueue: false,
@@ -76,7 +69,6 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
     scans: 15,
     maxFileBytes: 250 * 1024 * 1024,
     maxDurationSec: Number.POSITIVE_INFINITY,
-    modes: ['fast', 'detailed'],
     youtube: true,
     spotifyExport: true,
     priorityQueue: false,
@@ -85,7 +77,6 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
     scans: 50,
     maxFileBytes: 500 * 1024 * 1024,
     maxDurationSec: Number.POSITIVE_INFINITY,
-    modes: ['fast', 'detailed'],
     youtube: true,
     spotifyExport: true,
     priorityQueue: true,
@@ -110,10 +101,9 @@ export const BETA_END_NOTICE_DAYS = 7;
 export const BETA_SCANS_PER_MONTH = 5;
 export const BETA_SCANS_PER_DAY = 2;
 
-// Analysis modes — step between chunks (chunk is always 10s, ACRCloud uses first 10s)
-export const FAST_STEP_SEC = 120; // 2 min — ~38 calls for 75min mix
-export const DETAILED_STEP_SEC = 30; // 30s — ~150 calls for 75min mix
-export const CHUNK_STEP_SEC = FAST_STEP_SEC; // default mode
+// Step between chunks (chunk is always 10s, ACRCloud uses first 10s). Single fixed value —
+// a compromise between the old Fast (120s, cheap/coarse) and Detailed (30s, dense/costly) modes.
+export const CHUNK_STEP_SEC = 60;
 
 // Post-aggregation consolidation: merge two segments of the SAME track when
 // the gap between consecutive detections is <= this many seconds, even if

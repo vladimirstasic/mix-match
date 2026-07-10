@@ -1,11 +1,10 @@
 import { useCallback, useRef, useState, type DragEvent } from 'react';
-import type { AnalysisMode } from '@mix-match/shared';
 import { MAX_FILE_SIZE, ALLOWED_MIMETYPES } from '@mix-match/shared';
 import { Button } from '@/components/ui/button';
 
 interface Props {
-  onFileSelected: (file: File, mode: AnalysisMode, engine?: 'filescan') => void;
-  onUrlSubmitted: (url: string, mode: AnalysisMode) => void;
+  onFileSelected: (file: File, engine?: 'filescan') => void;
+  onUrlSubmitted: (url: string, engine?: 'filescan') => void;
   disabled?: boolean;
   isAdmin?: boolean;
 }
@@ -14,13 +13,14 @@ type Tab = 'file' | 'url';
 
 export function FileUpload({ onFileSelected, onUrlSubmitted, disabled, isAdmin }: Props) {
   const [tab, setTab] = useState<Tab>('file');
-  const [mode, setMode] = useState<AnalysisMode>('fast');
   const [useFileScan, setUseFileScan] = useState(false);
   const [dragOver, setDragOver] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
   const [urlInput, setUrlInput] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
+
+  const engine = isAdmin && useFileScan ? 'filescan' : undefined;
 
   const validate = (file: File): string | null => {
     if (file.size > MAX_FILE_SIZE) return `File too large (max ${MAX_FILE_SIZE / 1024 / 1024}MB)`;
@@ -54,7 +54,9 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled, isAdmin }
     } catch {
       return 'Please enter a valid URL';
     }
-    if (/(?:youtube\.com|youtu\.be)/i.test(trimmed)) {
+    // YouTube's realtime (yt-dlp) path is still in Beta; the File Scanning engine handles
+    // YouTube directly on ACRCloud's side, so admins testing it are exempt from this block.
+    if (!engine && /(?:youtube\.com|youtu\.be)/i.test(trimmed)) {
       return 'YouTube is still in Beta. Try SoundCloud, Mixcloud, or upload an MP3 file.';
     }
     return null;
@@ -66,7 +68,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled, isAdmin }
         setError('Drop or select a file first');
         return;
       }
-      onFileSelected(pendingFile, mode, isAdmin && useFileScan ? 'filescan' : undefined);
+      onFileSelected(pendingFile, engine);
       setPendingFile(null);
     } else {
       const err = validateUrl(urlInput);
@@ -75,7 +77,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled, isAdmin }
         return;
       }
       setError(null);
-      onUrlSubmitted(urlInput.trim(), mode);
+      onUrlSubmitted(urlInput.trim(), engine);
       setUrlInput('');
     }
   };
@@ -155,31 +157,7 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled, isAdmin }
           )}
         </div>
 
-        <div className="flex items-center gap-2">
-          <span className="label-mono mr-1">MODE</span>
-          <button
-            className={`px-3 py-2 font-mono uppercase tracking-[0.08em] text-xs border transition-colors ${
-              mode === 'fast'
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'border-border text-foreground hover:border-primary'
-            }`}
-            onClick={() => setMode('fast')}
-          >
-            Fast <i className={`not-italic ${mode === 'fast' ? 'opacity-70' : 'opacity-50'}`}>~20s</i>
-          </button>
-          <button
-            className={`px-3 py-2 font-mono uppercase tracking-[0.08em] text-xs border transition-colors ${
-              mode === 'detailed'
-                ? 'bg-primary text-primary-foreground border-primary'
-                : 'border-border text-foreground hover:border-primary'
-            }`}
-            onClick={() => setMode('detailed')}
-          >
-            Detailed <i className={`not-italic ${mode === 'detailed' ? 'opacity-70' : 'opacity-50'}`}>~2min</i>
-          </button>
-        </div>
-
-        {isAdmin && tab === 'file' && (
+        {isAdmin && (
           <label className="flex items-center gap-2 font-mono text-xs uppercase tracking-[0.08em] text-muted-foreground cursor-pointer">
             <input type="checkbox" checked={useFileScan} onChange={e => setUseFileScan(e.target.checked)} />
             File Scanning engine (admin, beta)
