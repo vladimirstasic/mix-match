@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+import { apiFetch } from '../../api/client';
 
 export function ProfileSettings() {
   const [username, setUsername] = useState('');
@@ -11,7 +10,7 @@ export function ProfileSettings() {
   const [currentUsername, setCurrentUsername] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch(`${API_BASE}/user/profile`, { credentials: 'include' })
+    apiFetch('/user/profile')
       .then(r => (r.ok ? r.json() : null))
       .then(data => {
         if (data?.username) {
@@ -25,10 +24,8 @@ export function ProfileSettings() {
   const save = async () => {
     setError(null);
     try {
-      const res = await fetch(`${API_BASE}/user/profile`, {
+      const res = await apiFetch('/user/profile', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
         body: JSON.stringify({ username }),
       });
       if (!res.ok) {
