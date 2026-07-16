@@ -25,6 +25,7 @@ import { filescanPollQueue } from '../queue/filescan-poll.js';
 import { config } from '../config.js';
 import { normalizeAudio, generateWaveform } from '../services/ffmpeg.js';
 import { uploadToFileScan, uploadPlatformUrlToFileScan } from '../services/acrcloud-filescan.js';
+import { getVideoTitle } from '../services/ytdlp.js';
 
 const upload = multer({
   dest: config.uploadDir,
@@ -328,9 +329,11 @@ uploadRouter.post('/upload-url', requireUser, async (req, res) => {
       return;
     }
 
+    const title = await getVideoTitle(url).catch(() => url);
+
     const [analysis] = await db
       .insert(analyses)
-      .values({ filename: url, fileSize: 0, sourceUrl: url, status: 'pending', userId, engine: 'filescan' })
+      .values({ filename: title, fileSize: 0, sourceUrl: url, status: 'pending', userId, engine: 'filescan' })
       .returning({ id: analyses.id });
 
     try {

@@ -711,19 +711,31 @@ export function Timeline({
         <button
           type="button"
           className="ctrl"
-          disabled={sharing || !!shareUrl}
+          disabled={sharing}
           onClick={async () => {
+            if (shareUrl) {
+              navigator.clipboard.writeText(shareUrl);
+              setCopied('share');
+              setTimeout(() => setCopied(null), 2000);
+              return;
+            }
             setSharing(true);
             try {
               const slug = await onShare();
-              if (slug) setShareUrl(`${window.location.origin}/t/${slug}`);
+              if (slug) {
+                const url = `${window.location.origin}/t/${slug}`;
+                setShareUrl(url);
+                navigator.clipboard.writeText(url);
+                setCopied('share');
+                setTimeout(() => setCopied(null), 2000);
+              }
             } finally {
               setSharing(false);
             }
           }}
         >
           <Share2 className="w-3 h-3" />
-          {sharing ? 'SHARING…' : 'SHARE'}
+          {sharing ? 'SHARING…' : copied === 'share' ? 'COPIED!' : 'SHARE'}
         </button>
       </div>
 
@@ -737,7 +749,7 @@ export function Timeline({
 
       <Recommendations analysisId={analysisId} />
 
-      <div className="flex items-center justify-between mt-2">
+      <div className="flex flex-col items-center gap-2 text-center mt-2">
         <AffiliateDisclosure />
         <AcrcloudAttribution />
       </div>

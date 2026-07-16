@@ -269,6 +269,7 @@
   font-size: 0.78rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
+  white-space: nowrap;
   padding: 0.6rem 1.1rem;
   color: var(--primary-foreground);
   background: var(--primary);
@@ -343,6 +344,52 @@
   display: flex;
   align-items: center;
   gap: 0.6rem;
+}
+.bar-burger {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  color: var(--muted-foreground);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  cursor: pointer;
+  transition: color 0.2s, border-color 0.2s, background 0.2s;
+}
+.bar-burger:hover {
+  color: var(--foreground);
+  border-color: var(--line-strong);
+  background: var(--card);
+}
+.bar-menu {
+  position: fixed;
+  top: 54px;
+  inset-inline: 0;
+  z-index: 49;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 1rem 1.25rem 1.25rem;
+  background: var(--bar-bg);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--border);
+}
+.bar-menu a {
+  font-family: var(--font-mono);
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  color: var(--ink-faint);
+  padding: 0.6rem 0.2rem;
+  transition: color 0.2s;
+}
+.bar-menu a:hover {
+  color: var(--primary);
+}
+.bar-menu .ctrl {
+  align-self: flex-start;
+  margin-top: 0.3rem;
 }
 .app-route {
   font-family: var(--font-mono);
@@ -644,6 +691,10 @@
   }
   .bar-nav { display: none; }
   .hud { display: none; }
+  .bar-signin { display: none; }
+  .bar-theme { display: none; }
+  .bar-burger { display: inline-flex; }
+  .landing-bar .btn-demo { padding: 0.45rem 0.7rem; font-size: 0.64rem; }
 }
 
 /* Compact app-bar on small screens */
@@ -665,12 +716,12 @@
   .corner.tr { top: 64px; right: 12px; }
   .corner.bl { bottom: 12px; left: 12px; }
   .corner.br { bottom: 12px; right: 12px; }
+  .app-stage > .corner { display: none; }
 }
 
 /* Stack log row content on mobile so track names don't overflow */
 @media (max-width: 640px) {
-  .log-row {
-    grid-template-columns: 1fr;
+  .log-row {    grid-template-columns: 1fr;
   }
 }
 

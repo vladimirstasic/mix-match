@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Loader2 } from 'lucide-react';
-
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+import { apiFetch } from '../../api/client';
 
 interface FeedMix {
   id: string;
@@ -21,7 +20,7 @@ export function Feed({ onSelectAnalysis }: Props) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_BASE}/user/feed`, { credentials: 'include' })
+    apiFetch('/user/feed')
       .then(r => (r.ok ? r.json() : []))
       .then(setMixes)
       .finally(() => setLoading(false));

@@ -1,5 +1,15 @@
 import { SignInButton } from '@clerk/clerk-react';
+import { Menu, X } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
 import { PageChrome, ThemeToggle } from '../layout';
+import { AcrcloudAttribution } from '../AcrcloudAttribution';
+
+const NAV_LINKS = [
+  { href: '#how', label: '[01] PIPELINE' },
+  { href: '#accuracy', label: '[02] RECOGNITION' },
+  { href: '#features', label: '[03] MODULES' },
+  { href: '#pricing', label: '[04] PLANS' },
+];
 
 const PIPELINE = [
   { n: '01', title: 'Ingest', body: 'Drag a recording or paste a SoundCloud / Mixcloud link. We fetch and decode it.' },
@@ -28,7 +38,7 @@ const MODULES = [
   {
     k: 'AUDIO_FINGERPRINT',
     title: 'Recognition engine',
-    body: 'ACRCloud-powered. Fast mode scans highlights, Detailed walks segment by segment.',
+    body: 'ACRCloud acoustic fingerprinting matches every segment against a global track database, scoring each hit for confidence — even pitch- or tempo-shifted tracks.',
   },
   {
     k: 'URL_INGEST',
@@ -62,7 +72,7 @@ const PLANS = [
     name: 'Free',
     num: '$0',
     per: '/ forever',
-    features: ['5 scans / month', '2 scans / day', 'Fast mode', 'Text export', 'Public share pages'],
+    features: ['5 scans / month', '2 scans / day', 'Text export', 'Public share pages'],
     cta: 'GET STARTED',
     featured: false,
     soon: false,
@@ -73,7 +83,6 @@ const PLANS = [
     per: '/ month',
     features: [
       '30 mixes / month',
-      'Fast + Detailed',
       'All export formats',
       'Spotify playlists',
       'Streaming links',
@@ -86,11 +95,23 @@ const PLANS = [
 ];
 
 export function LandingPage() {
+  const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLHeadElement>(null);
+
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onClickOutside);
+    return () => document.removeEventListener('mousedown', onClickOutside);
+  }, [menuOpen]);
+
   return (
     <div className="min-h-screen text-foreground overflow-hidden">
       <PageChrome variant="full" />
 
-      <header className="landing-bar">
+      <header className="landing-bar" ref={menuRef}>
         <a className="unit" href="#top">
           <span className="led" aria-hidden />
           <span className="unit-name">MIXMATCH</span>
@@ -104,16 +125,42 @@ export function LandingPage() {
           <a href="#pricing">[04] PLANS</a>
         </nav>
         <div className="bar-actions">
-          <ThemeToggle />
+          <span className="bar-theme">
+            <ThemeToggle />
+          </span>
           <SignInButton mode="modal">
-            <button className="ctrl">SIGN IN</button>
+            <button className="ctrl bar-signin">SIGN IN</button>
           </SignInButton>
           <SignInButton mode="modal">
             <button className="btn-demo" type="button">
               GET STARTED
             </button>
           </SignInButton>
+          <button
+            className="bar-burger"
+            type="button"
+            aria-label={menuOpen ? 'Close menu' : 'Open menu'}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(o => !o)}
+          >
+            {menuOpen ? <X size={18} /> : <Menu size={18} />}
+          </button>
         </div>
+        {menuOpen && (
+          <nav className="bar-menu" aria-label="Primary mobile">
+            {NAV_LINKS.map(link => (
+              <a key={link.href} href={link.href} onClick={() => setMenuOpen(false)}>
+                {link.label}
+              </a>
+            ))}
+            <SignInButton mode="modal">
+              <button className="ctrl" onClick={() => setMenuOpen(false)}>
+                SIGN IN
+              </button>
+            </SignInButton>
+            <ThemeToggle />
+          </nav>
+        )}
       </header>
 
       <main id="top">
@@ -289,7 +336,7 @@ export function LandingPage() {
           <span>
             <span className="led" aria-hidden /> MIXMATCH /studio · BETA
           </span>
-          <span>POWERED BY ACRCLOUD · BETA</span>
+          <AcrcloudAttribution logoClassName="h-4" />
         </div>
       </footer>
     </div>

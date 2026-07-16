@@ -4,8 +4,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Disc3, Loader2, Music } from 'lucide-react';
 import { PageChrome } from '../layout';
-
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+import { apiFetch } from '../../api/client';
 
 interface DjProfileData {
   username: string;
@@ -21,7 +20,7 @@ export function DjProfile() {
 
   useEffect(() => {
     if (!username) return;
-    fetch(`${API_BASE}/dj/${username}`, { credentials: 'include' })
+    apiFetch(`/dj/${username}`)
       .then(r => {
         if (!r.ok) throw new Error();
         return r.json();
@@ -32,7 +31,7 @@ export function DjProfile() {
   }, [username]);
 
   const toggleFollow = async () => {
-    const res = await fetch(`${API_BASE}/dj/${username}/follow`, { method: 'POST', credentials: 'include' });
+    const res = await apiFetch(`/dj/${username}/follow`, { method: 'POST' });
     if (res.ok) {
       const data = await res.json();
       setFollowing(data.following);

@@ -27,6 +27,7 @@ import {
 import { processChunksOptimized } from '../services/optimizer.js';
 import { aggregateMatches, consolidateTimeline } from '../services/aggregator.js';
 import { buildSegments } from '../services/segments.js';
+import { buildYtdlpBaseArgs, getVideoTitle } from '../services/ytdlp.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -41,18 +42,10 @@ async function downloadUrl(
   analysisId: string,
   url: string,
 ): Promise<{ filePath: string; fileHash: string; filename: string }> {
-  const isYouTube = /(?:youtube\.com|youtu\.be)/i.test(url);
-  const baseYtArgs = ['--force-ipv4', '--socket-timeout', '30', '--retries', '2'];
-  if (isYouTube && process.env.YTDLP_PROXY) {
-    baseYtArgs.push('--proxy', process.env.YTDLP_PROXY);
-  }
-
+  const baseYtArgs = buildYtdlpBaseArgs(url);
   const outputPath = path.join(config.uploadDir, uuid() + '.mp3');
 
-  const { stdout: title } = await execFileAsync('yt-dlp', [...baseYtArgs, '--print', 'title', url], {
-    timeout: 90_000,
-  });
-  const filename = title.trim() || 'Unknown title';
+  const filename = await getVideoTitle(url);
 
   await execFileAsync(
     'yt-dlp',

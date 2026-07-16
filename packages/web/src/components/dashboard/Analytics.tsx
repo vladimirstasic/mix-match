@@ -1,8 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { BarChart3, Eye, Loader2 } from 'lucide-react';
-
-const API_BASE = import.meta.env.VITE_API_URL || '/api';
+import { apiFetch } from '../../api/client';
 
 interface AnalyticsData {
   totalViews: number;
@@ -14,7 +13,7 @@ export function Analytics() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${API_BASE}/user/analytics`, { credentials: 'include' })
+    apiFetch('/user/analytics')
       .then(r => (r.ok ? r.json() : null))
       .then(setData)
       .finally(() => setLoading(false));
