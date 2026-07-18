@@ -11,6 +11,7 @@ import {
   updateAnalysis,
 } from '../api/client';
 import { track } from '../lib/analytics';
+import { POLL_INTERVAL_MS, POLL_RETRY_MS, RETRY_POLL_MS } from '../constants';
 
 type Phase = 'idle' | 'loading' | 'uploading' | 'processing' | 'completed' | 'failed';
 
@@ -76,10 +77,10 @@ export function useAnalysis() {
       } else if (result.status === 'failed') {
         setState(s => ({ ...s, phase: 'failed', error: result.error || 'Failed' }));
       } else {
-        setTimeout(() => pollResult(id), 3000);
+        setTimeout(() => pollResult(id), POLL_INTERVAL_MS);
       }
     } catch {
-      setTimeout(() => pollResult(id), 5000);
+      setTimeout(() => pollResult(id), POLL_RETRY_MS);
     }
   }, []);
 
@@ -288,12 +289,12 @@ export function useAnalysis() {
         const full = await getAnalysis(state.analysisId!);
         const seg = full.segments.find(s => s.id === segmentId);
         if (seg?.status === 'retrying') {
-          setTimeout(poll, 2000);
+          setTimeout(poll, RETRY_POLL_MS);
         } else {
           setState(s => ({ ...s, segments: full.segments, results: full.results as TrackMatch[] }));
         }
       };
-      setTimeout(poll, 2000);
+      setTimeout(poll, RETRY_POLL_MS);
     },
     [state.analysisId],
   );
@@ -309,12 +310,12 @@ export function useAnalysis() {
       const full = await getAnalysis(state.analysisId!);
       const stillRetrying = full.segments.some(s => s.status === 'retrying');
       if (stillRetrying) {
-        setTimeout(poll, 3000);
+        setTimeout(poll, POLL_INTERVAL_MS);
       } else {
         setState(s => ({ ...s, segments: full.segments, results: full.results as TrackMatch[] }));
       }
     };
-    setTimeout(poll, 3000);
+    setTimeout(poll, POLL_INTERVAL_MS);
   }, [state.analysisId]);
 
   const editSegment = useCallback(

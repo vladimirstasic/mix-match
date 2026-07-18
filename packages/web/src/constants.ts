@@ -9,7 +9,6 @@ export const VIEW = {
   HOME: 'home',
   COMPARE: 'compare',
   MANUAL: 'manual',
-  FEED: 'feed',
 } as const;
 
 // These are already in @mix-match/shared types, but useful as runtime constants

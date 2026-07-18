@@ -191,8 +191,9 @@ export function LandingPage() {
               in your mix
             </h1>
             <p className="lede">
-              Upload a DJ set or drop in a SoundCloud or Mixcloud link. The engine listens through the whole mix and
-              returns a timestamped tracklist, with a confidence score on every hit.
+              Upload a DJ set or drop in a SoundCloud or Mixcloud link — no crowd-tagging, no waiting on a community to
+              identify it. The engine listens through the whole mix and returns a timestamped tracklist instantly, with
+              a confidence score on every hit.
             </p>
             <div className="hero-cta">
               <SignInButton mode="modal">
@@ -253,6 +254,10 @@ export function LandingPage() {
                 ))}
               </div>
             </div>
+            <p className="sub" style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.85rem' }}>
+              Best on commercially released tracks — unreleased edits, white labels, and ID-only cuts may come back
+              unidentified rather than guessed.
+            </p>
           </div>
         </section>
 
