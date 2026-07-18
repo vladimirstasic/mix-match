@@ -144,7 +144,7 @@ userRouter.get('/dj/:username/og', async (req, res) => {
 
   const title = esc(`@${user.username} — DJ profile on MixMatch`);
   const description = esc(`${count} mix${count !== 1 ? 'es' : ''} identified by MixMatch.`);
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
   const publicUrl = `${frontendUrl}/dj/${encodeURIComponent(username)}`;
   const imageUrl = `${frontendUrl}/og-image.png`;
 

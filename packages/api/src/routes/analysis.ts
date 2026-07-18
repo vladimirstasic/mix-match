@@ -456,7 +456,7 @@ analysisRouter.get('/t/:slug/og', async (req, res) => {
           .join(', ')}${identified.length > 3 ? '...' : ''}`
       : 'Tracklist identified by MixMatch',
   );
-  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
   const publicUrl = `${frontendUrl}/t/${encodeURIComponent(slug)}`;
   const imageUrl = `${frontendUrl}/og-image.png`;
 
