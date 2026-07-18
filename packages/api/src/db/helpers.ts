@@ -2,6 +2,7 @@ import { eq } from 'drizzle-orm';
 import { clerkClient } from '@clerk/express';
 import { db } from './client.js';
 import { analyses, segments, users } from './schema.js';
+import { trackServer } from '../lib/analytics.js';
 
 export async function findAnalysis(id: string) {
   const [row] = await db.select().from(analyses).where(eq(analyses.id, id)).limit(1);
@@ -39,6 +40,7 @@ export async function ensureUser(clerkId: string): Promise<void> {
   }
 
   await db.insert(users).values({ clerkId, email, firstName, lastName }).onConflictDoNothing();
+  trackServer(clerkId, 'sign_up_completed');
 }
 
 export async function getAnalysisSegments(analysisId: string) {

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Check, Zap, Crown, ArrowLeft, Loader2, Sparkles, Rocket } from 'lucide-react';
 import { createCheckout, getFoundingStatus, type FoundingStatus } from '../api/billing';
 import { getUserProfile } from '../api/client';
+import { track } from '../lib/analytics';
 
 interface TierConfig {
   plan: Plan;
@@ -28,7 +29,6 @@ const TIERS: TierConfig[] = [
       `${PLAN_LIMITS.free.scans} scans per month`,
       'SoundCloud, Mixcloud, file upload',
       `Up to ${Math.round(PLAN_LIMITS.free.maxFileBytes / 1024 / 1024)} MB uploads`,
-      'Fast scan mode (every 2 min)',
     ],
   },
   {
@@ -42,7 +42,6 @@ const TIERS: TierConfig[] = [
       `${PLAN_LIMITS.pro.scans} scans per month`,
       'SoundCloud, Mixcloud, upload',
       `Up to ${Math.round(PLAN_LIMITS.pro.maxFileBytes / 1024 / 1024)} MB uploads`,
-      'Detailed mode (every 30 sec)',
       'Spotify playlist export',
     ],
   },
@@ -211,7 +210,11 @@ export function PricingPage() {
                       </ul>
 
                       {tier.comingSoon ? (
-                        <Button className="w-full mt-auto" variant="outline" disabled>
+                        <Button
+                          className="w-full mt-auto"
+                          variant="outline"
+                          onClick={() => track('pro_interest_clicked', { plan: tier.name })}
+                        >
                           Coming soon
                         </Button>
                       ) : (

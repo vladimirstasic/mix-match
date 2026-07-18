@@ -177,6 +177,20 @@ export async function toggleBookmark(segmentId: string): Promise<{ isBookmarked:
   return res.json();
 }
 
+export interface UserStats {
+  trackCount: number;
+  mixCount: number;
+  avgBpm: number | null;
+  topArtists: { artist: string; count: number }[];
+  topGenres: { genre: string; count: number }[];
+}
+
+export async function getUserStats(): Promise<UserStats | null> {
+  const res = await apiFetch('/user/stats');
+  if (!res.ok) return null;
+  return res.json();
+}
+
 export interface CompareResult {
   mixA: { id: string; filename: string; totalTracks: number };
   mixB: { id: string; filename: string; totalTracks: number };

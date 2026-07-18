@@ -1,3 +1,27 @@
 {
-  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+  "rewrites": [
+    {
+      "source": "/t/:slug",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|[Tt]witter[Bb]ot|[Ss]lack[Bb]ot|[Dd]iscord[Bb]ot|[Tt]elegram[Bb]ot|[Ll]inked[Ii]n[Bb]ot|WhatsApp|[Gg]oogle[Bb]ot|[Aa]pple[Bb]ot|redditbot).*"
+        }
+      ],
+      "destination": "/api/og-preview?type=tracklist&id=:slug"
+    },
+    {
+      "source": "/dj/:username",
+      "has": [
+        {
+          "type": "header",
+          "key": "user-agent",
+          "value": ".*(facebookexternalhit|[Tt]witter[Bb]ot|[Ss]lack[Bb]ot|[Dd]iscord[Bb]ot|[Tt]elegram[Bb]ot|[Ll]inked[Ii]n[Bb]ot|WhatsApp|[Gg]oogle[Bb]ot|[Aa]pple[Bb]ot|redditbot).*"
+        }
+      ],
+      "destination": "/api/og-preview?type=dj&id=:username"
+    },
+    { "source": "/(.*)", "destination": "/index.html" }
+  ]
 }

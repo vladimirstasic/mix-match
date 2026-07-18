@@ -7,12 +7,7 @@ import { promisify } from 'util';
 import crypto from 'crypto';
 import { createReadStream } from 'fs';
 import { v4 as uuid } from 'uuid';
-import {
-  REDIS_FILE_CACHE_TTL,
-  CHUNK_DURATION_SEC,
-  CHUNKS_TTL_HOURS,
-  CHUNK_STEP_SEC,
-} from '@mix-match/shared';
+import { REDIS_FILE_CACHE_TTL, CHUNK_DURATION_SEC, CHUNKS_TTL_HOURS, CHUNK_STEP_SEC } from '@mix-match/shared';
 import { config } from '../config.js';
 import { redis } from '../queue';
 import { db } from '../db/client.js';
@@ -28,6 +23,7 @@ import { processChunksOptimized } from '../services/optimizer.js';
 import { aggregateMatches, consolidateTimeline } from '../services/aggregator.js';
 import { buildSegments } from '../services/segments.js';
 import { buildYtdlpBaseArgs, getVideoTitle } from '../services/ytdlp.js';
+import { trackServer } from '../lib/analytics.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -181,6 +177,14 @@ const worker = new Worker<AnalysisJobData>(
         .where(eq(analyses.id, analysisId));
 
       await redis.setex(`acr:file:${fileHash}`, REDIS_FILE_CACHE_TTL, analysisId);
+
+      const [{ userId: ownerId }] = await db
+        .select({ userId: analyses.userId })
+        .from(analyses)
+        .where(eq(analyses.id, analysisId));
+      if (ownerId) {
+        trackServer(ownerId, 'upload_completed', { analysisId, tracksFound: results.length });
+      }
 
       console.log(`[analysis:${analysisId}] Processing complete`);
       console.log(`  Total chunks:     ${fullMetrics.totalChunks}`);

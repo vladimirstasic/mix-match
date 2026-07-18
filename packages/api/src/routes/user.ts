@@ -124,6 +124,55 @@ userRouter.get('/dj/:username', async (req, res) => {
   res.json({ username: user.username, mixes, badges });
 });
 
+// GET /api/dj/:username/og — returns HTML with OG meta tags for social sharing
+userRouter.get('/dj/:username/og', async (req, res) => {
+  const username = req.params.username as string;
+  const [user] = await db.select().from(users).where(eq(users.username, username)).limit(1);
+  if (!user) {
+    res.status(404).send('Not found');
+    return;
+  }
+
+  const mixCount = await db
+    .select({ count: sql<number>`count(*)` })
+    .from(analyses)
+    .where(and(eq(analyses.userId, user.clerkId), eq(analyses.isPublic, true)));
+  const count = Number(mixCount[0]?.count ?? 0);
+
+  const esc = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+  const title = esc(`@${user.username} — DJ profile on MixMatch`);
+  const description = esc(`${count} mix${count !== 1 ? 'es' : ''} identified by MixMatch.`);
+  const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
+  const publicUrl = `${frontendUrl}/dj/${encodeURIComponent(username)}`;
+  const imageUrl = `${frontendUrl}/og-image.png`;
+
+  res.setHeader('Content-Type', 'text/html');
+  res.send(`<!DOCTYPE html>
+<html>
+<head>
+  <title>${title}</title>
+  <meta property="og:title" content="${title}" />
+  <meta property="og:description" content="${description}" />
+  <meta property="og:type" content="profile" />
+  <meta property="og:url" content="${publicUrl}" />
+  <meta property="og:image" content="${imageUrl}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="${title}" />
+  <meta name="twitter:description" content="${description}" />
+  <meta name="twitter:image" content="${imageUrl}" />
+</head>
+<body>
+  <h1>${title}</h1>
+  <p>${description}</p>
+  <p><a href="${publicUrl}">View on MixMatch</a></p>
+</body>
+</html>`);
+});
+
 userRouter.patch('/analysis/:id/tags', requireUser, async (req, res) => {
   const userId = getUserId(req);
 
@@ -308,4 +357,47 @@ userRouter.get('/user/analytics', requireUser, async (req, res) => {
   const totalViews = mixes.reduce((sum, m) => sum + (m.viewCount || 0), 0);
 
   res.json({ totalViews, mixes });
+});
+
+// GET /api/user/stats — top artists/genres/avg BPM across all identified segments
+userRouter.get('/user/stats', requireUser, async (req, res) => {
+  const userId = getUserId(req);
+
+  const identifiedFilter = and(eq(analyses.userId, userId), eq(segments.status, 'identified'));
+
+  const topArtists = await db
+    .select({ artist: segments.artist, count: sql<number>`count(*)` })
+    .from(segments)
+    .innerJoin(analyses, eq(segments.analysisId, analyses.id))
+    .where(and(identifiedFilter, sql`${segments.artist} is not null`))
+    .groupBy(segments.artist)
+    .orderBy(desc(sql`count(*)`))
+    .limit(5);
+
+  const topGenres = await db
+    .select({ genre: segments.genre, count: sql<number>`count(*)` })
+    .from(segments)
+    .innerJoin(analyses, eq(segments.analysisId, analyses.id))
+    .where(and(identifiedFilter, sql`${segments.genre} is not null`))
+    .groupBy(segments.genre)
+    .orderBy(desc(sql`count(*)`))
+    .limit(5);
+
+  const [totals] = await db
+    .select({
+      trackCount: sql<number>`count(*)`,
+      avgBpm: sql<number | null>`avg(${segments.bpm})`,
+      mixCount: sql<number>`count(distinct ${analyses.id})`,
+    })
+    .from(segments)
+    .innerJoin(analyses, eq(segments.analysisId, analyses.id))
+    .where(identifiedFilter);
+
+  res.json({
+    trackCount: Number(totals?.trackCount ?? 0),
+    mixCount: Number(totals?.mixCount ?? 0),
+    avgBpm: totals?.avgBpm != null ? Math.round(Number(totals.avgBpm)) : null,
+    topArtists: topArtists.map(a => ({ artist: a.artist as string, count: Number(a.count) })),
+    topGenres: topGenres.map(g => ({ genre: g.genre as string, count: Number(g.count) })),
+  });
 });

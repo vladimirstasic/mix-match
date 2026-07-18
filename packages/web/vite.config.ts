@@ -13,6 +13,17 @@ export default defineConfig({
   },
   build: {
     chunkSizeWarningLimit: 800,
+    rollupOptions: {
+      output: {
+        // Without this, Rollup's automatic chunking ties posthog-js to whichever
+        // lazy-loaded feature chunk happens to import lib/analytics.ts first
+        // (observed: it got bundled into ExportModal, +85KB gzipped) instead of
+        // the eager main bundle where it's actually initialized.
+        manualChunks(id) {
+          if (id.includes('node_modules/posthog-js')) return 'vendor-posthog';
+        },
+      },
+    },
   },
   server: {
     port: 5173,

@@ -918,8 +918,9 @@
 }
 .recent-list li {
   display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 0.3rem 1rem;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 0.3rem 0.7rem;
   padding: 0.85rem 1rem;
   border-bottom: 1px solid var(--border);
   cursor: pointer;
@@ -930,6 +931,18 @@
 }
 .recent-list li:hover {
   background: var(--popover);
+}
+.rl-fav-star {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink-faint);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.rl-fav-star:hover,
+.rl-fav-star.active {
+  color: var(--primary);
 }
 .recent-list .rl-name {
   font-size: 0.9rem;
@@ -947,6 +960,31 @@
   font-family: var(--font-mono);
   font-size: 0.66rem;
   color: var(--ink-faint);
+}
+.rl-filter {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0.5rem 1rem 0;
+}
+.rl-fav-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  font-family: var(--font-mono);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+  padding: 0.25rem 0.5rem;
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+.rl-fav-toggle:hover {
+  color: var(--foreground);
+}
+.rl-fav-toggle.active {
+  color: var(--primary);
+  border-color: var(--primary);
 }
 .rl-state {
   min-height: 160px;

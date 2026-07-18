@@ -19,6 +19,10 @@ retryRouter.post('/analysis/:id/segments/:segmentId/retry', requireUser, async (
     res.status(404).json({ error: 'Analysis not found' });
     return;
   }
+  if (analysis.userId && analysis.userId !== userId) {
+    res.status(403).json({ error: 'Not authorized' });
+    return;
+  }
 
   if (!analysis.chunksDir) {
     res.status(410).json({ error: 'Chunk files not available' });
@@ -62,6 +66,10 @@ retryRouter.post('/analysis/:id/retry-unknown', requireUser, async (req, res) =>
   const analysis = await findAnalysis(id);
   if (!analysis) {
     res.status(404).json({ error: 'Analysis not found' });
+    return;
+  }
+  if (analysis.userId && analysis.userId !== userId) {
+    res.status(403).json({ error: 'Not authorized' });
     return;
   }
   if (!analysis.chunksDir) {

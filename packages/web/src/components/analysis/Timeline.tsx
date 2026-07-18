@@ -26,6 +26,8 @@ import { BuyLinks } from './BuyLinks';
 import { AffiliateDisclosure } from '../AffiliateDisclosure';
 import { AcrcloudAttribution } from '../AcrcloudAttribution';
 import { toggleBookmark, voteSegment } from '../../api/client';
+import { explainUnknownSegment } from '../../lib/explainUnknownSegment';
+import { track } from '../../lib/analytics';
 
 interface Props {
   segments: Segment[];
@@ -221,6 +223,7 @@ export function Timeline({
   };
 
   const openExport = (format: 'text' | 'mixcloud' | 'soundcloud' | 'youtube' | 'markdown') => {
+    track('export_clicked', { format });
     const identified = segments.filter(s => s.status === 'identified');
     let title: string;
     let content: string;
@@ -592,7 +595,9 @@ export function Timeline({
                   {seg.status === 'unknown' && (
                     <div className="flex items-center gap-3">
                       <HelpCircle className="w-4 h-4 text-muted-foreground/50 shrink-0" />
-                      <span className="text-muted-foreground/70 italic text-sm">Unknown section</span>
+                      <span className="text-muted-foreground/70 italic text-sm">
+                        {explainUnknownSegment(seg, segments)}
+                      </span>
                       <div className="ml-auto">
                         {chunksAvailable ? (
                           <Button variant="ghost" size="sm" onClick={() => onRetrySegment(seg.id)}>
@@ -713,6 +718,7 @@ export function Timeline({
           className="ctrl"
           disabled={sharing}
           onClick={async () => {
+            track('share_clicked', { analysisId });
             if (shareUrl) {
               navigator.clipboard.writeText(shareUrl);
               setCopied('share');

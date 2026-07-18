@@ -10,6 +10,7 @@ import {
   editSegment as editSegmentApi,
   updateAnalysis,
 } from '../api/client';
+import { track } from '../lib/analytics';
 
 type Phase = 'idle' | 'loading' | 'uploading' | 'processing' | 'completed' | 'failed';
 
@@ -137,6 +138,7 @@ export function useAnalysis() {
   const startAnalysis = useCallback(
     async (file: File, engine?: 'filescan') => {
       setState(s => ({ ...s, phase: 'uploading', uploadProgress: 0, error: null, results: null }));
+      track('upload_started', { source: 'file', engine });
 
       try {
         const { analysisId } = await uploadFile(
@@ -165,6 +167,7 @@ export function useAnalysis() {
   const startAnalysisFromUrl = useCallback(
     async (url: string, engine?: 'filescan') => {
       setState(s => ({ ...s, phase: 'uploading', uploadProgress: 0, error: null, results: null }));
+      track('upload_started', { source: 'url', engine });
 
       try {
         // No progress tracking for URL download — just show indeterminate

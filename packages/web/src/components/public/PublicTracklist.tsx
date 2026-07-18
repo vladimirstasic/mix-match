@@ -7,6 +7,8 @@ import { PageChrome } from '../layout';
 import { BuyLinks } from '../analysis/BuyLinks';
 import { AffiliateDisclosure } from '../AffiliateDisclosure';
 import { AcrcloudAttribution } from '../AcrcloudAttribution';
+import { useDocumentMeta } from '../../hooks/useDocumentMeta';
+import { explainUnknownSegment } from '../../lib/explainUnknownSegment';
 
 const API_BASE = import.meta.env.VITE_API_URL || '/api';
 
@@ -43,6 +45,15 @@ export function PublicTracklist() {
       .finally(() => setLoading(false));
   }, [slug]);
 
+  const identifiedCount = data?.segments.filter(s => s.trackName).length ?? 0;
+
+  useDocumentMeta(
+    data ? `${data.filename} — tracklist identified by MixMatch` : 'MixMatch',
+    data
+      ? `${identifiedCount}/${data.segments.length} tracks identified in this mix. Timestamped tracklist generated automatically by MixMatch.`
+      : undefined,
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background text-foreground flex items-center justify-center">
@@ -63,8 +74,6 @@ export function PublicTracklist() {
       </div>
     );
   }
-
-  const identifiedCount = data.segments.filter(s => s.trackName).length;
 
   return (
     <div className="min-h-screen bg-background text-foreground relative overflow-hidden">
@@ -102,7 +111,7 @@ export function PublicTracklist() {
                           </div>
                         )}
                         <span className="font-medium text-sm flex-1 min-w-0 truncate">
-                          {seg.trackName || 'Unknown section'}
+                          {seg.trackName || 'Unidentified'}
                         </span>
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
@@ -119,6 +128,11 @@ export function PublicTracklist() {
                         {seg.trackName && <BuyLinks trackName={seg.trackName} />}
                       </div>
                     </div>
+                    {!seg.trackName && (
+                      <p className="text-xs text-muted-foreground/70 italic mt-1 sm:pl-[122px]">
+                        {explainUnknownSegment(seg, data.segments)}
+                      </p>
+                    )}
                   </div>
                 </div>
               </React.Fragment>

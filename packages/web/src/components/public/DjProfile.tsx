@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Disc3, Loader2, Music } from 'lucide-react';
 import { PageChrome } from '../layout';
 import { apiFetch } from '../../api/client';
+import { useDocumentMeta } from '../../hooks/useDocumentMeta';
 
 interface DjProfileData {
   username: string;
@@ -37,6 +38,11 @@ export function DjProfile() {
       setFollowing(data.following);
     }
   };
+
+  useDocumentMeta(
+    data ? `@${data.username} — DJ profile on MixMatch` : 'DJ profile — MixMatch',
+    data ? `${data.mixes.length} mix${data.mixes.length !== 1 ? 'es' : ''} identified by MixMatch.` : undefined,
+  );
 
   if (loading)
     return (

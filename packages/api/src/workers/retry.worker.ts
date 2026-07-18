@@ -2,6 +2,7 @@ import { Worker, Job } from 'bullmq';
 import { eq } from 'drizzle-orm';
 import path from 'path';
 import fs from 'fs/promises';
+import { CHUNK_STEP_SEC } from '@mix-match/shared';
 import { redis } from '../queue';
 import { db } from '../db/client.js';
 import { segments } from '../db/schema.js';
@@ -32,7 +33,7 @@ async function retrySegment(
   const chunkFiles = await fs.readdir(chunksDir);
   const sortedChunks = chunkFiles.filter(f => f.startsWith('chunk_') && f.endsWith('.wav')).sort();
 
-  const targetIdx = Math.floor((startSec + offsetSec) / 10);
+  const targetIdx = Math.floor((startSec + offsetSec) / CHUNK_STEP_SEC);
   const chunkFile = sortedChunks[Math.min(targetIdx, sortedChunks.length - 1)];
 
   if (!chunkFile) {

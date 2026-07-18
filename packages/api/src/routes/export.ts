@@ -7,10 +7,15 @@ export const exportRouter = Router();
 
 // GET /api/analysis/:id/export/text
 exportRouter.get('/analysis/:id/export/text', requireUser, async (req, res) => {
+  const userId = getUserId(req);
   const analysisId = req.params.id as string;
   const analysis = await findAnalysis(analysisId);
   if (!analysis) {
     res.status(404).json({ error: 'Analysis not found' });
+    return;
+  }
+  if (analysis.userId && analysis.userId !== userId) {
+    res.status(403).json({ error: 'Not authorized' });
     return;
   }
 
@@ -30,10 +35,15 @@ exportRouter.get('/analysis/:id/export/text', requireUser, async (req, res) => {
 
 // GET /api/analysis/:id/export/mixcloud
 exportRouter.get('/analysis/:id/export/mixcloud', requireUser, async (req, res) => {
+  const userId = getUserId(req);
   const analysisId = req.params.id as string;
   const analysis = await findAnalysis(analysisId);
   if (!analysis) {
     res.status(404).json({ error: 'Analysis not found' });
+    return;
+  }
+  if (analysis.userId && analysis.userId !== userId) {
+    res.status(403).json({ error: 'Not authorized' });
     return;
   }
 
@@ -49,10 +59,15 @@ exportRouter.get('/analysis/:id/export/mixcloud', requireUser, async (req, res) 
 
 // GET /api/analysis/:id/export/soundcloud
 exportRouter.get('/analysis/:id/export/soundcloud', requireUser, async (req, res) => {
+  const userId = getUserId(req);
   const analysisId = req.params.id as string;
   const analysis = await findAnalysis(analysisId);
   if (!analysis) {
     res.status(404).json({ error: 'Analysis not found' });
+    return;
+  }
+  if (analysis.userId && analysis.userId !== userId) {
+    res.status(403).json({ error: 'Not authorized' });
     return;
   }
 
@@ -74,6 +89,10 @@ exportRouter.post('/analysis/:id/export/spotify-playlist', requireUser, async (r
   const analysis = await findAnalysis(analysisId);
   if (!analysis) {
     res.status(404).json({ error: 'Analysis not found' });
+    return;
+  }
+  if (analysis.userId && analysis.userId !== userId) {
+    res.status(403).json({ error: 'Not authorized' });
     return;
   }
 
@@ -108,10 +127,15 @@ exportRouter.post('/analysis/:id/export/spotify-playlist', requireUser, async (r
 
 // GET /api/analysis/:id/export/youtube
 exportRouter.get('/analysis/:id/export/youtube', requireUser, async (req, res) => {
+  const userId = getUserId(req);
   const analysisId = req.params.id as string;
   const analysis = await findAnalysis(analysisId);
   if (!analysis) {
     res.status(404).json({ error: 'Analysis not found' });
+    return;
+  }
+  if (analysis.userId && analysis.userId !== userId) {
+    res.status(403).json({ error: 'Not authorized' });
     return;
   }
 

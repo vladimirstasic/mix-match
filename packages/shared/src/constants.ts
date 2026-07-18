@@ -58,8 +58,8 @@ export interface PlanLimits {
 
 export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
   [PLANS.FREE]: {
-    scans: 3,
-    maxFileBytes: 100 * 1024 * 1024,
+    scans: 5, // matches BETA_SCANS_PER_MONTH so ending beta isn't a silent downgrade for early users
+    maxFileBytes: MAX_FILE_SIZE,
     maxDurationSec: 5400,
     youtube: false,
     spotifyExport: false,
@@ -67,7 +67,7 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
   },
   [PLANS.PRO]: {
     scans: 15,
-    maxFileBytes: 250 * 1024 * 1024,
+    maxFileBytes: MAX_FILE_SIZE,
     maxDurationSec: Number.POSITIVE_INFINITY,
     youtube: true,
     spotifyExport: true,
@@ -75,7 +75,7 @@ export const PLAN_LIMITS: Record<Plan, PlanLimits> = {
   },
   [PLANS.STUDIO]: {
     scans: 50,
-    maxFileBytes: 500 * 1024 * 1024,
+    maxFileBytes: MAX_FILE_SIZE,
     maxDurationSec: Number.POSITIVE_INFINITY,
     youtube: true,
     spotifyExport: true,

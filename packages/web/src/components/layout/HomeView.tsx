@@ -1,9 +1,10 @@
 import { useState } from 'react';
-import { Dashboard, Analytics, Feed } from '../dashboard';
+import { Link } from 'react-router-dom';
+import { Dashboard, Analytics, YourStats } from '../dashboard';
 import { FileUpload } from '../upload';
 import { ProfileSettings } from '../profile';
 
-type Tab = 'home' | 'feed' | 'profile';
+type Tab = 'home' | 'profile';
 
 interface HomeViewProps {
   credits: number | null;
@@ -18,7 +19,6 @@ export const HomeView = ({ credits, onSelectAnalysis, onFileSelected, onUrlSubmi
 
   const TABS: { id: Tab; label: string }[] = [
     { id: 'home', label: 'Home' },
-    { id: 'feed', label: 'Feed' },
     { id: 'profile', label: 'Profile' },
   ];
 
@@ -49,7 +49,13 @@ export const HomeView = ({ credits, onSelectAnalysis, onFileSelected, onUrlSubmi
             {credits === 0 ? (
               <div className="border border-border bg-card text-center py-12 px-4">
                 <p className="font-mono uppercase tracking-[0.1em] text-sm">No credits remaining</p>
-                <p className="text-sm text-muted-foreground mt-2">Credits reset monthly. Upgrade for more.</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Credits reset monthly.{' '}
+                  <Link to="/pricing" className="text-primary hover:underline">
+                    See plans
+                  </Link>
+                  .
+                </p>
               </div>
             ) : (
               <FileUpload onFileSelected={onFileSelected} onUrlSubmitted={onUrlSubmitted} isAdmin={isAdmin} />
@@ -64,11 +70,10 @@ export const HomeView = ({ credits, onSelectAnalysis, onFileSelected, onUrlSubmi
         </div>
       )}
 
-      {tab === 'feed' && <Feed onSelectAnalysis={onSelectAnalysis} />}
-
       {tab === 'profile' && (
         <div className="space-y-6">
           <ProfileSettings />
+          <YourStats />
           <Analytics />
         </div>
       )}

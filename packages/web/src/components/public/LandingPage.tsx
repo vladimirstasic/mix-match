@@ -3,6 +3,7 @@ import { Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { PageChrome, ThemeToggle } from '../layout';
 import { AcrcloudAttribution } from '../AcrcloudAttribution';
+import { track } from '../../lib/analytics';
 
 const NAV_LINKS = [
   { href: '#how', label: '[01] PIPELINE' },
@@ -81,13 +82,7 @@ const PLANS = [
     name: 'Pro',
     num: '$9.99',
     per: '/ month',
-    features: [
-      '30 mixes / month',
-      'All export formats',
-      'Spotify playlists',
-      'Streaming links',
-      'Manual editing',
-    ],
+    features: ['30 mixes / month', 'All export formats', 'Spotify playlists', 'Streaming links', 'Manual editing'],
     cta: 'COMING SOON',
     featured: true,
     soon: true,
@@ -301,8 +296,8 @@ export function LandingPage() {
                     <button
                       className="btn-demo"
                       type="button"
-                      disabled
-                      style={{ width: '100%', justifyContent: 'center', opacity: 0.55, cursor: 'not-allowed' }}
+                      onClick={() => track('pro_interest_clicked', { plan: p.name })}
+                      style={{ width: '100%', justifyContent: 'center', opacity: 0.55, cursor: 'pointer' }}
                     >
                       {p.cta}
                     </button>

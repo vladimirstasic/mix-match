@@ -19,17 +19,62 @@ const SET_SECONDS = 28 * 60;
 const TOTAL_CHUNKS = 128;
 
 const FEATURES = [
-  { key: 'F.01', title: 'Audio fingerprinting', desc: 'ACRCloud recognition. Fast scans the highlights, Detailed goes segment by segment.' },
-  { key: 'F.02', title: 'URL scanning', desc: 'Paste a SoundCloud or Mixcloud link and the engine downloads and scans it.' },
-  { key: 'F.03', title: 'Spotify playlists', desc: 'One command turns a tracklist into a Spotify playlist in your own account.' },
-  { key: 'F.04', title: 'Multi-format export', desc: 'Export for Mixcloud, SoundCloud, YouTube timestamps, or plain text.' },
-  { key: 'F.05', title: 'Streaming links', desc: 'Spotify, YouTube, and Deezer links with inline players per identified track.' },
-  { key: 'F.06', title: 'Shareable pages', desc: 'Public tracklist page on a custom URL. Clean layout, embedded players.' },
+  {
+    key: 'F.01',
+    title: 'Audio fingerprinting',
+    desc: 'ACRCloud recognition. Fast scans the highlights, Detailed goes segment by segment.',
+  },
+  {
+    key: 'F.02',
+    title: 'URL scanning',
+    desc: 'Paste a SoundCloud or Mixcloud link and the engine downloads and scans it.',
+  },
+  {
+    key: 'F.03',
+    title: 'Spotify playlists',
+    desc: 'One command turns a tracklist into a Spotify playlist in your own account.',
+  },
+  {
+    key: 'F.04',
+    title: 'Multi-format export',
+    desc: 'Export for Mixcloud, SoundCloud, YouTube timestamps, or plain text.',
+  },
+  {
+    key: 'F.05',
+    title: 'Streaming links',
+    desc: 'Spotify, YouTube, and Deezer links with inline players per identified track.',
+  },
+  {
+    key: 'F.06',
+    title: 'Shareable pages',
+    desc: 'Public tracklist page on a custom URL. Clean layout, embedded players.',
+  },
 ];
 const PRICING = [
-  { name: 'FREE', price: '$0', per: 'forever', featured: false, cta: 'GET STARTED', features: ['5 scans / month', '2 scans / day', 'Fast mode', 'Text export', 'Public share pages'] },
-  { name: 'PRO', price: '$9.99', per: '/ mo', featured: true, cta: 'START TRIAL', features: ['30 scans / month', 'Fast + Detailed', 'All export formats', 'Spotify playlists', 'Streaming links'] },
-  { name: 'STUDIO', price: '$29.99', per: '/ mo', featured: false, cta: 'CONTACT', features: ['Unlimited scans', 'Everything in Pro', 'URL scanning', 'DJ profile page', 'Custom URL'] },
+  {
+    name: 'FREE',
+    price: '$0',
+    per: 'forever',
+    featured: false,
+    cta: 'GET STARTED',
+    features: ['5 scans / month', '2 scans / day', 'Fast mode', 'Text export', 'Public share pages'],
+  },
+  {
+    name: 'PRO',
+    price: '$9.99',
+    per: '/ mo',
+    featured: true,
+    cta: 'START TRIAL',
+    features: ['30 scans / month', 'Fast + Detailed', 'All export formats', 'Spotify playlists', 'Streaming links'],
+  },
+  {
+    name: 'STUDIO',
+    price: '$29.99',
+    per: '/ mo',
+    featured: false,
+    cta: 'CONTACT',
+    features: ['Unlimited scans', 'Everything in Pro', 'URL scanning', 'DJ profile page', 'Custom URL'],
+  },
 ];
 const RECENT = [
   { name: 'warehouse-set.mp3', stat: '4/5', date: 'YESTERDAY · 28:00' },
@@ -40,37 +85,45 @@ const RECENT = [
 /* ---------- helpers ---------- */
 const $ = (s, r = document) => r.querySelector(s);
 const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-const fmt = (sec) => `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
+const fmt = sec => `${String(Math.floor(sec / 60)).padStart(2, '0')}:${String(Math.floor(sec % 60)).padStart(2, '0')}`;
 function rowHTML(t) {
   return `<div class="row ${t.status}">
     <span class="r-time mono">${t.time}</span>
     <span class="r-track">${t.track}</span>
-    ${t.status === 'identified'
-      ? `<span class="r-conf"><span class="cbar"><i class="cfill" style="width:${Math.round(t.conf * 100)}%"></i></span>${Math.round(t.conf * 100)}%</span>`
-      : `<span class="r-conf">no match</span>`}
+    ${
+      t.status === 'identified'
+        ? `<span class="r-conf"><span class="cbar"><i class="cfill" style="width:${Math.round(t.conf * 100)}%"></i></span>${Math.round(t.conf * 100)}%</span>`
+        : `<span class="r-conf">no match</span>`
+    }
   </div>`;
 }
 
 /* ---------- inject ---------- */
 function injectStatic() {
-  $('#timeline').innerHTML = TIMELINE.map((t) => `<div class="row ${t.status} show">
+  $('#timeline').innerHTML = TIMELINE.map(
+    t => `<div class="row ${t.status} show">
       <span class="r-time mono">${t.time}</span>
       <span class="r-track">${t.track}</span>
-      ${t.status === 'identified'
-        ? `<span class="r-conf"><span class="cbar"><i class="cfill" style="width:${Math.round(t.conf * 100)}%"></i></span>${Math.round(t.conf * 100)}%</span>`
-        : `<span class="r-conf">no match</span>`}
-    </div>`).join('');
+      ${
+        t.status === 'identified'
+          ? `<span class="r-conf"><span class="cbar"><i class="cfill" style="width:${Math.round(t.conf * 100)}%"></i></span>${Math.round(t.conf * 100)}%</span>`
+          : `<span class="r-conf">no match</span>`
+      }
+    </div>`,
+  ).join('');
   $('#features-grid').innerHTML = FEATURES.map(
-    (f) => `<article class="cell feature" data-reveal><span class="fkey mono">${f.key}</span><h3>${f.title}</h3><p>${f.desc}</p></article>`,
+    f =>
+      `<article class="cell feature" data-reveal><span class="fkey mono">${f.key}</span><h3>${f.title}</h3><p>${f.desc}</p></article>`,
   ).join('');
   $('#pricing-grid').innerHTML = PRICING.map(
-    (p) => `<div class="price ${p.featured ? 'featured' : ''}" data-reveal>${p.featured ? '<span class="ptag">POPULAR</span>' : ''}
+    p => `<div class="price ${p.featured ? 'featured' : ''}" data-reveal>${p.featured ? '<span class="ptag">POPULAR</span>' : ''}
       <h3>${p.name}</h3><div class="pamt"><span class="num">${p.price}</span> <span class="per">${p.per}</span></div>
-      <ul>${p.features.map((f) => `<li>${f}</li>`).join('')}</ul>
+      <ul>${p.features.map(f => `<li>${f}</li>`).join('')}</ul>
       <button class="btn" data-enter-app>${p.cta}</button></div>`,
   ).join('');
   $('#recent-list').innerHTML = RECENT.map(
-    (r) => `<li data-enter-results><span class="rl-name">${r.name}</span><span class="rl-stat">${r.stat}</span><span class="rl-date mono">${r.date}</span></li>`,
+    r =>
+      `<li data-enter-results><span class="rl-name">${r.name}</span><span class="rl-stat">${r.stat}</span><span class="rl-date mono">${r.date}</span></li>`,
   ).join('');
 }
 
@@ -79,13 +132,13 @@ const THEME_KEY = 'mm-demo-theme';
 let lab = null; // set by init3D; lets the toggle recolour the scope
 function setTheme(t) {
   document.documentElement.dataset.theme = t;
-  $$('#theme-label, .theme-label2').forEach((el) => (el.textContent = t.toUpperCase()));
+  $$('#theme-label, .theme-label2').forEach(el => (el.textContent = t.toUpperCase()));
   localStorage.setItem(THEME_KEY, t);
   lab?.applyTheme(t);
 }
 function initTheme() {
   setTheme(localStorage.getItem(THEME_KEY) || 'dark');
-  $$('#theme-toggle, [data-theme-toggle]').forEach((b) =>
+  $$('#theme-toggle, [data-theme-toggle]').forEach(b =>
     b.addEventListener('click', () => setTheme(document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark')),
   );
 }
@@ -107,38 +160,55 @@ function exitApp() {
 }
 function setView(v) {
   app.view = v;
-  $$('.app-view').forEach((el) => (el.hidden = el.dataset.view !== v));
+  $$('.app-view').forEach(el => (el.hidden = el.dataset.view !== v));
   $('#app-route').textContent =
     v === 'home' ? 'CONSOLE / NEW SCAN' : v === 'scan' ? 'CONSOLE / SCANNING' : 'CONSOLE / RESULT';
 }
 
 /* ---------- app inputs ---------- */
 function initInputs() {
-  $$('.seg').forEach((tab) =>
+  $$('.seg').forEach(tab =>
     tab.addEventListener('click', () => {
-      $$('.seg').forEach((t) => { t.classList.toggle('is-active', t === tab); t.setAttribute('aria-selected', t === tab); });
-      $$('.tab-panel').forEach((p) => p.classList.toggle('is-active', p.dataset.panel === tab.dataset.tab));
+      $$('.seg').forEach(t => {
+        t.classList.toggle('is-active', t === tab);
+        t.setAttribute('aria-selected', t === tab);
+      });
+      $$('.tab-panel').forEach(p => p.classList.toggle('is-active', p.dataset.panel === tab.dataset.tab));
     }),
   );
-  $$('.mode').forEach((m) =>
+  $$('.mode').forEach(m =>
     m.addEventListener('click', () => {
       app.mode = m.dataset.mode;
-      $$('.mode').forEach((x) => x.classList.toggle('is-active', x === m));
+      $$('.mode').forEach(x => x.classList.toggle('is-active', x === m));
     }),
   );
   const dz = $('#dropzone');
-  ['dragenter', 'dragover'].forEach((e) => dz.addEventListener(e, (ev) => { ev.preventDefault(); dz.classList.add('is-over'); }));
-  ['dragleave', 'drop'].forEach((e) => dz.addEventListener(e, (ev) => { ev.preventDefault(); dz.classList.remove('is-over'); if (e === 'drop') runScan(); }));
+  ['dragenter', 'dragover'].forEach(e =>
+    dz.addEventListener(e, ev => {
+      ev.preventDefault();
+      dz.classList.add('is-over');
+    }),
+  );
+  ['dragleave', 'drop'].forEach(e =>
+    dz.addEventListener(e, ev => {
+      ev.preventDefault();
+      dz.classList.remove('is-over');
+      if (e === 'drop') runScan();
+    }),
+  );
   dz.addEventListener('click', runScan);
   $('#analyze-btn').addEventListener('click', runScan);
   $('#newscan-btn').addEventListener('click', () => setView('home'));
 
-  $$('[data-enter-app]').forEach((b) => b.addEventListener('click', () => enterApp(b.hasAttribute('data-autorun'))));
-  $$('[data-exit-app]').forEach((b) => b.addEventListener('click', exitApp));
+  $$('[data-enter-app]').forEach(b => b.addEventListener('click', () => enterApp(b.hasAttribute('data-autorun'))));
+  $$('[data-exit-app]').forEach(b => b.addEventListener('click', exitApp));
   // recent scans jump straight to a finished result
-  document.addEventListener('click', (e) => {
+  document.addEventListener('click', e => {
     const li = e.target.closest('[data-enter-results]');
-    if (li) { fillResults(); setView('results'); }
+    if (li) {
+      fillResults();
+      setView('results');
+    }
   });
 }
 
@@ -173,7 +243,8 @@ function tickScan() {
   const rem = Math.ceil((1 - scan.t) * scan.secs);
   $('#s-eta').textContent = `${rem}s`;
   const seg = TIMELINE[currentSegment(scan.t)];
-  $('#s-track').textContent = seg.status === 'identified' ? `matching · ${seg.track}` : 'no catalog match in this segment';
+  $('#s-track').textContent =
+    seg.status === 'identified' ? `matching · ${seg.track}` : 'no catalog match in this segment';
 
   // reveal rows into the live log as the playhead crosses each segment end
   REVEAL_AT.forEach((p, i) => {
@@ -189,13 +260,17 @@ function tickScan() {
   if (scan.t >= 1) {
     scan.mode = 'done';
     $('#s-state').textContent = 'DONE';
-    setTimeout(() => { fillResults(); setView('results'); showToast('Demo — connect the real backend to scan an actual mix.'); }, 600);
+    setTimeout(() => {
+      fillResults();
+      setView('results');
+      showToast('Demo — connect the real backend to scan an actual mix.');
+    }, 600);
   }
 }
 
 function fillResults() {
-  $('#results-log').innerHTML = TIMELINE.map((t) => rowHTML(t).replace('class="row', 'class="row show')).join('');
-  const id = TIMELINE.filter((t) => t.status === 'identified').length;
+  $('#results-log').innerHTML = TIMELINE.map(t => rowHTML(t).replace('class="row', 'class="row show')).join('');
+  const id = TIMELINE.filter(t => t.status === 'identified').length;
   const cov = Math.round((id / TIMELINE.length) * 100);
   $('#r-meta').textContent = `${id} / ${TIMELINE.length} identified · ${cov}% coverage · ${app.mode}`;
   $('#r-cov').textContent = `${id} / ${TIMELINE.length} · ${cov}%`;
@@ -222,10 +297,16 @@ function loop(now) {
 /* ---------- reveal-on-scroll + toast ---------- */
 function initReveal() {
   const io = new IntersectionObserver(
-    (es) => es.forEach((e) => { if (e.isIntersecting) { e.target.classList.add('is-visible'); io.unobserve(e.target); } }),
+    es =>
+      es.forEach(e => {
+        if (e.isIntersecting) {
+          e.target.classList.add('is-visible');
+          io.unobserve(e.target);
+        }
+      }),
     { threshold: 0.12 },
   );
-  $$('[data-reveal]').forEach((el) => io.observe(el));
+  $$('[data-reveal]').forEach(el => io.observe(el));
 }
 let toastTimer;
 function showToast(msg) {
@@ -241,11 +322,20 @@ async function init3D() {
   const canvas = $('#lab-canvas');
   if (matchMedia('(prefers-reduced-motion: reduce)').matches) return;
   let THREE;
-  try { THREE = await import('three'); }
-  catch (e) { console.warn('[lab] three load failed', e); return; }
+  try {
+    THREE = await import('three');
+  } catch (e) {
+    console.warn('[lab] three load failed', e);
+    return;
+  }
   let renderer;
-  try { renderer = new THREE.WebGPURenderer({ canvas, antialias: true, alpha: true }); await renderer.init(); }
-  catch (e) { console.warn('[lab] renderer init failed', e); return; }
+  try {
+    renderer = new THREE.WebGPURenderer({ canvas, antialias: true, alpha: true });
+    await renderer.init();
+  } catch (e) {
+    console.warn('[lab] renderer init failed', e);
+    return;
+  }
 
   const sizes = { w: innerWidth, h: innerHeight };
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
@@ -266,19 +356,32 @@ async function init3D() {
 
   // background glow comes from the CSS #lab-fallback layer (no TSL dependency)
 
-  const W = 17, baseY = -1.0, BARS = 200, MAXH = 3.0;
+  const W = 17,
+    baseY = -1.0,
+    BARS = 200,
+    MAXH = 3.0;
   // amplitude envelope: loud in tracks, quiet around the "unknown" section
-  const env = (t) => (0.45 + 0.55 * Math.sin(t * 9.0) ** 2) * (1 - 0.74 * Math.exp(-Math.pow((t - 0.69) / 0.07, 2)));
+  const env = t => (0.45 + 0.55 * Math.sin(t * 9.0) ** 2) * (1 - 0.74 * Math.exp(-Math.pow((t - 0.69) / 0.07, 2)));
   // filled, mirrored audio waveform (the thing that reads as "audio")
-  const barMat = new THREE.MeshBasicMaterial({ transparent: true, blending: THREE.AdditiveBlending, depthWrite: false });
+  const barMat = new THREE.MeshBasicMaterial({
+    transparent: true,
+    blending: THREE.AdditiveBlending,
+    depthWrite: false,
+  });
   const wave = new THREE.InstancedMesh(new THREE.PlaneGeometry(0.1, 1), barMat, BARS);
   wave.frustumCulled = false;
   const wdummy = new THREE.Object3D();
   for (let i = 0; i < BARS; i++) wave.setColorAt(i, WIN_LO); // create instanceColor buffer
   scene.add(wave);
 
-  const phGeo = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0, baseY - 4, 0), new THREE.Vector3(0, baseY + 4, 0)]);
-  const playhead = new THREE.Line(phGeo, new THREE.LineBasicMaterial({ color: 0xffe2a0, transparent: true, opacity: 0.0 }));
+  const phGeo = new THREE.BufferGeometry().setFromPoints([
+    new THREE.Vector3(0, baseY - 4, 0),
+    new THREE.Vector3(0, baseY + 4, 0),
+  ]);
+  const playhead = new THREE.Line(
+    phGeo,
+    new THREE.LineBasicMaterial({ color: 0xffe2a0, transparent: true, opacity: 0.0 }),
+  );
   scene.add(playhead);
 
   // dark = amber glow (additive); light = dark ink trace (normal) for a paper-scope look
@@ -294,7 +397,14 @@ async function init3D() {
   applyTheme3d(document.documentElement.dataset.theme);
 
   const ptr = { x: 0, y: 0, tx: 0, ty: 0 };
-  addEventListener('pointermove', (e) => { ptr.tx = (e.clientX / innerWidth - 0.5) * 2; ptr.ty = (e.clientY / innerHeight - 0.5) * 2; }, { passive: true });
+  addEventListener(
+    'pointermove',
+    e => {
+      ptr.tx = (e.clientX / innerWidth - 0.5) * 2;
+      ptr.ty = (e.clientY / innerHeight - 0.5) * 2;
+    },
+    { passive: true },
+  );
 
   const t0 = performance.now();
   const c = new THREE.Color();
@@ -334,7 +444,10 @@ async function init3D() {
         else c.copy(WIN_MID).lerp(WIN_HI, (ampN - 0.5) * 2);
         c.multiplyScalar((head.scanning ? (scanned ? 1 : 0.5) : 0.85) + near * 0.4);
       } else {
-        const f = Math.min(1, 0.3 + hNorm * 0.5 + (head.scanning ? (scanned ? 0.3 : 0) : 0.1) + near * 0.4 + lift * 0.5);
+        const f = Math.min(
+          1,
+          0.3 + hNorm * 0.5 + (head.scanning ? (scanned ? 0.3 : 0) : 0.1) + near * 0.4 + lift * 0.5,
+        );
         c.copy(PALE).lerp(DEEP, f);
       }
       wave.setColorAt(i, c);
@@ -351,8 +464,10 @@ async function init3D() {
   }
   renderer.setAnimationLoop(frame);
   addEventListener('resize', () => {
-    sizes.w = innerWidth; sizes.h = innerHeight;
-    camera.aspect = sizes.w / sizes.h; camera.updateProjectionMatrix();
+    sizes.w = innerWidth;
+    sizes.h = innerHeight;
+    camera.aspect = sizes.w / sizes.h;
+    camera.updateProjectionMatrix();
     renderer.setSize(sizes.w, sizes.h);
   });
 }

@@ -3,8 +3,8 @@ import { ANALYSIS_STATUS } from '../../constants';
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { EqualizerLoader } from '@/components/ui/equalizer-loader';
-import { getUserAnalyses, deleteAnalysis, type AnalysisSummary } from '../../api/client';
-import { Loader2 } from 'lucide-react';
+import { getUserAnalyses, deleteAnalysis, toggleFavorite, type AnalysisSummary } from '../../api/client';
+import { Loader2, Star } from 'lucide-react';
 
 interface Props {
   onSelectAnalysis: (id: string) => void;
@@ -40,6 +40,7 @@ export function Dashboard({ onSelectAnalysis }: Props) {
   const [loading, setLoading] = useState(true);
   const [confirmDelete, setConfirmDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
 
   useEffect(() => {
     getUserAnalyses()
@@ -54,6 +55,12 @@ export function Dashboard({ onSelectAnalysis }: Props) {
     setAnalyses(prev => prev.filter(a => a.id !== confirmDelete));
     setDeleting(false);
     setConfirmDelete(null);
+  };
+
+  const handleToggleFavorite = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation();
+    const { isFavorite } = await toggleFavorite(id);
+    setAnalyses(prev => prev.map(a => (a.id === id ? { ...a, isFavorite } : a)));
   };
 
   if (loading) {
@@ -73,17 +80,44 @@ export function Dashboard({ onSelectAnalysis }: Props) {
     );
   }
 
+  const visible = favoritesOnly ? analyses.filter(a => a.isFavorite) : analyses;
+
   return (
     <>
-      <ul className="recent-list">
-        {analyses.slice(0, 12).map(a => (
-          <li key={a.id} onClick={() => onSelectAnalysis(a.id)}>
-            <span className="rl-name">{a.filename}</span>
-            <span className="rl-stat">{isActive(a) ? <EqualizerLoader label="Scanning" /> : statusLabel(a)}</span>
-            <span className="rl-date">{formatDate(a.createdAt)}</span>
-          </li>
-        ))}
-      </ul>
+      <div className="rl-filter">
+        <button
+          type="button"
+          className={`rl-fav-toggle ${favoritesOnly ? 'active' : ''}`}
+          onClick={() => setFavoritesOnly(v => !v)}
+        >
+          <Star className="w-3 h-3" fill={favoritesOnly ? 'currentColor' : 'none'} />
+          FAVORITES
+        </button>
+      </div>
+
+      {visible.length === 0 ? (
+        <div className="rl-state">
+          <span className="rl-state-label">NO FAVORITES YET</span>
+        </div>
+      ) : (
+        <ul className="recent-list">
+          {visible.slice(0, 12).map(a => (
+            <li key={a.id} onClick={() => onSelectAnalysis(a.id)}>
+              <button
+                type="button"
+                className={`rl-fav-star ${a.isFavorite ? 'active' : ''}`}
+                onClick={e => handleToggleFavorite(e, a.id)}
+                aria-label="Toggle favorite"
+              >
+                <Star className="w-3 h-3" fill={a.isFavorite ? 'currentColor' : 'none'} />
+              </button>
+              <span className="rl-name">{a.filename}</span>
+              <span className="rl-stat">{isActive(a) ? <EqualizerLoader label="Scanning" /> : statusLabel(a)}</span>
+              <span className="rl-date">{formatDate(a.createdAt)}</span>
+            </li>
+          ))}
+        </ul>
+      )}
 
       <Dialog open={!!confirmDelete} onOpenChange={() => setConfirmDelete(null)}>
         <DialogContent hideClose className="max-w-sm">

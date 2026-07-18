@@ -319,7 +319,7 @@ analysisRouter.get('/analysis/:id/progress', async (req, res) => {
 });
 
 // PATCH /api/analysis/:id/segments/:segId — manual track edit
-analysisRouter.patch('/analysis/:id/segments/:segId', async (req, res) => {
+analysisRouter.patch('/analysis/:id/segments/:segId', requireUser, async (req, res) => {
   const userId = req.userId;
   const analysisId = req.params.id as string;
   const segId = req.params.segId as string;
@@ -458,6 +458,7 @@ analysisRouter.get('/t/:slug/og', async (req, res) => {
   );
   const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
   const publicUrl = `${frontendUrl}/t/${encodeURIComponent(slug)}`;
+  const imageUrl = `${frontendUrl}/og-image.png`;
 
   res.setHeader('Content-Type', 'text/html');
   res.send(`<!DOCTYPE html>
@@ -468,9 +469,13 @@ analysisRouter.get('/t/:slug/og', async (req, res) => {
   <meta property="og:description" content="${description}" />
   <meta property="og:type" content="music.playlist" />
   <meta property="og:url" content="${publicUrl}" />
-  <meta name="twitter:card" content="summary" />
+  <meta property="og:image" content="${imageUrl}" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="${title}" />
   <meta name="twitter:description" content="${description}" />
+  <meta name="twitter:image" content="${imageUrl}" />
 </head>
 <body>
   <h1>${title}</h1>
@@ -500,7 +505,7 @@ analysisRouter.get('/t/:slug', async (req, res) => {
 
   res.json({
     filename: analysis.filename,
-    segments: segs.filter(s => s.status === 'identified'),
+    segments: segs,
     createdAt: analysis.createdAt,
   });
 });

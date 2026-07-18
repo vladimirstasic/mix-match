@@ -47,4 +47,8 @@ export const config = {
   },
   frontendUrl: process.env.FRONTEND_URL || 'http://localhost:5173',
   betaMode: process.env.BETA_MODE === 'true',
+  posthog: {
+    apiKey: process.env.POSTHOG_API_KEY || '',
+    host: process.env.POSTHOG_HOST || 'https://us.i.posthog.com',
+  },
 };

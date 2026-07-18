@@ -32,7 +32,9 @@ async function main() {
         .set({ email, firstName: clerkUser.firstName, lastName: clerkUser.lastName })
         .where(eq(users.clerkId, clerkId));
 
-      console.log(`  ✓ ${clerkId} -> ${email ?? '(no email)'} ${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`);
+      console.log(
+        `  ✓ ${clerkId} -> ${email ?? '(no email)'} ${clerkUser.firstName ?? ''} ${clerkUser.lastName ?? ''}`,
+      );
       updated++;
     } catch (err) {
       console.error(`  ✗ ${clerkId}:`, err instanceof Error ? err.message : err);

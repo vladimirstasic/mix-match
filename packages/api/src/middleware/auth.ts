@@ -1,23 +1,12 @@
-import { getAuth } from '@clerk/express';
+import { getAuth, verifyToken } from '@clerk/express';
 import type { Request, Response, NextFunction } from 'express';
+import { config } from '../config.js';
 
 declare global {
   namespace Express {
     interface Request {
       userId?: string;
     }
-  }
-}
-
-function decodeJwtPayload(token: string): { sub?: string } | null {
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) return null;
-    const base64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(Buffer.from(base64, 'base64').toString('utf8'));
-    return payload;
-  } catch {
-    return null;
   }
 }
 
@@ -30,10 +19,12 @@ export async function requireUser(req: Request, res: Response, next: NextFunctio
 
   const authHeader = req.headers.authorization;
   if (authHeader?.startsWith('Bearer ')) {
-    const payload = decodeJwtPayload(authHeader.slice(7));
-    if (payload?.sub) {
+    try {
+      const payload = await verifyToken(authHeader.slice(7), { secretKey: config.clerkSecretKey });
       req.userId = payload.sub;
       return next();
+    } catch {
+      // falls through to 401 below
     }
   }
 
