@@ -1,12 +1,31 @@
 import { Router } from 'express';
 import { eq, desc, and, sql } from 'drizzle-orm';
+import { getAuth } from '@clerk/express';
 import { requireUser, getUserId } from '../middleware/auth.js';
 import { db } from '../db/client.js';
-import { analyses, users, segments, follows } from '../db/schema.js';
+import { analyses, users, segments, follows, waitlistSignups } from '../db/schema.js';
 import { findAnalysis, findSegment, findUser, ensureUser } from '../db/helpers.js';
 import { config } from '../config.js';
 
 export const userRouter = Router();
+
+// POST /api/waitlist — capture Pro-interest signups; works for signed-in and anonymous visitors
+userRouter.post('/waitlist', async (req, res) => {
+  const { email, plan } = req.body ?? {};
+  if (typeof email !== 'string' || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    res.status(400).json({ error: 'Valid email required' });
+    return;
+  }
+
+  const { userId } = getAuth(req);
+
+  await db
+    .insert(waitlistSignups)
+    .values({ email, plan: plan === 'studio' ? 'studio' : 'pro', userId: userId ?? null })
+    .onConflictDoNothing();
+
+  res.json({ ok: true });
+});
 
 userRouter.get('/user/profile', requireUser, async (req, res) => {
   const userId = getUserId(req);

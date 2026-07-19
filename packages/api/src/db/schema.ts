@@ -42,6 +42,7 @@ export const analyses = pgTable(
     engine: varchar('engine', { length: 20 }).notNull().default('realtime'),
     filescanFileId: varchar('filescan_file_id', { length: 100 }),
     scanState: integer('scan_state'),
+    summary: text('summary'),
     createdAt: timestamp('created_at').defaultNow(),
     updatedAt: timestamp('updated_at').defaultNow(),
   },
@@ -119,3 +120,11 @@ export const follows = pgTable(
   },
   table => [index('follows_follower_id_idx').on(table.followerId)],
 );
+
+export const waitlistSignups = pgTable('waitlist_signups', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  email: varchar('email', { length: 255 }).notNull().unique(),
+  plan: varchar('plan', { length: 20 }).notNull().default('pro'),
+  userId: varchar('user_id', { length: 255 }),
+  createdAt: timestamp('created_at').defaultNow(),
+});

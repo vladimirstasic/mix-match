@@ -25,6 +25,7 @@ interface PublicData {
   filename: string;
   segments: PublicSegment[];
   createdAt: string;
+  summary: string | null;
 }
 
 export function PublicTracklist() {
@@ -50,7 +51,8 @@ export function PublicTracklist() {
   useDocumentMeta(
     data ? `${data.filename} — tracklist identified by MixMatch` : 'MixMatch',
     data
-      ? `${identifiedCount}/${data.segments.length} tracks identified in this mix. Timestamped tracklist generated automatically by MixMatch.`
+      ? data.summary ||
+          `${identifiedCount}/${data.segments.length} tracks identified in this mix. Timestamped tracklist generated automatically by MixMatch.`
       : undefined,
   );
 
@@ -86,6 +88,7 @@ export function PublicTracklist() {
           {new Date(data.createdAt).toLocaleDateString()} · {identifiedCount} track
           {identifiedCount !== 1 ? 's' : ''} identified
         </p>
+        {data.summary && <p className="text-sm text-muted-foreground italic">{data.summary}</p>}
 
         <div className="log">
           <div className="log-top">

@@ -3,7 +3,7 @@ import { Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { PageChrome, ThemeToggle } from '../layout';
 import { AcrcloudAttribution } from '../AcrcloudAttribution';
-import { track } from '../../lib/analytics';
+import { useWaitlist } from '../../hooks/useWaitlist';
 
 const NAV_LINKS = [
   { href: '#how', label: '[01] PIPELINE' },
@@ -92,6 +92,7 @@ const PLANS = [
 export function LandingPage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const menuRef = useRef<HTMLHeadElement>(null);
+  const waitlist = useWaitlist('pro');
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -298,14 +299,40 @@ export function LandingPage() {
                     ))}
                   </ul>
                   {p.soon ? (
-                    <button
-                      className="btn-demo"
-                      type="button"
-                      onClick={() => track('pro_interest_clicked', { plan: p.name })}
-                      style={{ width: '100%', justifyContent: 'center', opacity: 0.55, cursor: 'pointer' }}
-                    >
-                      {p.cta}
-                    </button>
+                    waitlist.done ? (
+                      <p className="text-center text-sm" style={{ padding: '0.6rem 0' }}>
+                        You&apos;re on the list — we&apos;ll email you.
+                      </p>
+                    ) : waitlist.open ? (
+                      <form
+                        onSubmit={e => {
+                          e.preventDefault();
+                          waitlist.submit();
+                        }}
+                        style={{ display: 'flex', gap: '0.4rem' }}
+                      >
+                        <input
+                          type="email"
+                          required
+                          value={waitlist.email}
+                          onChange={e => waitlist.setEmail(e.target.value)}
+                          placeholder="you@email.com"
+                          className="flex-1 w-full px-3 border border-border bg-transparent font-mono text-sm focus:outline-none focus:border-primary"
+                        />
+                        <button className="ctrl" type="submit" disabled={waitlist.submitting}>
+                          {waitlist.submitting ? '...' : 'NOTIFY ME'}
+                        </button>
+                      </form>
+                    ) : (
+                      <button
+                        className="btn-demo"
+                        type="button"
+                        onClick={waitlist.openForm}
+                        style={{ width: '100%', justifyContent: 'center', opacity: 0.55, cursor: 'pointer' }}
+                      >
+                        {p.cta}
+                      </button>
+                    )
                   ) : (
                     <SignInButton mode="modal">
                       <button className="ctrl" type="button" style={{ width: '100%', justifyContent: 'center' }}>

@@ -24,6 +24,7 @@ import { aggregateMatches, consolidateTimeline } from '../services/aggregator.js
 import { buildSegments } from '../services/segments.js';
 import { buildYtdlpBaseArgs, getVideoTitle } from '../services/ytdlp.js';
 import { trackServer } from '../lib/analytics.js';
+import { generateMixSummary } from '../services/mix-summary.js';
 
 const execFileAsync = promisify(execFile);
 
@@ -165,6 +166,8 @@ const worker = new Worker<AnalysisJobData>(
           metrics.apiCalls > 0 ? Math.round((processingTimeMs - metrics.silenceSkipped * 5) / metrics.apiCalls) : 0,
       };
 
+      const summary = await generateMixSummary(results);
+
       await db
         .update(analyses)
         .set({
@@ -172,6 +175,7 @@ const worker = new Worker<AnalysisJobData>(
           processedChunks: totalChunks,
           results,
           metrics: fullMetrics,
+          summary,
           updatedAt: new Date(),
         })
         .where(eq(analyses.id, analysisId));

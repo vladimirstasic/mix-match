@@ -177,6 +177,11 @@ export async function toggleBookmark(segmentId: string): Promise<{ isBookmarked:
   return res.json();
 }
 
+export async function joinWaitlist(email: string, plan: string): Promise<boolean> {
+  const res = await apiFetch('/waitlist', { method: 'POST', body: JSON.stringify({ email, plan }) });
+  return res.ok;
+}
+
 export interface UserStats {
   trackCount: number;
   mixCount: number;

@@ -51,4 +51,5 @@ export const config = {
     apiKey: process.env.POSTHOG_API_KEY || '',
     host: process.env.POSTHOG_HOST || 'https://us.i.posthog.com',
   },
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
 };

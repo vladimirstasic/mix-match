@@ -449,12 +449,13 @@ analysisRouter.get('/t/:slug/og', async (req, res) => {
 
   const title = esc(`${analysis.filename} — MixMatch`);
   const description = esc(
-    identified.length > 0
-      ? `${identified.length} tracks: ${identified
-          .slice(0, 3)
-          .map(s => s.trackName)
-          .join(', ')}${identified.length > 3 ? '...' : ''}`
-      : 'Tracklist identified by MixMatch',
+    analysis.summary ||
+      (identified.length > 0
+        ? `${identified.length} tracks: ${identified
+            .slice(0, 3)
+            .map(s => s.trackName)
+            .join(', ')}${identified.length > 3 ? '...' : ''}`
+        : 'Tracklist identified by MixMatch'),
   );
   const frontendUrl = (process.env.FRONTEND_URL || 'http://localhost:5173').replace(/\/$/, '');
   const publicUrl = `${frontendUrl}/t/${encodeURIComponent(slug)}`;
@@ -507,6 +508,7 @@ analysisRouter.get('/t/:slug', async (req, res) => {
     filename: analysis.filename,
     segments: segs,
     createdAt: analysis.createdAt,
+    summary: analysis.summary,
   });
 });
 
