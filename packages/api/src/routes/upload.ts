@@ -17,8 +17,8 @@ import {
   FILESCAN_POLL_FALLBACK_DELAY_MS,
 } from '@mix-match/shared';
 import { db } from '../db/client.js';
-import { analyses, users } from '../db/schema.js';
-import { findUser, ensureUser } from '../db/helpers.js';
+import { analyses, segments, users } from '../db/schema.js';
+import { findUser, ensureUser, findAnalysis, getAnalysisSegments } from '../db/helpers.js';
 import { analysisQueue } from '../queue/index.js';
 import { redis } from '../queue/index.js';
 import { filescanPollQueue } from '../queue/filescan-poll.js';
@@ -159,6 +159,63 @@ async function checkPlanLimits(
   return true;
 }
 
+// A cache hit on somebody else's scan can't just hand over their analysis id — the
+// ownership check in GET /analysis/:id would 403 the requester, who then polls a
+// spinner forever. Copy the finished result into a row of their own instead, which
+// costs zero ACRCloud calls.
+//
+// chunksDir is deliberately not copied: those files belong to the source analysis and
+// are deleted with it, so a clone behaves like any scan whose chunks have expired
+// (retry-unknown returns 410). slug/isPublic/isFavorite/tags/isBookmarked stay behind
+// too — those are the original owner's, not the requester's.
+async function cloneAnalysisForUser(
+  source: typeof analyses.$inferSelect,
+  userId: string,
+  filename: string,
+  fileSize: number,
+): Promise<string> {
+  const [clone] = await db
+    .insert(analyses)
+    .values({
+      filename,
+      fileSize,
+      fileHash: source.fileHash,
+      status: 'completed',
+      totalChunks: source.totalChunks,
+      processedChunks: source.processedChunks,
+      results: source.results,
+      metrics: source.metrics,
+      waveformData: source.waveformData,
+      summary: source.summary,
+      userId,
+    })
+    .returning({ id: analyses.id });
+
+  const sourceSegments = await getAnalysisSegments(source.id);
+  if (sourceSegments.length > 0) {
+    await db.insert(segments).values(
+      sourceSegments.map(s => ({
+        analysisId: clone.id,
+        startSec: s.startSec,
+        endSec: s.endSec,
+        status: s.status,
+        trackName: s.trackName,
+        artist: s.artist,
+        title: s.title,
+        acrid: s.acrid,
+        confidence: s.confidence,
+        bpm: s.bpm,
+        genre: s.genre,
+        musicalKey: s.musicalKey,
+        externalLinks: s.externalLinks,
+        attempts: s.attempts,
+      })),
+    );
+  }
+
+  return clone.id;
+}
+
 export const uploadRouter = Router();
 
 uploadRouter.post('/upload', upload.single('file'), requireUser, async (req, res) => {
@@ -198,9 +255,18 @@ uploadRouter.post('/upload', upload.single('file'), requireUser, async (req, res
     // same file must not short-circuit a fresh filescan request.
     if (engine === 'realtime') {
       const cachedAnalysisId = await redis.get(`acr:file:${fileHash}`);
-      if (cachedAnalysisId) {
+      const cached = cachedAnalysisId ? await findAnalysis(cachedAnalysisId) : null;
+
+      // Only a completed row is worth reusing. A cached id whose analysis was since
+      // deleted (or is still running) would hand the client something that 404s or
+      // never finishes, so fall through to a fresh scan instead.
+      if (cached && cached.status === 'completed') {
         await fs.unlink(file.path);
-        res.json({ analysisId: cachedAnalysisId });
+        const analysisId =
+          cached.userId === userId
+            ? cached.id
+            : await cloneAnalysisForUser(cached, userId, file.originalname, file.size);
+        res.json({ analysisId });
         return;
       }
     }

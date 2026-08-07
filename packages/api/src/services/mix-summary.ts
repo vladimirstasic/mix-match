@@ -4,10 +4,25 @@ import type { TrackMatch } from '@mix-match/shared';
 
 const client = config.anthropicApiKey ? new Anthropic({ apiKey: config.anthropicApiKey }) : null;
 
+// Deterministic one-liner from the same facts, used when no LLM key is configured or the
+// call fails. The share page needs *some* description, and this reads better than the
+// truncated track list it would otherwise fall back to.
+function templateSummary(count: number, genres: string[], bpmRange: string | null, artists: string[]): string {
+  const head = `${count} ${count === 1 ? 'track' : 'tracks'} identified in this mix`;
+  const detail = [
+    genres.length > 0 ? genres.slice(0, 3).join(', ').toLowerCase() : null,
+    bpmRange,
+    artists.length > 0 ? `featuring ${artists.slice(0, 3).join(', ')}` : null,
+  ].filter(Boolean);
+
+  return detail.length > 0 ? `${head} — ${detail.join(', ')}.` : `${head}.`;
+}
+
 // One cheap LLM call per completed scan (cached in analyses.summary), not per page view.
-// No-ops entirely until ANTHROPIC_API_KEY is set.
+// Falls back to templateSummary when ANTHROPIC_API_KEY is unset, so share pages always
+// have a description.
 export async function generateMixSummary(results: TrackMatch[]): Promise<string | null> {
-  if (!client || results.length === 0) return null;
+  if (results.length === 0) return null;
 
   const genres = [...new Set(results.map(r => r.genre).filter((g): g is string => !!g))];
   const bpms = results.map(r => r.bpm).filter((b): b is number => typeof b === 'number');
@@ -23,6 +38,8 @@ export async function generateMixSummary(results: TrackMatch[]): Promise<string 
     .filter(Boolean)
     .join('; ');
 
+  if (!client) return templateSummary(results.length, genres, bpmRange, artists);
+
   try {
     const message = await client.messages.create({
       model: 'claude-haiku-4-5-20251001',
@@ -35,10 +52,10 @@ export async function generateMixSummary(results: TrackMatch[]): Promise<string 
       ],
     });
     const block = message.content[0];
-    if (block?.type !== 'text') return null;
-    return block.text.trim() || null;
+    if (block?.type !== 'text') return templateSummary(results.length, genres, bpmRange, artists);
+    return block.text.trim() || templateSummary(results.length, genres, bpmRange, artists);
   } catch (err) {
     console.error('[mix-summary] generation failed:', err instanceof Error ? err.message : err);
-    return null;
+    return templateSummary(results.length, genres, bpmRange, artists);
   }
 }

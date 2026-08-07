@@ -20,6 +20,14 @@ import { acrcloudFilescanWebhookHandler } from './routes/webhooks.js';
 
 const app = express();
 
+// Express 4 does not forward rejections from async route handlers, and several routes
+// deliberately re-throw (upload.ts, user.ts), so without this Node kills the process —
+// taking all three workers and every in-flight scan down with it. Logged, not exited,
+// on purpose: a failed request is not a reason to abort other users' scans.
+process.on('unhandledRejection', err => {
+  console.error('[unhandledRejection]', err);
+});
+
 app.use(cors({ origin: true, credentials: true }));
 
 app.post('/api/billing/webhook', express.raw({ type: 'application/json' }), billingWebhookHandler);
@@ -43,24 +51,33 @@ import './workers/analysis.worker.js';
 import './workers/retry.worker.js';
 import './workers/filescan-poll.worker.js';
 
-import { eq, and, lt, inArray } from 'drizzle-orm';
-import { analyses, segments as segmentsTable } from './db/schema.js';
+import { and, lt, inArray } from 'drizzle-orm';
+import { analyses } from './db/schema.js';
 
-async function cleanupStaleAnalyses() {
-  const thirtyMinAgo = new Date(Date.now() - 30 * 60 * 1000);
+// Worker concurrency is 1 and per-chunk progress is reported to BullMQ, not the DB, so
+// `analyses.updatedAt` goes stale on scans that are alive but queued behind another job.
+// 30 minutes was short enough to catch those.
+const STALE_AFTER_MS = 90 * 60 * 1000;
+
+// Marks abandoned scans failed rather than deleting them. The delete took the row, its
+// segments and the spent credit with it and left the client polling an id that 404s
+// forever; a failed row tells the user what happened, and if the worker was in fact
+// still alive it overwrites the status when it finishes.
+async function failStaleAnalyses() {
+  const cutoff = new Date(Date.now() - STALE_AFTER_MS);
 
   const stale = await db
-    .select({ id: analyses.id })
-    .from(analyses)
-    .where(and(inArray(analyses.status, ['pending', 'processing']), lt(analyses.updatedAt!, thirtyMinAgo)));
-
-  for (const { id } of stale) {
-    await db.delete(segmentsTable).where(eq(segmentsTable.analysisId, id));
-    await db.delete(analyses).where(eq(analyses.id, id));
-  }
+    .update(analyses)
+    .set({
+      status: 'failed',
+      error: 'Scan timed out — it was queued or running for too long. Please try again.',
+      updatedAt: new Date(),
+    })
+    .where(and(inArray(analyses.status, ['pending', 'processing']), lt(analyses.updatedAt!, cutoff)))
+    .returning({ id: analyses.id });
 
   if (stale.length > 0) {
-    console.log(`Cleaned up ${stale.length} stale analyses`);
+    console.log(`Marked ${stale.length} stale analyses as failed`);
   }
 }
 
@@ -70,9 +87,9 @@ async function start() {
   await migrate(db, { migrationsFolder: migrationsPath });
   console.log('Migrations done.');
 
-  await cleanupStaleAnalyses();
+  await failStaleAnalyses();
 
-  setInterval(cleanupStaleAnalyses, 5 * 60 * 1000);
+  setInterval(failStaleAnalyses, 5 * 60 * 1000);
 
   app.listen(config.port, () => {
     console.log(`API server running on port ${config.port}`);
