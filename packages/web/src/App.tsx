@@ -3,6 +3,7 @@ import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } fro
 import { SignedIn, SignedOut, useAuth } from '@clerk/clerk-react';
 
 import { useAnalysis } from './hooks/useAnalysis';
+import { useAnalyticsIdentity } from './hooks/useAnalyticsIdentity';
 import { setAuthTokenProvider, getUserProfile } from './api/client';
 
 import { DjProfile, LandingPage, PublicTracklist } from './components/public';
@@ -68,15 +69,19 @@ import { PHASE, SEGMENT_STATUS, VIEW } from './constants';
 
 type ViewMode = (typeof VIEW)[keyof typeof VIEW];
 
-const App = () => (
-  <Routes>
-    <Route path="/t/:slug" element={<PublicTracklist />} />
-    <Route path="/dj/:username" element={<DjProfile />} />
-    <Route path="/pricing" element={<PricingPage />} />
-    <Route path="/account" element={<AccountPage />} />
-    <Route path="*" element={<MainApp />} />
-  </Routes>
-);
+const App = () => {
+  useAnalyticsIdentity();
+
+  return (
+    <Routes>
+      <Route path="/t/:slug" element={<PublicTracklist />} />
+      <Route path="/dj/:username" element={<DjProfile />} />
+      <Route path="/pricing" element={<PricingPage />} />
+      <Route path="/account" element={<AccountPage />} />
+      <Route path="*" element={<MainApp />} />
+    </Routes>
+  );
+};
 
 const MainApp = () => {
   const { getToken, isSignedIn } = useAuth();
@@ -182,12 +187,28 @@ const MainApp = () => {
 
   /**
    * Notification permission
+   *
+   * Asked when a scan actually starts, not on mount. On mount it fired for anonymous
+   * visitors sitting on the landing page — a permission prompt on first paint reads as
+   * spam on the one page that has to convert. Asking from the submit gesture also means
+   * the request still has user activation, which Firefox and Safari require, and the
+   * payoff ("we'll tell you when the scan finishes") is legible at that moment.
    */
-  useEffect(() => {
+  const askNotificationPermission = () => {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
     }
-  }, []);
+  };
+
+  const handleFileSelected = (file: File, engine?: 'filescan') => {
+    askNotificationPermission();
+    startAnalysis(file, engine);
+  };
+
+  const handleUrlSubmitted = (url: string, engine?: 'filescan') => {
+    askNotificationPermission();
+    startAnalysisFromUrl(url, engine);
+  };
 
   /**
    * Fetch user credits
@@ -251,8 +272,8 @@ const MainApp = () => {
                 <HomeView
                   credits={credits}
                   onSelectAnalysis={loadAnalysis}
-                  onFileSelected={startAnalysis}
-                  onUrlSubmitted={startAnalysisFromUrl}
+                  onFileSelected={handleFileSelected}
+                  onUrlSubmitted={handleUrlSubmitted}
                   isAdmin={isAdmin}
                 />
               )}

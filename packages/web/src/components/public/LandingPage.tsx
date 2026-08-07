@@ -1,6 +1,7 @@
 import { SignInButton } from '@clerk/clerk-react';
 import { Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
+import { BETA_SCANS_PER_DAY, PLAN_LIMITS, PLAN_PRICES } from '@mix-match/shared';
 import { PageChrome, ThemeToggle } from '../layout';
 import { AcrcloudAttribution } from '../AcrcloudAttribution';
 import { useWaitlist } from '../../hooks/useWaitlist';
@@ -68,21 +69,34 @@ const MODULES = [
   },
 ];
 
+// Prices and quotas come from @mix-match/shared so this page can't drift from
+// /pricing — the two used to advertise different Pro prices and scan counts.
 const PLANS = [
   {
     name: 'Free',
-    num: '$0',
+    num: `$${PLAN_PRICES.free}`,
     per: '/ forever',
-    features: ['5 scans / month', '2 scans / day', 'Text export', 'Public share pages'],
+    features: [
+      `${PLAN_LIMITS.free.scans} scans / month`,
+      `${BETA_SCANS_PER_DAY} scans / day`,
+      'Text export',
+      'Public share pages',
+    ],
     cta: 'GET STARTED',
     featured: false,
     soon: false,
   },
   {
     name: 'Pro',
-    num: '$9.99',
+    num: `$${PLAN_PRICES.pro}`,
     per: '/ month',
-    features: ['30 mixes / month', 'All export formats', 'Spotify playlists', 'Streaming links', 'Manual editing'],
+    features: [
+      `${PLAN_LIMITS.pro.scans} scans / month`,
+      'All export formats',
+      'Spotify playlists',
+      'Streaming links',
+      'Manual editing',
+    ],
     cta: 'COMING SOON',
     featured: true,
     soon: true,
@@ -206,7 +220,9 @@ export function LandingPage() {
                 <button className="ctrl ctrl-lg">OPEN THE CONSOLE →</button>
               </SignInButton>
             </div>
-            <p className="trust">NO CARD · 5 SCANS / MO · 2 / DAY</p>
+            <p className="trust">
+              NO CARD · {PLAN_LIMITS.free.scans} SCANS / MO · {BETA_SCANS_PER_DAY} / DAY
+            </p>
           </div>
         </section>
 

@@ -9,7 +9,14 @@ let enabled = false;
 // without an env-var check at every call site.
 export function initAnalytics() {
   if (!API_KEY) return;
-  posthog.init(API_KEY, { api_host: API_HOST, capture_pageview: true, person_profiles: 'identified_only' });
+  // 'history_change' instead of true: this is an SPA, so /pricing, /t/:slug and
+  // /dj/:username are reached via pushState — plain `true` only ever records the
+  // first URL of a full page load.
+  posthog.init(API_KEY, {
+    api_host: API_HOST,
+    capture_pageview: 'history_change',
+    person_profiles: 'identified_only',
+  });
   enabled = true;
 }
 
@@ -21,4 +28,11 @@ export function track(event: string, props?: Record<string, unknown>) {
 export function identifyUser(userId: string) {
   if (!enabled) return;
   posthog.identify(userId);
+}
+
+// Only on an actual sign-out — reset() mints a fresh anonymous id, so calling it
+// on every anonymous page load would make each visit look like a new person.
+export function resetAnalytics() {
+  if (!enabled) return;
+  posthog.reset();
 }
