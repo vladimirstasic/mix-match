@@ -3,6 +3,7 @@ import { Check, Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { BETA_SCANS_PER_DAY, PLAN_LIMITS, PLAN_PRICES } from '@mix-match/shared';
 import { PageChrome, ThemeToggle } from '../layout';
+import { BuyLinks } from '../analysis/BuyLinks';
 import { AcrcloudAttribution } from '../AcrcloudAttribution';
 import { useWaitlist } from '../../hooks/useWaitlist';
 
@@ -294,16 +295,25 @@ export function LandingPage() {
                           {r.track ?? 'Unidentified'}
                         </span>
                       </div>
+                      {/* The real BuyLinks component, not a copy of it: buildBuyLinks() derives
+                          these chips from the track name alone (lib/affiliate.ts), so what renders
+                          here is byte-identical to what renders in a signed-in result. */}
+                      {r.track && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          <BuyLinks trackName={r.track} />
+                        </div>
+                      )}
                     </div>
                   </div>
                 ))}
               </div>
             </div>
             <p className="sub" style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.85rem' }}>
-              In your account each identified row also carries BPM, key and genre where the catalogue has them, plus
-              Spotify, Apple Music, Beatport, YouTube and Deezer links — with inline players for Spotify, YouTube and
-              Deezer. Best on commercially released tracks: unreleased edits, white labels, and ID-only cuts come back
-              unidentified rather than guessed.
+              The BUY chips above are the real ones — they are built from the track name, so they work for every
+              identified track. In your account each row also carries BPM, key and genre, and Spotify, YouTube and
+              Deezer chips with inline players wherever the catalogue returns a match for that exact track. Best on
+              commercially released tracks: unreleased edits, white labels, and ID-only cuts come back unidentified
+              rather than guessed.
             </p>
           </div>
         </section>
