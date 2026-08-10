@@ -309,11 +309,11 @@ export function LandingPage() {
               </div>
             </div>
             <p className="sub" style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.85rem' }}>
-              The BUY chips above are the real ones — they are built from the track name, so they work for every
-              identified track. In your account each row also carries BPM, key and genre, and Spotify, YouTube and
-              Deezer chips with inline players wherever the catalogue returns a match for that exact track. Best on
-              commercially released tracks: unreleased edits, white labels, and ID-only cuts come back unidentified
-              rather than guessed.
+              The BUY chips above are the real ones — built from the track name, so every identified track has them.
+              Identified rows also get Spotify and Deezer chips with inline players when the catalogue matches that
+              exact track, and BPM, key or genre on the matches that carry them — many don&apos;t. Best on commercially
+              released tracks: unreleased edits, white labels, and ID-only cuts come back unidentified rather than
+              guessed.
             </p>
           </div>
         </section>
