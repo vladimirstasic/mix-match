@@ -777,38 +777,6 @@
   border-left-color: var(--primary);
   background: color-mix(in srgb, var(--primary) 5%, var(--card));
 }
-.r-time {
-  font-family: var(--font-mono);
-  font-size: 0.74rem;
-  color: var(--ink-faint);
-}
-.r-track {
-  font-size: 0.9rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-.log-row.unknown .r-track {
-  color: var(--ink-faint);
-  font-style: italic;
-}
-.r-conf {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  color: var(--muted-foreground);
-}
-.cbar {
-  width: 56px;
-  height: 4px;
-  background: var(--line-strong);
-}
-.cfill {
-  height: 100%;
-  background: var(--accent);
-}
 
 .price {
   position: relative;

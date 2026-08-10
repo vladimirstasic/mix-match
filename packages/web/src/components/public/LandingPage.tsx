@@ -1,5 +1,5 @@
 import { SignInButton } from '@clerk/clerk-react';
-import { Menu, X } from 'lucide-react';
+import { Check, Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState } from 'react';
 import { BETA_SCANS_PER_DAY, PLAN_LIMITS, PLAN_PRICES } from '@mix-match/shared';
 import { PageChrome, ThemeToggle } from '../layout';
@@ -20,27 +20,38 @@ const PIPELINE = [
     title: 'Fingerprint',
     body: 'Acoustic fingerprints are extracted across the whole set, segment by segment.',
   },
-  { n: '03', title: 'Match', body: 'Each segment is matched against the catalog, with a confidence score per hit.' },
+  {
+    n: '03',
+    title: 'Match',
+    body: 'Each segment is matched against the catalog. Weak matches are discarded rather than guessed at.',
+  },
   {
     n: '04',
     title: 'Export',
-    body: 'Timestamps, streaming links, and export for Mixcloud, SoundCloud, or plain text.',
+    body: 'Timestamps and streaming links, exported as Mixcloud, SoundCloud, YouTube, Markdown or plain text.',
   },
 ];
 
-const RECOGNITION_LOG: { time: string; track: string; conf: number; status: 'identified' | 'unknown' }[] = [
-  { time: '00:00 — 05:30', track: 'Dorisburg — Irrbloss', conf: 0.96, status: 'identified' },
-  { time: '05:30 — 11:15', track: 'Hatikvah — Unforgettable', conf: 0.91, status: 'identified' },
-  { time: '11:15 — 16:40', track: 'DJ Hell — The Angst (Henrik Schwarz Remix)', conf: 0.88, status: 'identified' },
-  { time: '16:40 — 22:10', track: 'Unknown section', conf: 0, status: 'unknown' },
-  { time: '22:10 — 28:00', track: 'Âme — Rej', conf: 0.94, status: 'identified' },
+// A real excerpt from a real scan, not a mock-up: these six rows are lifted verbatim
+// from packages/api/src/services/__fixtures__/kengarden-015-output.json — the recorded
+// output of one 118-minute set (71 segments, 54 distinct tracks). Kept as-is on purpose,
+// including the 15-second one-off at 10:00 and the unidentified stretch at 02:45, because
+// that is what real output looks like. The source mix and its DJ are deliberately not
+// named. No field here is invented — the row renders only what the fixture contains.
+const RECOGNITION_LOG: { time: string; track: string | null }[] = [
+  { time: '01:30 — 02:45', track: 'Missy Elliott, 50 Cent — Work It' },
+  { time: '02:45 — 04:30', track: null },
+  { time: '04:30 — 09:45', track: 'Moeaike, SOMMERS (UK) — I’m For Real (Original Mix)' },
+  { time: '10:00 — 10:15', track: 'Ankhoi, Luch — THE FUTURE (Extended)' },
+  { time: '10:30 — 16:45', track: 'Ankhoi, Luch — THE FUTURE' },
+  { time: '17:00 — 17:45', track: 'NICK ROBERTS, KIII RODRIGUEZ — Mami (Extended Mix)' },
 ];
 
 const MODULES = [
   {
     k: 'AUDIO_FINGERPRINT',
     title: 'Recognition engine',
-    body: 'ACRCloud acoustic fingerprinting matches every segment against a global track database, scoring each hit for confidence — even pitch- or tempo-shifted tracks.',
+    body: 'ACRCloud acoustic fingerprinting matches every segment against a global track database and scores each hit, keeping only matches above a confidence floor — even pitch- or tempo-shifted tracks.',
   },
   {
     k: 'URL_INGEST',
@@ -50,7 +61,7 @@ const MODULES = [
   {
     k: 'SPOTIFY_EXPORT',
     title: 'Spotify playlists',
-    body: 'One click turns your tracklist into a Spotify playlist in your account. Instant.',
+    body: 'Send a finished tracklist to Spotify as a playlist — you approve access with your Spotify account, then it lands in your library.',
   },
   {
     k: 'MULTI_FORMAT',
@@ -60,12 +71,12 @@ const MODULES = [
   {
     k: 'PUBLIC_PAGE',
     title: 'Shareable pages',
-    body: 'Public tracklist page with a custom URL. Embedded players, clean layout.',
+    body: 'Public tracklist page on its own shareable link. Embedded players, clean layout.',
   },
   {
     k: 'STREAMING_LINKS',
     title: 'Streaming links',
-    body: 'Spotify, YouTube, and Deezer links with inline players for every identified track.',
+    body: 'Spotify, Apple Music, Beatport, YouTube and Deezer links wherever the catalogue has them, with inline players for Spotify, YouTube and Deezer.',
   },
 ];
 
@@ -207,8 +218,8 @@ export function LandingPage() {
             </h1>
             <p className="lede">
               Upload a DJ set or drop in a SoundCloud or Mixcloud link — no crowd-tagging, no waiting on a community to
-              identify it. The engine listens through the whole mix and returns a timestamped tracklist instantly, with
-              a confidence score on every hit.
+              identify it. The engine listens through the whole mix and returns a timestamped tracklist with streaming
+              links for every track it can identify.
             </p>
             <div className="hero-cta">
               <SignInButton mode="modal">
@@ -249,30 +260,49 @@ export function LandingPage() {
               <i>[02]</i> What a result looks like
             </h2>
             <p className="sub">
-              Every segment timestamped, every hit scored. This is the recognition log from a finished scan.
+              A real excerpt from one 118-minute set, in the same layout your results use. Nothing here is cleaned up:
+              the gap at 02:45 came back unidentified, and 10:00 is a 15-second hit the engine caught between two longer
+              plays.
             </p>
             <div className="log">
               <div className="log-top">
                 <span>RECOGNITION_LOG</span>
-                <span>4 / 5 · 80%</span>
+                <span>5 / 6 · 83%</span>
               </div>
-              <div className="log-body">
-                {RECOGNITION_LOG.map((r, i) => (
-                  <div key={i} className={`log-row ${r.status}`}>
-                    <span className="r-time">{r.time}</span>
-                    <span className="r-track">{r.track}</span>
-                    <span className="r-conf">
-                      {r.status === 'identified' ? r.conf.toFixed(2) : '—'}
-                      <span className="cbar">
-                        <span className="cfill" style={{ width: `${r.conf * 100}%` }} />
+              <div className="log-body space-y-2 p-2">
+                {RECOGNITION_LOG.map(r => (
+                  <div
+                    key={r.time}
+                    className={`log-row ${r.track ? 'identified' : 'unknown'}`}
+                    style={{ display: 'block' }}
+                  >
+                    <div className="py-1 flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                      <span className="font-mono text-[11px] text-muted-foreground whitespace-nowrap sm:min-w-[110px]">
+                        {r.time}
                       </span>
-                    </span>
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        {r.track && (
+                          <div className="w-4 h-4 bg-primary/15 flex items-center justify-center shrink-0">
+                            <Check className="w-2.5 h-2.5 text-primary" />
+                          </div>
+                        )}
+                        <span
+                          className={`text-sm flex-1 min-w-0 truncate ${
+                            r.track ? 'font-medium' : 'italic text-muted-foreground/70'
+                          }`}
+                        >
+                          {r.track ?? 'Unidentified'}
+                        </span>
+                      </div>
+                    </div>
                   </div>
                 ))}
               </div>
             </div>
             <p className="sub" style={{ marginTop: '1rem', marginBottom: 0, fontSize: '0.85rem' }}>
-              Best on commercially released tracks — unreleased edits, white labels, and ID-only cuts may come back
+              In your account each identified row also carries BPM, key and genre where the catalogue has them, plus
+              Spotify, Apple Music, Beatport, YouTube and Deezer links — with inline players for Spotify, YouTube and
+              Deezer. Best on commercially released tracks: unreleased edits, white labels, and ID-only cuts come back
               unidentified rather than guessed.
             </p>
           </div>
