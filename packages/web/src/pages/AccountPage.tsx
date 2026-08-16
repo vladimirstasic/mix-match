@@ -1,7 +1,15 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { SignedIn, SignedOut, RedirectToSignIn } from '@clerk/clerk-react';
-import { PLANS, PLAN_LIMITS, BETA_SCANS_PER_MONTH, BETA_SCANS_PER_DAY, type Plan } from '@mix-match/shared';
+import {
+  PLANS,
+  PLAN_LIMITS,
+  PLAN_PRICES,
+  BETA_SCANS_PER_MONTH,
+  BETA_SCANS_PER_DAY,
+  BETA_END_NOTICE_DAYS,
+  type Plan,
+} from '@mix-match/shared';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft, Crown, Loader2, CheckCircle2, Sparkles, Rocket } from 'lucide-react';
@@ -127,8 +135,8 @@ export function AccountPage() {
                     </div>
 
                     <p className="text-xs text-muted-foreground border-t border-border/50 pt-3">
-                      We'll announce Beta end at least 7 days in advance via email. First 100 to subscribe afterwards
-                      lock in lifetime Founding Member pricing — $6/mo Pro or $12/mo Studio.
+                      We'll announce Beta end at least {BETA_END_NOTICE_DAYS} days in advance via email. First 100 to
+                      subscribe afterwards lock in lifetime Founding Member pricing — ${PLAN_PRICES.pro}/mo Pro.
                     </p>
                   </CardContent>
                 </Card>

@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { SignedIn, SignedOut, SignInButton } from '@clerk/clerk-react';
-import { PLANS, PLAN_LIMITS, PLAN_PRICES, PLAN_FULL_PRICES, type Plan } from '@mix-match/shared';
+import {
+  PLANS,
+  PLAN_LIMITS,
+  PLAN_PRICES,
+  PLAN_FULL_PRICES,
+  BETA_SCANS_PER_MONTH,
+  BETA_SCANS_PER_DAY,
+  BETA_END_NOTICE_DAYS,
+  type Plan,
+} from '@mix-match/shared';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Check, Zap, Crown, ArrowLeft, Loader2, Sparkles, Rocket } from 'lucide-react';
@@ -116,9 +125,9 @@ export function PricingPage() {
                   <h1 className="text-3xl font-bold tracking-tight">MixMatch is in Open Beta</h1>
                   <p className="text-muted-foreground mt-3">
                     Try all premium features for free —{' '}
-                    <span className="font-medium text-foreground">5 scans/month</span>,{' '}
-                    <span className="font-medium text-foreground">2 per day</span>, detailed mode, Spotify export, no
-                    credit card. We'll announce Beta end at least 7 days in advance via email.
+                    <span className="font-medium text-foreground">{BETA_SCANS_PER_MONTH} scans/month</span>,{' '}
+                    <span className="font-medium text-foreground">{BETA_SCANS_PER_DAY} per day</span>, Spotify export,
+                    no credit card. We'll announce Beta end at least {BETA_END_NOTICE_DAYS} days in advance via email.
                   </p>
                 </div>
                 <div className="rounded-xl border border-primary/20 bg-primary/5 px-5 py-4 text-sm">
