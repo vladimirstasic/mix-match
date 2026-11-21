@@ -112,3 +112,9 @@ export const CHUNK_STEP_SEC = 60;
 // "track A split into 3-5 pieces by transition false-positives" case while
 // keeping a genuine later replay separate.
 export const CONSOLIDATE_GAP_WINDOW_SEC = 150;
+
+// Temporary kill switch: scanning is limited to admins while ACRCloud usage is reviewed.
+// Set to false to reopen scans for everyone.
+export const SCANS_PAUSED = true;
+export const SCANS_PAUSED_MESSAGE =
+  'Scanning is temporarily disabled while we make some technical improvements. Please check back soon.';

@@ -15,6 +15,8 @@ import {
   BETA_SCANS_PER_MONTH,
   BETA_SCANS_PER_DAY,
   FILESCAN_POLL_FALLBACK_DELAY_MS,
+  SCANS_PAUSED,
+  SCANS_PAUSED_MESSAGE,
 } from '@mix-match/shared';
 import { db } from '../db/client.js';
 import { analyses, segments, users } from '../db/schema.js';
@@ -67,6 +69,11 @@ async function checkPlanLimits(
 ): Promise<boolean> {
   const adminCheck = await findUser(userId);
   if (adminCheck?.isAdmin) return true;
+
+  if (SCANS_PAUSED) {
+    res.status(503).json({ error: SCANS_PAUSED_MESSAGE, code: 'SCANS_PAUSED' });
+    return false;
+  }
 
   if (config.betaMode) {
     const today = new Date().toISOString().slice(0, 10);

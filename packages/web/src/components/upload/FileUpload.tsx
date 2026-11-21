@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState, type DragEvent } from 'react';
-import { MAX_FILE_SIZE, ALLOWED_MIMETYPES } from '@mix-match/shared';
+import { MAX_FILE_SIZE, ALLOWED_MIMETYPES, SCANS_PAUSED, SCANS_PAUSED_MESSAGE } from '@mix-match/shared';
 import { Button } from '@/components/ui/button';
 
 interface Props {
@@ -164,9 +164,11 @@ export function FileUpload({ onFileSelected, onUrlSubmitted, disabled, isAdmin }
           </label>
         )}
 
-        <Button className="clip-bevel w-full" size="lg" disabled={!canRun} onClick={run}>
+        <Button className="clip-bevel w-full" size="lg" disabled={!canRun || (SCANS_PAUSED && !isAdmin)} onClick={run}>
           Run Analysis
         </Button>
+
+        {SCANS_PAUSED && !isAdmin && <p className="text-sm text-muted-foreground font-mono">{SCANS_PAUSED_MESSAGE}</p>}
 
         {error && <p className="text-sm text-destructive font-mono">{error}</p>}
       </div>

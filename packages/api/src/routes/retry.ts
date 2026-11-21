@@ -1,15 +1,24 @@
-import { Router } from 'express';
+import { Router, type Request, type Response, type NextFunction } from 'express';
 import { eq, and } from 'drizzle-orm';
 import { requireUser, getUserId } from '../middleware/auth.js';
 import fs from 'fs/promises';
 import { db } from '../db/client.js';
 import { segments } from '../db/schema.js';
-import { findAnalysis } from '../db/helpers.js';
+import { findAnalysis, findUser } from '../db/helpers.js';
+import { SCANS_PAUSED, SCANS_PAUSED_MESSAGE } from '@mix-match/shared';
 import { retryQueue } from '../queue/index.js';
 
 export const retryRouter = Router();
 
-retryRouter.post('/analysis/:id/segments/:segmentId/retry', requireUser, async (req, res) => {
+// Retries call ACRCloud too, so they are paused for non-admins along with new scans.
+async function blockWhileScansPaused(req: Request, res: Response, next: NextFunction) {
+  if (!SCANS_PAUSED) return next();
+  const user = await findUser(getUserId(req));
+  if (user?.isAdmin) return next();
+  res.status(503).json({ error: SCANS_PAUSED_MESSAGE, code: 'SCANS_PAUSED' });
+}
+
+retryRouter.post('/analysis/:id/segments/:segmentId/retry', requireUser, blockWhileScansPaused, async (req, res) => {
   const userId = getUserId(req);
   const id = req.params.id as string;
   const segmentId = req.params.segmentId as string;
@@ -59,7 +68,7 @@ retryRouter.post('/analysis/:id/segments/:segmentId/retry', requireUser, async (
   res.json({ jobId: job.id });
 });
 
-retryRouter.post('/analysis/:id/retry-unknown', requireUser, async (req, res) => {
+retryRouter.post('/analysis/:id/retry-unknown', requireUser, blockWhileScansPaused, async (req, res) => {
   const userId = getUserId(req);
   const id = req.params.id as string;
 
